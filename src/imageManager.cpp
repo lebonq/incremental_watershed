@@ -9,7 +9,9 @@ imageManager::imageManager(std::string path,cv::Mat image)
     image_{image},
     height_{image.size().height},
     width_{image.size().width},
-    graph_{this->height_*this->width_}
+    graph_{this->height_*this->width_},
+    qbet_{this->height_*this->width_},
+    isReady_{false}
 {
     //this->pathFile_ = path;
     //this->image_ = cv::imread(this->pathFile_,cv::IMREAD_GRAYSCALE);
@@ -41,8 +43,14 @@ void imageManager::toGraph() {
             index++;
         }
     }
+}
 
-    this->graph_.init_sortedEdges();
+void imageManager::init() {
+    this->toGraph(); // Convert our image into a graph
+    this->graph_.init_sortedEdges(); // Sort the edges of the graph
+    algorithms::kruskal(this->graph_,this->qbet_,this->width_); // Apply the kruskal algorithm
+
+    this->isReady_ = true;
 }
 
 imageManager::~imageManager() {

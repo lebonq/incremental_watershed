@@ -4,9 +4,9 @@
 
 #ifndef INCREMENTAL_WATERSHED_QEBT_H
 #define INCREMENTAL_WATERSHED_QEBT_H
-#include "dataStructures/Q.h"
-#include "dataStructures/QT.h"
-#include "dataStructures/QBT.h"
+#include "Q.h"
+#include "QT.h"
+#include "QBT.h"
 
 class QEBT : public Q{
 private:

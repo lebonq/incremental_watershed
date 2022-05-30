@@ -1,7 +1,7 @@
 //
 // Created by lebon on 12/05/2022.
 //
-#include "graph.h"
+#include "dataStructures/graph.h"
 #include "imageManager.h"
 #include "algorithms.h"
 #include "dataStructures/QBT.h"
@@ -13,9 +13,8 @@ int main(int argc, char* argv[])
     auto testim = cv::imread("coins.gray.png",cv::IMREAD_GRAYSCALE);
     //todo declare inside the imageManager
     auto testImg = imageManager("coins.gray.png",testim);
-    testImg.toGraph();
     auto QbtImage = QEBT(testImg.getGraph().getNbVertex());
-    algorithms::kruskal(testImg.getGraph(),QbtImage,252,312);
+    testImg.init();
 
     // test MST PWK
     auto graphTestQBT = graph(8);
@@ -38,7 +37,7 @@ int main(int argc, char* argv[])
     graphTestQBT.init_sortedEdges();
     auto Qbttest = QEBT(graphTestQBT.getNbVertex());
 
-    algorithms::kruskal(graphTestQBT,Qbttest,4,2);
+    //algorithms::kruskal(graphTestQBT,Qbttest,4);
 
     //test random graph
     /*auto graphTestQBT = graph(9);
@@ -63,7 +62,7 @@ int main(int argc, char* argv[])
     graphTestQBT.init_sortedEdges();
     auto Qbttest = QBT(graphTestQBT.getNbVertex());
 
-    algorithms::kruskal(graphTestQBT,Qbttest,3,3);*/
+    algorithms::kruskal(graphTestQBT,Qbttest,3);*/
 
     return 0;
 }

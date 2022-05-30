@@ -4,16 +4,14 @@
 
 #include "algorithms.h"
 
-void algorithms::kruskal(graph& G,Q& Q, int w, int h) {
+void algorithms::kruskal(graph& G,Q& Q, int w) {
 
-    std::vector<int> test;
 
     for (int i = 0; i < G.getNbVertex(); i++) {
         Q.makeSet(i);
     }
 
     //std::cout << G.getNbVertex() << std::endl;
-    int evenOrOdd = w%2;
     for (int j = 0; j < max_value_count; j++) {
         for(int i = 0; i < G.count_[j]; i++) {
             int cx, cy = 0;
@@ -37,19 +35,37 @@ void algorithms::kruskal(graph& G,Q& Q, int w, int h) {
 
                 if(cx != cy) {
                     Q.makeUnion(cx, cy);
-                    test.push_back(edge);//add in the MST
-                    //TODO MST data structure
+                    G.getMst()[edge]= true;
                 }
 
         }
 
     }
     //Print the MST
-
-    for(auto i : test){
-        //std::cout << i << ",";
-    }
-    //std::cout << std::endl;
+    /*
+    for(int i = 0; i < G.getNbVertex()*2; i++) {
+        if(G.getMst()[i]) {
+            std::cout << i << " ";
+        }
+    }*/
 }
 
+void algorithms::breadthFirstSearchLabel(){
 
+}
+
+void algorithms::fusionSegment() {
+
+}
+
+void algorithms::splitSegment() {
+
+}
+
+void algorithms::removeMarker() {
+
+}
+
+void algorithms::addMarker() {
+
+}

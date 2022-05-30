@@ -3,7 +3,17 @@ project(incremental_watershed)
 
 set(CMAKE_CXX_STANDARD 14)
 
-include_directories(.)
+file(
+        GLOB_RECURSE
+        SOURCE_FILES
+        src/*.cpp
+)
+
+file(
+        GLOB_RECURSE
+        HEADER_FILES
+        src/*.h
+)
 
 # Where to find CMake modules and OpenCV
 set(OpenCV_DIR "C:\\Lib\\OpenCV\\build_vs\\install")
@@ -13,12 +23,10 @@ set(OpenCV_INCLUDE_DIR "C:\\Lib\\OpenCV\\build_vs\\install\\include" )
 find_package(OpenCV REQUIRED)
 include_directories(${OpenCV_INCLUDE_DIRS})
 
-add_executable(incremental_watershed
-        graph.cpp
-        graph.h main.cpp imageManager.cpp imageManager.h dataStructures/Q.h dataStructures/QBT.cpp dataStructures/QBT.h algorithms.cpp algorithms.h data.h dataStructures/QT.cpp dataStructures/QT.h dataStructures/QEBT.cpp dataStructures/QEBT.h)
+add_executable (${PROJECT_NAME} ${SOURCE_FILES}  ${HEADER_FILES})
 
 # add libs you need
 set(OpenCV_LIBS opencv_core opencv_imgproc opencv_highgui opencv_imgcodecs)
 
 # linking
-target_link_libraries(incremental_watershed ${OpenCV_LIBS})
+target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBS})
