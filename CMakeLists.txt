@@ -16,6 +16,7 @@ file(
 )
 
 # Where to find CMake modules and OpenCV
+#================= NEED TO COMPILE AND LINK WITH OpenCV =====================
 set(OpenCV_DIR "C:\\Lib\\OpenCV\\build_vs\\install")
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
 set(OpenCV_INCLUDE_DIR "C:\\Lib\\OpenCV\\build_vs\\install\\include" )
