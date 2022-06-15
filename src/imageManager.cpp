@@ -48,11 +48,64 @@ void imageManager::toGraph() {
 void imageManager::init() {
     this->toGraph(); // Convert our image into a graph
     this->graph_.init_sortedEdges(); // Sort the edges of the graph
-    algorithms::kruskal(this->graph_,this->qbet_,this->width_); // Apply the kruskal algorithm
+
+    //TODO Temp
+    this->indexTemp = new int[this->graph_.getNbVertex()*2]();
+    for(int i = 0; i < this->graph_.getNbVertex()*2; i++){
+        this->indexTemp[i] = -1;
+    }
+
+    this->nbVertex_ = this->graph_.getNbVertex();
+    algorithms::kruskal(this->graph_,this->qbet_,this->width_,this->indexTemp); // Apply the kruskal algorithm
+
+
+    this->segments_ = new int[this->graph_.getNbVertex()](); //There is a ID for each vertex
+    this->marks_ = new int[this->qbet_.getQBT().getSize()](); //There is size nodes
+    this->sizePart_ = new int[this->graph_.getNbVertex()](); //There is at most |V| segments
+    this->ws_ = new bool[this->qbet_.getQBT().getSize()](); //There is size nodes
+    this->mstEdit_ = new bool[this->graph_.getMst().size()]; //Size of the MST
+
+    for(int i = 0; i < this->graph_.getMst().size(); i++) { //At start all edges are in the MST
+        this->mstEdit_[i] = true;
+    }
+
+    this->sizePart_[0] = this->graph_.getNbVertex(); //The first segment is the whole image
 
     this->isReady_ = true;
+
+    //std::cout << this->graph_.getMst()[this->getEdge(78624+1)] << std::endl;
+    //on veut la positon de l'edge 18883 dans le mst
+    /*std::cout << this->indexTemp[18883] << std::endl;
+    std::cout << this->graph_.getMst()[this->indexTemp[18883]] << std::endl;*/
+
+    /*
+     * std::cout << this->graph_.getMst().size() << std::endl;
+    std::cout << this->graph_.getEdges()[this->graph_.getMst()[1074645]] << std::endl;
+    std::cout << this->mstEdit_[this->indexTemp[(2*417819)-2]] << std::endl:*/
+}
+
+void imageManager::addMarkers(int* markers, int nbMarkers) {
+    algorithms::addMarker(*this,markers,nbMarkers);
+}
+
+void imageManager::removeMarkers() {
+
+}
+
+int imageManager::getEdge(int n){
+    if(n < this->nbVertex_){
+        std::cout<<"Error : n is not a valid node"<<std::endl;
+        std::exit(EXIT_FAILURE);
+    }
+    return n - this->nbVertex_;
 }
 
 imageManager::~imageManager() {
     this->image_.release();
+
+    delete[] this->segments_;
+    delete[] this->marks_;
+    delete[] this->sizePart_;
+    delete[] this->ws_;
+    delete[] this->mstEdit_;
 }

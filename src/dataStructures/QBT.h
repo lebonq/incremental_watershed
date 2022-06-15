@@ -13,12 +13,15 @@ private:
     int* parent_;// represent the parent of each node
     int size_;
 public:
+
+
     QBT(int nbVertex);
     int findCannonical(int q) override;
     void makeSet(int q) override;
     int makeUnion(int q1, int q2) override;
-    int getSize(){return this->size_;}
-    void setParent(int q, int value){this->parent_[q] = value;}
+    int* getParents(){return this->parent_;};
+    int getSize(){return this->size_;};
+    void setParent(int x, int y){this->parent_[x] = y;}
     ~QBT();
 };
 

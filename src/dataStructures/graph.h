@@ -4,13 +4,14 @@
 #ifndef INCREMENTAL_WATERSHED_GRAPH_H
 #define INCREMENTAL_WATERSHED_GRAPH_H
 #include <iostream>
+#include <vector>
 #include "../data.h"
 
 
 class graph {
 private:
     int* edges_;
-    bool* mst_;
+    std::vector<int> mst_; //contain edges in order of the nodes edge 0 correspond to nodes 0 + |V|
     int nbVertex_;
 
 
@@ -23,7 +24,7 @@ public:
     int* getEdges(){return this->edges_;}
     void init_sortedEdges();
     int& getNbVertex(){return this->nbVertex_;}
-    bool* getMst(){return this->mst_;}
+    std::vector<int>& getMst(){return this->mst_;}
     ~graph();
 };
 

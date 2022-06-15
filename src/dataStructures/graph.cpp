@@ -7,12 +7,9 @@
 graph::graph(int pNbVertex) :
     nbVertex_{pNbVertex},
     edges_{new int[pNbVertex*2]},
-    mst_{new bool[pNbVertex*2]},
-    count_{new int[max_value_count]},
+    count_{new int[max_value_count]()},
     sortedEdges_{new int*[max_value_count]}
     {
-        memset(this->count_, 0, max_value_count*sizeof(int));
-        memset(this->mst_, false, pNbVertex*2*sizeof(bool));
     }
 
 bool graph::setWeight(int pIndex, int pWeight) {
