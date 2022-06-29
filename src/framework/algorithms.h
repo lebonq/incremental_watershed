@@ -16,9 +16,10 @@ public:
     static void kruskal(graph& G,Q& Q, int w,int* temp);
     static int breadthFirstSearchLabel(imageManager& im, int tag, int p);
     static void splitSegment(imageManager & im, bool* historyVisited,std::vector<int> queueEdges);
-    static void mergeSegment(int p1, int p2, imageManager & im);
+    static void mergeSegment(int edge, imageManager & im);
     static void removeMarker(imageManager & im,int* markers,int nbMarkers);
     static void addMarker(imageManager & im,int* markers,int nbMarkers);
+    static void showSegmentation(imageManager & im,std::string nameOfImage);
 };
 
 

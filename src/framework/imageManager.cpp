@@ -88,8 +88,8 @@ void imageManager::addMarkers(int* markers, int nbMarkers) {
     algorithms::addMarker(*this,markers,nbMarkers);
 }
 
-void imageManager::removeMarkers() {
-
+void imageManager::removeMarkers(int* markers, int nbMarkers) {
+    algorithms::removeMarker(*this,markers,nbMarkers);
 }
 
 int imageManager::getEdge(int n){

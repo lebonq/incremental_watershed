@@ -42,7 +42,7 @@ public:
     QEBT& getHierarchy() {return this->qbet_;} // Getter of the hierarchy
     void init(); // Initialize everything to be ready for add and remove markers
     void addMarkers(int* markers, int nbMarkers);
-    void removeMarkers();
+    void removeMarkers(int* markers, int nbMarkers);
     int getEdge(int n);
     int getWidth(){return this->width_;};
     int getHeight(){return this->height_;};

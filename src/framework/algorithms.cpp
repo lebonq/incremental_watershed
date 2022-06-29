@@ -172,9 +172,21 @@ void algorithms::splitSegment(imageManager & im, bool* historyVisited,
  * @param p2 Point on the second segment
  * @param im
  */
-void algorithms::mergeSegment(int p1, int p2, imageManager & im) {
+void algorithms::mergeSegment(int edge, imageManager & im) {
     int* seg = im.segments_;
     int * sizeSeg = im.sizePart_;
+    int p1,p2;
+
+    if(((edge) & (1<<(0))) == 1){//if odd or even not the same formula
+        //Copy and paste of line #22 to avoid doing jump into memory
+        p1 = edge/2;
+        p2 = (edge/2)+im.getWidth();
+    }
+    else{
+        p1 = (edge+1)/2;
+        p2 = ((edge+1)/2)+1;
+    }
+
     int tag1 = seg[p1];
     int tag2 = seg[p2];
 
@@ -196,6 +208,7 @@ void algorithms::removeMarker(imageManager & im,int* markers,int nbMarkers) {
     QBT& qbt = im.getHierarchy().getQBT();
     int* parent = qbt.getParents();
     int sizeParent = qbt.getSize();
+    auto mstL = im.getGraph().getMst();
 
     for(int i = 0; i < nbMarkers;i++){
         marker = markers[i];
@@ -205,7 +218,7 @@ void algorithms::removeMarker(imageManager & im,int* markers,int nbMarkers) {
             if(im.marks_[up] == 1) {
                 im.ws_[im.getEdge(up)]= false;
                 im.mstEdit_[im.getEdge(up)]= true;
-                mergeSegment(0,0,im);//TODO
+                mergeSegment(mstL[im.getEdge(up)],im);
                 break;
             }
             up = parent[up];
@@ -220,6 +233,7 @@ void algorithms::addMarker(imageManager & im,int* markers,int nbMarkers) {
     int sizeParent = qbt.getSize();
     bool* historyVisited = new bool[im.getGraph().getNbVertex()]();
     std::vector<int> queueEdges;
+    auto mstL = im.getGraph().getMst();
 
     for(int i = 0; i < nbMarkers;i++){
         marker = markers[i];
@@ -229,7 +243,7 @@ void algorithms::addMarker(imageManager & im,int* markers,int nbMarkers) {
             if(im.marks_[up] == 2) {
                 im.ws_[im.getEdge(up)]= true;
                 im.mstEdit_[im.getEdge(up)] = false;
-                queueEdges.push_back(im.getGraph().getMst()[im.getEdge(up)]);
+                queueEdges.push_back(mstL[im.getEdge(up)]);
                 break;
             }
             up = parent[up];
@@ -239,4 +253,32 @@ void algorithms::addMarker(imageManager & im,int* markers,int nbMarkers) {
     splitSegment(im,historyVisited,queueEdges);
 
     delete[] historyVisited;
+}
+
+void algorithms::showSegmentation(imageManager & im,std::string nameOfImage) {
+    cv::Mat img(im.getHeight(), im.getWidth(),
+                 CV_8UC3, cv::Vec3b(255, 0, 0));
+    // Verify if image is created or not
+    if(img.empty()){
+        std::cout << "Could not load image" << std::endl;
+        std::cin.get();
+    }
+
+    img.at<cv::Vec3b>(0, 0) = cv::Vec3b(0, 0, 0);
+
+    int cpt = 0,seed;
+    for(int y = 0; y < im.getHeight(); y++){
+        for(int x = 0; x < im.getWidth(); x++){
+            seed = im.segments_[cpt];
+            srand(seed);
+            img.at<cv::Vec3b>(y, x) = cv::Vec3b(rand()%255, rand()%255, rand()%255);
+            cpt++;
+        }
+    }
+
+    namedWindow(nameOfImage, cv::WINDOW_AUTOSIZE);
+
+    imshow(nameOfImage, img);
+    // wait for any keypress
+    cv::waitKey(0);
 }
