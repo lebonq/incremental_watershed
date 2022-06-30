@@ -5,7 +5,6 @@
 #include "test.h"
 #include "../framework/dataStructures/graph.h"
 #include "../framework/imageManager.h"
-#include "../framework/dataStructures/QEBT.h"
 #include <opencv2/highgui/highgui.hpp>
 #include <benchmark/benchmark.h>
 
@@ -25,7 +24,7 @@ static void BM_AddMarkerCell2(benchmark::State& state) {
     }
 }
 // Register the function as a benchmark
-BENCHMARK(BM_AddMarkerCell2);
+BENCHMARK(BM_AddMarkerCell2)->Unit(benchmark::kMillisecond)->Iterations(100);
 
 
 BENCHMARK_MAIN();

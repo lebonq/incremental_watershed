@@ -6,18 +6,6 @@ include(FetchContent)
 
 set(CMAKE_CXX_STANDARD 14)
 
-file(
-        GLOB_RECURSE
-        SOURCE_FILES
-        ../*.cpp
-)
-
-file(
-        GLOB_RECURSE
-        HEADER_FILES
-        ../*.h
-)
-
 # Where to find CMake modules and OpenCV
 #================= NEED TO COMPILE AND LINK WITH OpenCV =====================
 set(OpenCV_DIR "C:\\Lib\\OpenCV\\build_vs\\install")
@@ -40,7 +28,24 @@ FetchContent_MakeAvailable(
         googletest
         googlebenchmark)
 
-add_executable (${PROJECT_NAME} ${SOURCE_FILES}  ${HEADER_FILES})
+add_executable (${PROJECT_NAME}
+        test.cpp
+        test.h
+        ../framework/algorithms.cpp
+        ../framework/algorithms.h
+        ../framework/data.h
+        ../framework/imageManager.cpp
+        ../framework/imageManager.fwd.h
+        ../framework/imageManager.h
+        ../framework/dataStructures/graph.cpp
+        ../framework/dataStructures/graph.h
+        ../framework/dataStructures/Q.h
+        ../framework/dataStructures/QBT.cpp
+        ../framework/dataStructures/QBT.h
+        ../framework/dataStructures/QEBT.cpp
+        ../framework/dataStructures/QEBT.h
+        ../framework/dataStructures/QT.cpp
+        ../framework/dataStructures/QT.h)
 
 # add libs you need
 set(OpenCV_LIBS opencv_core opencv_imgproc opencv_highgui opencv_imgcodecs)
