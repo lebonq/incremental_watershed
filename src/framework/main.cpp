@@ -3,8 +3,8 @@
 //
 #include "dataStructures/graph.h"
 #include "imageManager.h"
-#include "dataStructures/QEBT.h"
 #include <opencv2/highgui/highgui.hpp>
+
 
 int main(int argc, char* argv[])
 {
@@ -17,10 +17,46 @@ int main(int argc, char* argv[])
     int nbMarkers1 = 11942;
 
     //ADD MARKER
-
+    std::cout << "Add marker" << std::endl;
     testImg.addMarkers(markers1,nbMarkers1);
 
-    algorithms::showSegmentation(testImg,"Add marker 1");
+    std::cout << "Show image" << std::endl;
+    algorithms::showSegmentationMP(testImg,"Add marker 1");
+
+    //create an empty stack
+    /*std::stack<int> stack;
+    int finish =0;
+    int top;
+
+    #pragma omp parallel num_threads(2)
+    {
+        if(omp_get_thread_num() == 0){
+            while(finish == 0){
+                while(stack.empty() == false){
+                    //pop and print top of the stack
+                    #pragma omp critical (stack)
+                    {
+                        top = stack.top();
+                        stack.pop();
+                    }
+
+                    std::cout << "Thread 0 : " << top << std::endl;
+                }
+            }
+        }
+        else{
+            //add 5 int values to the stack and put 1 in finish
+            for(int i = 0; i < 200; i++){
+#pragma omp critical (stack)
+                {
+                    stack.push(i);
+                }
+
+            }
+            finish = 1;
+        }
+    }*/
 
     return 0;
+
 }

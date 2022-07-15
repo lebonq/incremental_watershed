@@ -10,6 +10,7 @@
 #include "dataStructures/graph.h"
 #include "dataStructures/QEBT.h"
 #include "algorithms.h"
+#include "dataStructures/partition.h"
 
 class imageManager {
 private:
@@ -20,7 +21,6 @@ private:
     cv::Mat image_; // Opencv Data of the image
     graph graph_; // Graph representation of the image
     QEBT qbet_; // Hierarchy
-    bool isReady_;
     void toGraph();// Convert image to a graph TODO : Add a way to choose cost function
 
     int nbVertex_; // Number of vertex in the graph for better performance in getEdge(n)
@@ -31,11 +31,14 @@ public:
     int* sizePart_;
     bool* ws_;
     bool* mstEdit_;
+
     int tagCount_ = 1;
     std::vector<int> tag_;
-    //TO-BE-REMOVE Pour marks on fait marks[up-nbVertex] ca nous permet de reduire la taille de l'array
 
     int* indexTemp;//tab de correcpondence
+
+    //For MP
+    partition partitionMP_;
 
     imageManager(std::string path,cv::Mat image);
     graph& getGraph() {return this->graph_;} // Getter of the graph

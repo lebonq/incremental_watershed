@@ -23,7 +23,6 @@ void QBT::makeSet(int q) {
 }
 
 int QBT::makeUnion(int q1, int q2) {
-    std::cout << "makeUnion : " << q1 << "," << q2 << " = " << this->size_ << std::endl;
     this->parent_[q1] = this->size_;
     this->parent_[q2] = this->size_;
     this->makeSet(this->size_);

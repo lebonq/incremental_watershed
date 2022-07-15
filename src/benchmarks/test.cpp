@@ -11,7 +11,6 @@
 static void BM_AddMarkerCell2(benchmark::State& state) {
 
     auto testim = cv::imread("cell2.jpg",cv::IMREAD_GRAYSCALE);
-    //todo declare inside the imageManager
     imageManager testImg = imageManager("cell2.jpg",testim);
     testImg.init();
 
@@ -21,10 +20,13 @@ static void BM_AddMarkerCell2(benchmark::State& state) {
     for (auto _ : state) {
         testImg.addMarkers(markers1,nbMarkers1);
         testImg.removeMarkers(markers1,nbMarkers1);
+        for(int i = 0; i <testImg.getGraph().getNbVertex();++i){
+            testImg.partitionMP_.getParents()[i] = -2;
+        }
     }
 }
 // Register the function as a benchmark
-BENCHMARK(BM_AddMarkerCell2)->Unit(benchmark::kMillisecond)->Iterations(100);
+BENCHMARK(BM_AddMarkerCell2)->Unit(benchmark::kMillisecond)->Iterations(1000);
 
 
 BENCHMARK_MAIN();

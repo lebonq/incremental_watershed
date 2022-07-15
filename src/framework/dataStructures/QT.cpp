@@ -17,7 +17,7 @@ int QT::findCannonical(int q) {
         r = this->parent_[r];
     }
     while(this->parent_[q] >= 0){
-        tmp = q; //TODO : check if it's necessary
+        tmp = q;
         q = this->parent_[q];
         this->parent_[tmp] = r;
     }

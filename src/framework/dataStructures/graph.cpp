@@ -12,6 +12,12 @@ graph::graph(int pNbVertex) :
     {
     }
 
+/**
+ * Associate a weight to an edge
+ * @param pIndex Index of the edge you want to add an weight
+ * @param pWeight
+ * @return If the operation success
+ */
 bool graph::setWeight(int pIndex, int pWeight) {
     if(pIndex >= this->nbVertex_*2){
         std::cout << "Error to set weight to an edge : Index out of range" << std::endl;
@@ -25,7 +31,9 @@ bool graph::setWeight(int pIndex, int pWeight) {
         return true;
     }
 }
-
+/**
+ * Allocate memories to store the sorted edges
+ */
 void graph::init_sortedEdges() {
 
     //Init all the array at the right size

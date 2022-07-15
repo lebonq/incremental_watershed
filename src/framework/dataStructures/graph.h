@@ -14,7 +14,6 @@ private:
     std::vector<int> mst_; //contain edges in order of the nodes edge 0 correspond to nodes 0 + |V|
     int nbVertex_;
 
-
 public:
     int* count_;//Number of edges with a value between 0 and 255
     int** sortedEdges_;//index in the vector edges of the edges sorted by value

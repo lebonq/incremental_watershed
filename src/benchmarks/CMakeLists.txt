@@ -5,14 +5,17 @@ enable_testing()
 include(FetchContent)
 
 set(CMAKE_CXX_STANDARD 14)
+option(TBB_TEST OFF)
 
 # Where to find CMake modules and OpenCV
 #================= NEED TO COMPILE AND LINK WITH OpenCV =====================
 set(OpenCV_DIR "C:\\Lib\\OpenCV\\build_vs\\install")
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
 set(OpenCV_INCLUDE_DIR "C:\\Lib\\OpenCV\\build_vs\\install\\include" )
+set(TBB_DIR "C:\\Lib\\oneTBB\\lib\\cmake\\tbb" )
 
 find_package(OpenCV REQUIRED)
+find_package(TBB REQUIRED)
 include_directories(${OpenCV_INCLUDE_DIRS})
 
 # Externally provided libraries
@@ -45,10 +48,12 @@ add_executable (${PROJECT_NAME}
         ../framework/dataStructures/QEBT.cpp
         ../framework/dataStructures/QEBT.h
         ../framework/dataStructures/QT.cpp
-        ../framework/dataStructures/QT.h)
+        ../framework/dataStructures/QT.h
+        ../framework/dataStructures/partition.cpp
+        ../framework/dataStructures/partition.h)
 
 # add libs you need
 set(OpenCV_LIBS opencv_core opencv_imgproc opencv_highgui opencv_imgcodecs)
 
 # linking
-target_link_libraries(${PROJECT_NAME} benchmark::benchmark  ${OpenCV_LIBS})
+target_link_libraries(${PROJECT_NAME} benchmark::benchmark  ${OpenCV_LIBS} TBB::tbb)

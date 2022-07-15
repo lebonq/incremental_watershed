@@ -11,16 +11,8 @@ imageManager::imageManager(std::string path,cv::Mat image)
     width_{image.size().width},
     graph_{this->height_*this->width_},
     qbet_{this->height_*this->width_},
-    isReady_{false}
-{
-    //this->pathFile_ = path;
-    //this->image_ = cv::imread(this->pathFile_,cv::IMREAD_GRAYSCALE);
-    //this->height_ = this->image_.size().height;
-    //this->width_ = this->image_.size().width;
-    //this->graph_ = graph(this->height_*this->width_);
-
-    //std::cout << (int) img.at<uchar>(1,1) << std::endl;
-}
+    partitionMP_{this->height_*this->width_}
+{}
 
 void imageManager::toGraph() {
     int index = 0;
@@ -71,8 +63,6 @@ void imageManager::init() {
 
     this->sizePart_[0] = this->graph_.getNbVertex(); //The first segment is the whole image
 
-    this->isReady_ = true;
-
     //std::cout << this->graph_.getMst()[this->getEdge(78624+1)] << std::endl;
     //on veut la positon de l'edge 18883 dans le mst
     /*std::cout << this->indexTemp[18883] << std::endl;
@@ -85,7 +75,7 @@ void imageManager::init() {
 }
 
 void imageManager::addMarkers(int* markers, int nbMarkers) {
-    algorithms::addMarker(*this,markers,nbMarkers);
+    algorithms::addMarkerMP(*this,markers,nbMarkers);
 }
 
 void imageManager::removeMarkers(int* markers, int nbMarkers) {
