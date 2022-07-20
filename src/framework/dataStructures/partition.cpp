@@ -8,11 +8,7 @@ partition::partition(int nbVertex):
     lock_{new bool[nbVertex]()},
     size_{nbVertex} //really necessary ??
     {
-        //here -2 cause we brute force
-        for(int i = 0; i <nbVertex;++i){
-            this->parent_[i] = -2;
-        }
-
+        std::fill_n(this->getParents(), nbVertex, -2);
 }
 
 int partition::findCanonical(int q) {

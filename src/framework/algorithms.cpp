@@ -217,7 +217,7 @@ void algorithms::removeMarker(imageManager & im,int* markers,int nbMarkers) {
             if(im.marks_[up] == 1) {
                 im.ws_[im.getEdge(up)]= false;
                 im.mstEdit_[im.getEdge(up)]= true;
-                //mergeSegment(mstL[im.getEdge(up)],im);
+                mergeSegment(mstL[im.getEdge(up)],im);
                 break;
             }
             up = parent[up];
@@ -287,7 +287,7 @@ void algorithms::showSegmentation(imageManager & im,std::string nameOfImage) {
 }
 
 int algorithms::breadthFirstSearchLabelMP(imageManager& im, int p,int currentBlock, int xstart,int xend, int ystart, int yend, int* parentTmp,
-                                          std::map<int,int>* hVerticesQueue,std::map<int,int>* vVerticesQueue) {
+                                          std::vector<int>* hVerticesQueue,std::vector<int>* vVerticesQueue) {
     std::vector<int> queue;
     queue.push_back(p);
     int count = 1;
@@ -324,9 +324,7 @@ int algorithms::breadthFirstSearchLabelMP(imageManager& im, int p,int currentBlo
                 count++;
             }
         }
-        if(checkBlock == false && vRight < wh && (v+1)%w != 0  &&  im.mstEdit_[im.indexTemp[2*v]] == true){
-            hVerticesQueue[currentBlock+1].insert(std::pair<int,int>(vRight,root));
-        }
+
 
 
         tmpX = vLeft%w;
@@ -340,6 +338,9 @@ int algorithms::breadthFirstSearchLabelMP(imageManager& im, int p,int currentBlo
                 count++;
             }
         }
+        if(checkBlock == false && vLeft >= 0 && v%w != 0  &&  im.mstEdit_[im.indexTemp[(2*v)-2]] == true ){
+            hVerticesQueue[currentBlock].push_back(v);
+        }
 
         tmpX = vDown%w;
         tmpY = (vDown-tmpX)/w;
@@ -351,9 +352,6 @@ int algorithms::breadthFirstSearchLabelMP(imageManager& im, int p,int currentBlo
                 parentTmp[vDown] = root;
                 count++;
             }
-        }
-        if(checkBlock == false && vDown < wh &&  im.mstEdit_[im.indexTemp[(2*v)+1]] == true){
-            vVerticesQueue[currentBlock+WB].insert(std::pair<int,int>(vDown,root));
         }
 
         tmpX = vUp%w;
@@ -367,7 +365,9 @@ int algorithms::breadthFirstSearchLabelMP(imageManager& im, int p,int currentBlo
                 count++;
             }
         }
-
+        if(checkBlock == false && vUp >= 0 &&  im.mstEdit_[im.indexTemp[((2*v)-(2*w))+1]] == true){
+            vVerticesQueue[currentBlock].push_back(v);
+        }
 
 
     }
@@ -393,12 +393,12 @@ void algorithms::splitSegmentMP(imageManager& im, std::vector<int> queueEdges) {
 
     //tbb::concurrent_vector<int> *blockQueue = new tbb::concurrent_vector<int>[WB * HB];
 
-    std::map<int,int> *hVerticesQueue = new std::map<int,int>[WB * HB];
-    std::map<int,int> *vVerticesQueue = new std::map<int,int>[WB * HB];
+    std::vector<int> *hVerticesQueue = new std::vector<int>[WB * HB];
+    std::vector<int>  *vVerticesQueue = new std::vector<int>[WB * HB];
     for (int i = 0; i < WB * HB; i++) {
         //blockQueue[i] = tbb::concurrent_vector<int>();
-        hVerticesQueue[i] = std::map<int,int>();
-        vVerticesQueue[i] = std::map<int,int>();
+        hVerticesQueue[i] = std::vector<int>();
+        vVerticesQueue[i] = std::vector<int>();
     }
 
 
@@ -424,7 +424,7 @@ void algorithms::splitSegmentMP(imageManager& im, std::vector<int> queueEdges) {
         blockQueue[block2].push_back(p2);
     }*/
 
-    #pragma omp parallel num_threads(16)
+    #pragma omp parallel num_threads(WB*HB)
     {
         int xstart, xend, ystart, yend, blockColumn, blockRow;
         bool selfLock = false;
@@ -442,6 +442,10 @@ void algorithms::splitSegmentMP(imageManager& im, std::vector<int> queueEdges) {
 
         if(blockRow == HB-1){
             yend = h-1;
+        }
+
+        if(blockColumn == WB-1){
+            xend = w-1;
         }
 
         //int idxCur = 0;
@@ -502,33 +506,99 @@ void algorithms::splitSegmentMP(imageManager& im, std::vector<int> queueEdges) {
 
     }
 
-    #pragma omp parallel num_threads(16)
+
+    //Horizontal merge
+    #pragma omp parallel num_threads(WB)
     {
-        int v,vl;
+
+        int v, vl;
         int currentBlock = omp_get_thread_num();
-        for(auto it = hVerticesQueue[currentBlock].begin();
-            it != hVerticesQueue[currentBlock].end();
-            it++){
-            v = im.partitionMP_.findCanonical(it->first);
-            parentTmp[v] = it->second;
+
+        for(int i = 0; i < WB; i++) {
+            for (auto v: hVerticesQueue[currentBlock * WB + i]) {
+                vl = im.partitionMP_.findCanonical(v - 1);
+                v = im.partitionMP_.findCanonical(v);
+                parentTmp[v] = vl;
+            }
         }
     }
 
-    #pragma omp parallel num_threads(16)
+    //Vertical merge
+    #pragma omp parallel num_threads(1)
     {
         int v,vu;
         int currentBlock = omp_get_thread_num();
-        for(auto it = vVerticesQueue[currentBlock].begin();
-            it != vVerticesQueue[currentBlock].end();
-            it++){
-            v = im.partitionMP_.findCanonical(it->first);
-            parentTmp[v] = it->second;
+
+        for(int j = 0; j < HB; j++) {
+            for (int i = 0; i < WB; i++) {
+                for (auto v: vVerticesQueue[currentBlock+i + WB * j]) {
+                    vu = im.partitionMP_.findCanonical(v - w);
+                    v = im.partitionMP_.findCanonical(v);
+                    parentTmp[v] = vu;
+                }
+            }
         }
     }
 
+    delete[] hVerticesQueue;
+    delete[] vVerticesQueue;
 }
 
 void algorithms::mergeSegmentMP(imageManager& im, std::vector<int> queueEdges) {
+    int p1, p2, s1, s2, si1,si2;
+    int WB = 4; // Number of blocks in the width and height of the image
+    int HB = 4;
+    int *parentTmp = im.partitionMP_.getParents();
+    int w = im.getWidth(); //size of the image
+    int h = im.getHeight();
+    int n = im.getGraph().getNbVertex(); //number of vertices in the graph
+
+    int indexInterval = (n-1)/(WB*HB);
+
+    std::vector<std::pair<int,int>> * queueMerge = new std::vector<std::pair<int,int>>[WB*HB];
+    std::vector<std::pair<int,int>> queueBondary;
+
+    for (int i = 0; i < WB * HB; i++) {
+        queueMerge[i] = std::vector<std::pair<int,int>>();
+    }
+
+    for (auto edge: queueEdges) {
+        if (((edge) & (1 << (0))) == 1) {//if odd or even not the same formula
+            //Copy and paste of line #22 to avoid doing jump into memory
+            p1 = edge / 2;
+            p2 = (edge / 2) + w;
+        } else {
+            p1 = (edge + 1) / 2;
+            p2 = ((edge + 1) / 2) + 1;
+        }
+
+        s1 = im.partitionMP_.findCanonical(p1);
+        s2 = im.partitionMP_.findCanonical(p2);
+
+        si1 = s1/indexInterval;
+        si2 = s2/indexInterval;
+
+        if(si1 == si2){
+            queueMerge[si1].push_back(std::pair<int,int>(s1,s2));
+        }
+        else{
+            queueBondary.push_back(std::pair<int,int>(s1,s2));
+        }
+    }
+
+    #pragma omp parallel num_threads(WB*HB)
+    {
+        int idThread = omp_get_thread_num();
+        for(auto edge: queueMerge[idThread]){
+            parentTmp[im.partitionMP_.findCanonical(edge.second)] = im.partitionMP_.findCanonical(edge.first);
+        }
+    }
+
+    for(auto edge: queueBondary){
+        parentTmp[im.partitionMP_.findCanonical(edge.first)] = im.partitionMP_.findCanonical(edge.second);
+    }
+
+    delete [] queueMerge;
 
 }
 
@@ -548,7 +618,6 @@ void algorithms::removeMarkerMP(imageManager & im,int* markers,int nbMarkers) {
                 im.ws_[im.getEdge(up)]= false;
                 im.mstEdit_[im.getEdge(up)]= true;
                 queueEdges.push_back(mstL[im.getEdge(up)]);
-                //mergeSegment(mstL[im.getEdge(up)],im);
                 break;
             }
             up = parent[up];
@@ -559,6 +628,8 @@ void algorithms::removeMarkerMP(imageManager & im,int* markers,int nbMarkers) {
 }
 
 void algorithms::addMarkerMP(imageManager & im,int* markers,int nbMarkers) {
+    std::fill_n(im.partitionMP_.getParents(), im.getGraph().getNbVertex(), -2); // Set segemnt to -2 by default
+
     int marker,up = 0;
     QBT& qbt = im.getHierarchy().getQBT();
     int* parent = qbt.getParents();
@@ -607,6 +678,8 @@ void algorithms::showSegmentationMP(imageManager & im,std::string nameOfImage) {
     namedWindow(nameOfImage, cv::WINDOW_AUTOSIZE);
 
     imshow(nameOfImage, img);
+    //Uncomment to save the image as a file
+    //cv::imwrite(nameOfImage,img);
     // wait for any keypress
     cv::waitKey(0);
 }

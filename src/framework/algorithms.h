@@ -12,6 +12,9 @@
 #include <omp.h>
 #include <oneapi/tbb.h>
 
+#include <chrono>
+#include <thread>
+
 #include "imageManager.fwd.h" //Break circular dependency
 
 class algorithms {
@@ -25,7 +28,7 @@ public:
     static void showSegmentation(imageManager & im,std::string nameOfImage);
     //Our 3 operations but in MP
     static int breadthFirstSearchLabelMP(imageManager& im, int p,int currentBlock, int xstart,int xend, int ystart, int yend, int* parentTmp,
-                                         std::map<int,int>* hVerticesQueue,std::map<int,int>* vVerticesQueue);
+                                         std::vector<int>* hVerticesQueue,std::vector<int>* vVerticesQueue);
     static void splitSegmentMP(imageManager& im, std::vector<int> queueEdges);
     static void addMarkerMP(imageManager & im,int* markers,int nbMarkers);
     static void mergeSegmentMP(imageManager & im, std::vector<int> queueEdges);

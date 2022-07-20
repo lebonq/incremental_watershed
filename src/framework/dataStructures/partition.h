@@ -5,6 +5,8 @@
 #ifndef INCREMENTAL_WATERSHED_PARTITION_H
 #define INCREMENTAL_WATERSHED_PARTITION_H
 
+#include <iostream>
+#include <string>
 
 class partition {
 private:

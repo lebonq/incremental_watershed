@@ -44,8 +44,8 @@ public:
     graph& getGraph() {return this->graph_;} // Getter of the graph
     QEBT& getHierarchy() {return this->qbet_;} // Getter of the hierarchy
     void init(); // Initialize everything to be ready for add and remove markers
-    void addMarkers(int* markers, int nbMarkers);
-    void removeMarkers(int* markers, int nbMarkers);
+    void addMarkers(int* markers, int nbMarkers,bool isMp);
+    void removeMarkers(int* markers, int nbMarkers,bool isMp);
     int getEdge(int n);
     int getWidth(){return this->width_;};
     int getHeight(){return this->height_;};

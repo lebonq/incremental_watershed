@@ -63,23 +63,26 @@ void imageManager::init() {
 
     this->sizePart_[0] = this->graph_.getNbVertex(); //The first segment is the whole image
 
-    //std::cout << this->graph_.getMst()[this->getEdge(78624+1)] << std::endl;
-    //on veut la positon de l'edge 18883 dans le mst
-    /*std::cout << this->indexTemp[18883] << std::endl;
-    std::cout << this->graph_.getMst()[this->indexTemp[18883]] << std::endl;*/
-
-    /*
-     * std::cout << this->graph_.getMst().size() << std::endl;
-    std::cout << this->graph_.getEdges()[this->graph_.getMst()[1074645]] << std::endl;
-    std::cout << this->mstEdit_[this->indexTemp[(2*417819)-2]] << std::endl:*/
 }
 
-void imageManager::addMarkers(int* markers, int nbMarkers) {
-    algorithms::addMarkerMP(*this,markers,nbMarkers);
+void imageManager::addMarkers(int* markers, int nbMarkers, bool isMp) {
+    if(isMp)
+    {
+        algorithms::addMarkerMP(*this, markers, nbMarkers);
+    }
+    else
+    {
+        algorithms::addMarker(*this, markers, nbMarkers);
+    }
 }
 
-void imageManager::removeMarkers(int* markers, int nbMarkers) {
-    algorithms::removeMarker(*this,markers,nbMarkers);
+void imageManager::removeMarkers(int* markers, int nbMarkers, bool isMp) {
+    if(isMp){
+        algorithms::removeMarkerMP(*this, markers, nbMarkers);
+    }
+    else{
+        algorithms::removeMarker(*this, markers, nbMarkers);
+    }
 }
 
 int imageManager::getEdge(int n){
