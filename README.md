@@ -1,2 +1,2 @@
 # incremental_watershed
-Implementation of incremental watershed in C++.
+Implementation of incremental watershed algorithm in C++.
