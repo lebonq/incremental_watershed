@@ -16,6 +16,7 @@ private:
 public:
     partition(int nbVertex);
     int findCanonical(int q);
+    int findCanonicalPathCompression(int q);
     int* getParents(){return this->parent_;};
     ~partition();
 };

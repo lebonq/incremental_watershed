@@ -50,7 +50,7 @@ add_executable (${PROJECT_NAME}
         ../framework/dataStructures/QT.cpp
         ../framework/dataStructures/QT.h
         ../framework/dataStructures/partition.cpp
-        ../framework/dataStructures/partition.h)
+        ../framework/dataStructures/partition.h ../markers.h)
 
 # add libs you need
 set(OpenCV_LIBS opencv_core opencv_imgproc opencv_highgui opencv_imgcodecs)

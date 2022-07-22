@@ -12,9 +12,6 @@
 #include <omp.h>
 #include <oneapi/tbb.h>
 
-#include <chrono>
-#include <thread>
-
 #include "imageManager.fwd.h" //Break circular dependency
 
 class algorithms {

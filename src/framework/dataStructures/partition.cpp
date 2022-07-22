@@ -18,6 +18,20 @@ int partition::findCanonical(int q) {
     return q;
 }
 
+int partition::findCanonicalPathCompression(int q) {
+    int r = q;
+    int tmp = 0;
+    while(this->parent_[r] >= 0){
+        r = this->parent_[r];
+    }
+    while(this->parent_[q] >= 0){
+        tmp = q;
+        q = this->parent_[q];
+        this->parent_[tmp] = r;
+    }
+    return r;
+}
+
 partition::~partition() {
     delete[] parent_;
     delete[] lock_;

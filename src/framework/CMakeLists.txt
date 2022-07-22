@@ -30,7 +30,7 @@ include_directories(${OpenCV_INCLUDE_DIRS})
 find_package(OpenMP REQUIRED)
 find_package(TBB REQUIRED)
 
-add_executable (${PROJECT_NAME} ${SOURCE_FILES}  ${HEADER_FILES})
+add_executable (${PROJECT_NAME} ${SOURCE_FILES}  ${HEADER_FILES} ../markers.h)
 
 # add libs you need
 set(OpenCV_LIBS opencv_core opencv_imgproc opencv_highgui opencv_imgcodecs)

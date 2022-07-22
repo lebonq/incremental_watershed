@@ -79,7 +79,7 @@ int algorithms::breadthFirstSearchLabel(imageManager& im, int tag, int p){
                 im.segments_[vRight] = tag;
                 count++;
             }
-        }// 418708 418707 not in mst edit
+        }
 
         if(vLeft >= 0 && v%w != 0 ){
             if(im.mstEdit_[im.indexTemp[(2*v)-2]] == true && im.segments_[vLeft] != tag){
@@ -299,9 +299,6 @@ int algorithms::breadthFirstSearchLabelMP(imageManager& im, int p,int currentBlo
     bool checkBlock;
     int root = p;
 
-    int WB = 4;
-    int HB = 4;
-
     int v,vRight,vLeft,vUp,vDown;
     while(!queue.empty()){
         v = queue.back();
@@ -324,7 +321,6 @@ int algorithms::breadthFirstSearchLabelMP(imageManager& im, int p,int currentBlo
                 count++;
             }
         }
-
 
 
         tmpX = vLeft%w;
@@ -377,8 +373,6 @@ int algorithms::breadthFirstSearchLabelMP(imageManager& im, int p,int currentBlo
 
 void algorithms::splitSegmentMP(imageManager& im, std::vector<int> queueEdges) {
     int p1, p2, block1, block2;
-    int WB = 4; // Number of blocks in the width and height of the image
-    int HB = 4;
     int *parentTmp = im.partitionMP_.getParents();
     int w = im.getWidth(); //size of the image
     int h = im.getHeight();
@@ -386,43 +380,12 @@ void algorithms::splitSegmentMP(imageManager& im, std::vector<int> queueEdges) {
     int wb = w / WB;
     int hb = h / HB;
 
-    //int* statut = new int[WB*HB](); //0 waiting 1 in progress 2 done
-    //int* lock = new int[WB*HB](); //0 not locked 1 locked (Only thread one can touch it)
-
-    //int* wait = new int[WB*HB](); //1 have to wait 0 can go (Only thread one can touch it)
-
-    //tbb::concurrent_vector<int> *blockQueue = new tbb::concurrent_vector<int>[WB * HB];
-
     std::vector<int> *hVerticesQueue = new std::vector<int>[WB * HB];
     std::vector<int>  *vVerticesQueue = new std::vector<int>[WB * HB];
     for (int i = 0; i < WB * HB; i++) {
-        //blockQueue[i] = tbb::concurrent_vector<int>();
         hVerticesQueue[i] = std::vector<int>();
         vVerticesQueue[i] = std::vector<int>();
     }
-
-
-    //Filtering point to put them in the right block
-    /*for (auto edge: queueEdges) {
-        if (((edge) & (1 << (0))) == 1) {//if odd or even not the same formula
-            //Copy and paste of line #22 to avoid doing jump into memory
-            p1 = edge / 2;
-            p2 = (edge / 2) + w;
-        } else {
-            p1 = (edge + 1) / 2;
-            p2 = ((edge + 1) / 2) + 1;
-        }
-
-        //TODO Check if this edge is between block
-        block1 = ((p1 % w) / wb) + (((p1 / w) / hb) * WB);
-        //std::cout << "block1 : " << block1 << " p1 : " << p1 << std::endl;
-        blockQueue[block1].push_back(p1);
-        statut[block1] = 1;
-        block2 = ((p2 % w) / wb) + (((p2 / w) / hb) * WB);
-        statut[block2] = 1;
-        //std::cout << "block2 : " << block2 << " p2 : " << p2 << std::endl;
-        blockQueue[block2].push_back(p2);
-    }*/
 
     #pragma omp parallel num_threads(WB*HB)
     {
@@ -448,62 +411,13 @@ void algorithms::splitSegmentMP(imageManager& im, std::vector<int> queueEdges) {
             xend = w-1;
         }
 
-        //int idxCur = 0;
-        //while(lock[currentBlock] == 0){
-
-                /*if(statut[currentBlock]  == 1 && selfLock == false){
-                    int size = blockQueue[currentBlock].size();
-                    while(idxCur < size){
-                        v = blockQueue[currentBlock][idxCur];
-                        breadthFirstSearchLabelMP(im, v,currentBlock, xstart, xend, ystart, yend, parentTmp,statut,wait,blockQueue);
-                        idxCur++;
-                    }
-
-                    statut[currentBlock] = 0;
-                }*/
-
-                 for(int r = ystart; r <= yend;r++) {
-                    for (int v = r * w + xstart; v <= r * w + xend; v++) {
-                        if (parentTmp[v] == -2) { //if not visited parent == -2
-                            breadthFirstSearchLabelMP(im, v, currentBlock, xstart, xend, ystart, yend, parentTmp,hVerticesQueue,vVerticesQueue);
-                        }
-                    }
+        for(int r = ystart; r <= yend;r++) {
+            for (int v = r * w + xstart; v <= r * w + xend; v++) {
+                if (parentTmp[v] == -2) { //if not visited parent == -2
+                    breadthFirstSearchLabelMP(im, v, currentBlock, xstart, xend, ystart, yend, parentTmp,hVerticesQueue,vVerticesQueue);
                 }
-                /*statut[currentBlock] = 1;
-
-                if(currentBlock == 0){
-                    bool check = true;
-                    for(int i = 0; i < WB*HB; i++){
-                        if(statut[i] == 0){
-                            check = false;
-                        }
-                    }
-                    if(check == true){
-                        for(int i = 0; i < WB*HB; i++){
-                            lock[i] = 1;
-                        }
-                    }
-                }
-        }*/
-
-            /*#pragma omp critical (Print)
-            {
-                std::cout << "Block " << currentBlock << " is column " << blockColumn << " and row " << blockRow
-                          << std::endl;
-                std::cout << "Block " << currentBlock << " is xstart " << xstart << " and xend " << xend
-                          << std::endl;
-                std::cout << "Block " << currentBlock << " is ystart " << ystart << " and yend " << yend
-                          << std::endl;
-                std::cout << "lock : " << lock << std::endl;
-            }*/
-        /*
-        #pragma omp critical (BlockStack)
-        {
-            end = queueBlock.empty();
+            }
         }
-    }*/
-
-
     }
 
 
@@ -546,8 +460,6 @@ void algorithms::splitSegmentMP(imageManager& im, std::vector<int> queueEdges) {
 
 void algorithms::mergeSegmentMP(imageManager& im, std::vector<int> queueEdges) {
     int p1, p2, s1, s2, si1,si2;
-    int WB = 4; // Number of blocks in the width and height of the image
-    int HB = 4;
     int *parentTmp = im.partitionMP_.getParents();
     int w = im.getWidth(); //size of the image
     int h = im.getHeight();
@@ -577,6 +489,13 @@ void algorithms::mergeSegmentMP(imageManager& im, std::vector<int> queueEdges) {
 
         si1 = s1/indexInterval;
         si2 = s2/indexInterval;
+
+        if(si1 == WB*HB){
+            si1 = WB*HB-1;
+        }
+        if(si2 == WB*HB){
+            si2 = WB*HB-1;
+        }
 
         if(si1 == si2){
             queueMerge[si1].push_back(std::pair<int,int>(s1,s2));
@@ -668,7 +587,7 @@ void algorithms::showSegmentationMP(imageManager & im,std::string nameOfImage) {
     int cpt = 0,seed;
     for(int y = 0; y < im.getHeight(); y++){
         for(int x = 0; x < im.getWidth(); x++){
-            seed = im.partitionMP_.findCanonical(cpt);
+            seed = im.partitionMP_.findCanonicalPathCompression(cpt);
             srand(seed);
             img.at<cv::Vec3b>(y, x) = cv::Vec3b(rand()%255, rand()%255, rand()%255);
             cpt++;
