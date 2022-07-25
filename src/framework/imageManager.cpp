@@ -101,4 +101,5 @@ imageManager::~imageManager() {
     delete[] this->sizePart_;
     delete[] this->ws_;
     delete[] this->mstEdit_;
+    delete[] this->indexTemp;
 }

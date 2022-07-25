@@ -4,6 +4,7 @@
 
 #include "test.h"
 #include "../framework/data.h"
+#include "../markers.h"
 #include "../framework/dataStructures/graph.h"
 #include "../framework/imageManager.h"
 #include <opencv2/highgui/highgui.hpp>
@@ -149,17 +150,18 @@ static void BM_AddMarker5Cell2MP(benchmark::State& state){
     }
 }
 
+#define bench_num 100
 // Register the function as a benchmark
-BENCHMARK(BM_AddMarker1Cell2)->Unit(benchmark::kMillisecond)->Iterations(100);
-BENCHMARK(BM_AddMarker1Cell2MP)->Unit(benchmark::kMillisecond)->Iterations(100);
-BENCHMARK(BM_AddMarker2Cell2)->Unit(benchmark::kMillisecond)->Iterations(100);
-BENCHMARK(BM_AddMarker2Cell2MP)->Unit(benchmark::kMillisecond)->Iterations(100);
-BENCHMARK(BM_RemoveMarker3Cell2)->Unit(benchmark::kMillisecond)->Iterations(100);
-BENCHMARK(BM_RemoveMarker3Cell2MP)->Unit(benchmark::kMillisecond)->Iterations(100);
-BENCHMARK(BM_RemoveMarker4Cell2)->Unit(benchmark::kMillisecond)->Iterations(100);
-BENCHMARK(BM_RemoveMarker4Cell2MP)->Unit(benchmark::kMillisecond)->Iterations(100);
-BENCHMARK(BM_AddMarker5Cell2)->Unit(benchmark::kMillisecond)->Iterations(100);
-BENCHMARK(BM_AddMarker5Cell2MP)->Unit(benchmark::kMillisecond)->Iterations(100);
+BENCHMARK(BM_AddMarker1Cell2)->Unit(benchmark::kMillisecond)->Iterations(bench_num);
+BENCHMARK(BM_AddMarker1Cell2MP)->Unit(benchmark::kMillisecond)->Iterations(bench_num);
+BENCHMARK(BM_AddMarker2Cell2)->Unit(benchmark::kMillisecond)->Iterations(bench_num);
+BENCHMARK(BM_AddMarker2Cell2MP)->Unit(benchmark::kMillisecond)->Iterations(bench_num);
+BENCHMARK(BM_RemoveMarker3Cell2)->Unit(benchmark::kMillisecond)->Iterations(bench_num);
+BENCHMARK(BM_RemoveMarker3Cell2MP)->Unit(benchmark::kMillisecond)->Iterations(bench_num);
+BENCHMARK(BM_RemoveMarker4Cell2)->Unit(benchmark::kMillisecond)->Iterations(bench_num);
+BENCHMARK(BM_RemoveMarker4Cell2MP)->Unit(benchmark::kMillisecond)->Iterations(bench_num);
+BENCHMARK(BM_AddMarker5Cell2)->Unit(benchmark::kMillisecond)->Iterations(bench_num);
+BENCHMARK(BM_AddMarker5Cell2MP)->Unit(benchmark::kMillisecond)->Iterations(bench_num);
 
 
 

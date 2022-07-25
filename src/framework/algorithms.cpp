@@ -430,8 +430,8 @@ void algorithms::splitSegmentMP(imageManager& im, std::vector<int> queueEdges) {
 
         for(int i = 0; i < WB; i++) {
             for (auto v: hVerticesQueue[currentBlock * WB + i]) {
-                vl = im.partitionMP_.findCanonical(v - 1);
-                v = im.partitionMP_.findCanonical(v);
+                vl = im.partitionMP_.findCanonicalPathCompression(v - 1);
+                v = im.partitionMP_.findCanonicalPathCompression(v);
                 parentTmp[v] = vl;
             }
         }
@@ -446,8 +446,8 @@ void algorithms::splitSegmentMP(imageManager& im, std::vector<int> queueEdges) {
         for(int j = 0; j < HB; j++) {
             for (int i = 0; i < WB; i++) {
                 for (auto v: vVerticesQueue[currentBlock+i + WB * j]) {
-                    vu = im.partitionMP_.findCanonical(v - w);
-                    v = im.partitionMP_.findCanonical(v);
+                    vu = im.partitionMP_.findCanonicalPathCompression(v - w);
+                    v = im.partitionMP_.findCanonicalPathCompression(v);
                     parentTmp[v] = vu;
                 }
             }
@@ -484,8 +484,8 @@ void algorithms::mergeSegmentMP(imageManager& im, std::vector<int> queueEdges) {
             p2 = ((edge + 1) / 2) + 1;
         }
 
-        s1 = im.partitionMP_.findCanonical(p1);
-        s2 = im.partitionMP_.findCanonical(p2);
+        s1 = im.partitionMP_.findCanonicalPathCompression(p1);
+        s2 = im.partitionMP_.findCanonicalPathCompression(p2);
 
         si1 = s1/indexInterval;
         si2 = s2/indexInterval;
@@ -509,12 +509,12 @@ void algorithms::mergeSegmentMP(imageManager& im, std::vector<int> queueEdges) {
     {
         int idThread = omp_get_thread_num();
         for(auto edge: queueMerge[idThread]){
-            parentTmp[im.partitionMP_.findCanonical(edge.second)] = im.partitionMP_.findCanonical(edge.first);
+            parentTmp[im.partitionMP_.findCanonicalPathCompression(edge.second)] = im.partitionMP_.findCanonicalPathCompression(edge.first);
         }
     }
 
     for(auto edge: queueBondary){
-        parentTmp[im.partitionMP_.findCanonical(edge.first)] = im.partitionMP_.findCanonical(edge.second);
+        parentTmp[im.partitionMP_.findCanonicalPathCompression(edge.first)] = im.partitionMP_.findCanonicalPathCompression(edge.second);
     }
 
     delete [] queueMerge;
