@@ -1,7 +1,7 @@
 //
 // Created by lebon on 22/07/2022.
 //
-
+#pragma once
 #ifndef INCREMENTAL_WATERSHED_MARKERS_H
 #define INCREMENTAL_WATERSHED_MARKERS_H
 
