@@ -3,7 +3,7 @@
 #define DATA_H
 // Defintions
 constexpr int max_value_count = 256;
-constexpr int WB = 2; //number of blocks in width
-constexpr int HB = 4; //number of blocks in height
+constexpr int WB = 10; //number of blocks in width
+constexpr int HB = 10; //number of blocks in height
 
 #endif //DATA_H

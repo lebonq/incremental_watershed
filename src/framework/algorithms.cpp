@@ -372,7 +372,6 @@ int algorithms::breadthFirstSearchLabelMP(imageManager& im, int p,int currentBlo
 }
 
 void algorithms::splitSegmentMP(imageManager& im, std::vector<int> queueEdges) {
-    int p1, p2, block1, block2;
     int *parentTmp = im.partitionMP_.getParents();
     int w = im.getWidth(); //size of the image
     int h = im.getHeight();
@@ -387,11 +386,9 @@ void algorithms::splitSegmentMP(imageManager& im, std::vector<int> queueEdges) {
         vVerticesQueue[i] = std::vector<int>();
     }
 
-    #pragma omp parallel num_threads(WB*HB)
+    #pragma omp parallel num_threads(100)
     {
         int xstart, xend, ystart, yend, blockColumn, blockRow;
-        bool selfLock = false;
-        int v;
         int currentBlock = omp_get_thread_num();
 
         blockColumn = currentBlock % WB;
@@ -420,12 +417,11 @@ void algorithms::splitSegmentMP(imageManager& im, std::vector<int> queueEdges) {
         }
     }
 
-
     //Horizontal merge
-    #pragma omp parallel num_threads(WB)
+    #pragma omp parallel num_threads(10)
     {
 
-        int v, vl;
+        int vl;
         int currentBlock = omp_get_thread_num();
 
         for(int i = 0; i < WB; i++) {
@@ -440,7 +436,7 @@ void algorithms::splitSegmentMP(imageManager& im, std::vector<int> queueEdges) {
     //Vertical merge
     #pragma omp parallel num_threads(1)
     {
-        int v,vu;
+        int vu;
         int currentBlock = omp_get_thread_num();
 
         for(int j = 0; j < HB; j++) {
@@ -505,7 +501,7 @@ void algorithms::mergeSegmentMP(imageManager& im, std::vector<int> queueEdges) {
         }
     }
 
-    #pragma omp parallel num_threads(WB*HB)
+    #pragma omp parallel num_threads(100)
     {
         int idThread = omp_get_thread_num();
         for(auto edge: queueMerge[idThread]){

@@ -4,6 +4,7 @@
 #include "dataStructures/graph.h"
 #include "imageManager.h"
 #include "data.h"
+#include <chrono>
 #include "../markers.h"
 #include <opencv2/highgui/highgui.hpp>
 
@@ -50,7 +51,7 @@ int main(int argc, char* argv[])
 
     }
 
-    /*for(int i = 0; i< 1; i++){
+    for(int i = 0; i< 1; i++){
         auto coinImg = cv::imread("coins.gray.png",cv::IMREAD_GRAYSCALE);
         imageManager coinImgManager = imageManager("coins.gray.png",coinImg);
         coinImgManager.init();
@@ -175,8 +176,49 @@ int main(int argc, char* argv[])
         std::cout << "Remove markers 1" << std::endl;
         coinImgManager.removeMarkers(markerCoin1,nbmarkerCoin1,true);
         algorithms::showSegmentationMP(coinImgManager,"coinImg" + std::to_string(i) + ".png");
-    }*/
+    }
 
-    return 0;
+    /*int nbBench = 500;
+    auto testim = cv::imread("cell2.jpg",cv::IMREAD_GRAYSCALE);
+
+    auto t1 = std::chrono::high_resolution_clock::now();
+    auto t2 = std::chrono::high_resolution_clock::now();
+
+    long long mean = 0;
+
+    for (int i = 0; i < nbBench; i++) {
+        imageManager testImg = imageManager("cell2.jpg",testim);
+        testImg.init();
+
+        t1 = std::chrono::high_resolution_clock::now();
+        testImg.addMarkers(markers1Cell2,nbMarkers1Cell2,false);
+        t2 = std::chrono::high_resolution_clock::now();
+
+        mean += std::chrono::duration_cast<std::chrono::nanoseconds>(t2 - t1).count();
+    }
+
+
+    std::cout << "Non MP took on " << nbBench << " run a mean of "
+              << (mean/nbBench)/1000000.0
+              << " milliseconds\n";
+    mean = 0;
+
+    for (int i = 0; i < nbBench; i++) {
+        imageManager testImg = imageManager("cell2.jpg",testim);
+        testImg.init();
+
+        t1 = std::chrono::high_resolution_clock::now();
+        testImg.addMarkers(markers1Cell2,nbMarkers1Cell2,true);
+        t2 = std::chrono::high_resolution_clock::now();
+
+        mean += std::chrono::duration_cast<std::chrono::nanoseconds>(t2 - t1).count();
+    }
+
+    std::cout << "MP took on " << nbBench << " run a mean of "
+              << (mean/nbBench)/1000000.0
+              << " milliseconds\n";
+
+
+    return 0;*/
 
 }

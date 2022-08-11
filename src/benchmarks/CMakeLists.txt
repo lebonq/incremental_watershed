@@ -12,10 +12,9 @@ option(TBB_TEST OFF)
 set(OpenCV_DIR "C:\\Lib\\OpenCV\\build_vs\\install")
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
 set(OpenCV_INCLUDE_DIR "C:\\Lib\\OpenCV\\build_vs\\install\\include" )
-set(TBB_DIR "C:\\Lib\\oneTBB\\lib\\cmake\\tbb" )
 
+find_package(OpenMP REQUIRED)
 find_package(OpenCV REQUIRED)
-find_package(TBB REQUIRED)
 include_directories(${OpenCV_INCLUDE_DIRS})
 
 # Externally provided libraries
@@ -57,4 +56,4 @@ add_executable (${PROJECT_NAME}
 set(OpenCV_LIBS opencv_core opencv_imgproc opencv_highgui opencv_imgcodecs)
 
 # linking
-target_link_libraries(${PROJECT_NAME} benchmark::benchmark  ${OpenCV_LIBS} TBB::tbb)
+target_link_libraries(${PROJECT_NAME} benchmark::benchmark OpenMP::OpenMP_CXX ${OpenCV_LIBS})
