@@ -318,7 +318,6 @@ int algorithms::breadthFirstSearchLabelMP(imageManager& im, int p,int currentBlo
             if(im.mstEdit_[im.indexTemp[2*v]] == true && im.partitionMP_.findCanonical(vRight) != root){//If yes we check if the edge is revealnt and present in MST
                 queue.push_back(vRight);
                 parentTmp[vRight] = root;
-                count++;
             }
         }
 
@@ -331,7 +330,6 @@ int algorithms::breadthFirstSearchLabelMP(imageManager& im, int p,int currentBlo
             if(im.mstEdit_[im.indexTemp[(2*v)-2]] == true && im.partitionMP_.findCanonical(vLeft) != root){
                 queue.push_back(vLeft);
                 parentTmp[vLeft] = root;
-                count++;
             }
         }
         if(checkBlock == false && vLeft >= 0 && v%w != 0  &&  im.mstEdit_[im.indexTemp[(2*v)-2]] == true ){
@@ -346,7 +344,6 @@ int algorithms::breadthFirstSearchLabelMP(imageManager& im, int p,int currentBlo
             if(im.mstEdit_[im.indexTemp[(2*v)+1]] == true && im.partitionMP_.findCanonical(vDown) != root){
                 queue.push_back(vDown);
                 parentTmp[vDown] = root;
-                count++;
             }
         }
 
@@ -358,7 +355,6 @@ int algorithms::breadthFirstSearchLabelMP(imageManager& im, int p,int currentBlo
             if(im.mstEdit_[im.indexTemp[((2*v)-(2*w))+1]] == true && im.partitionMP_.findCanonical(vUp) != root){
                 queue.push_back(vUp);
                 parentTmp[vUp] = root;
-                count++;
             }
         }
         if(checkBlock == false && vUp >= 0 &&  im.mstEdit_[im.indexTemp[((2*v)-(2*w))+1]] == true){
@@ -367,7 +363,7 @@ int algorithms::breadthFirstSearchLabelMP(imageManager& im, int p,int currentBlo
 
 
     }
-    im.partitionMP_.getParents()[root] = -1;
+    //im.partitionMP_.getParents()[root] = -1;
     return count;
 }
 
@@ -386,7 +382,7 @@ void algorithms::splitSegmentMP(imageManager& im, std::vector<int> queueEdges) {
         vVerticesQueue[i] = std::vector<int>();
     }
 
-    #pragma omp parallel num_threads(100)
+    #pragma omp parallel num_threads(8)
     {
         int xstart, xend, ystart, yend, blockColumn, blockRow;
         int currentBlock = omp_get_thread_num();
@@ -418,7 +414,7 @@ void algorithms::splitSegmentMP(imageManager& im, std::vector<int> queueEdges) {
     }
 
     //Horizontal merge
-    #pragma omp parallel num_threads(10)
+    #pragma omp parallel num_threads(4)
     {
 
         int vl;
@@ -501,7 +497,7 @@ void algorithms::mergeSegmentMP(imageManager& im, std::vector<int> queueEdges) {
         }
     }
 
-    #pragma omp parallel num_threads(100)
+    #pragma omp parallel num_threads(8)
     {
         int idThread = omp_get_thread_num();
         for(auto edge: queueMerge[idThread]){

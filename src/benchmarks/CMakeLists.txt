@@ -5,7 +5,6 @@ enable_testing()
 include(FetchContent)
 
 set(CMAKE_CXX_STANDARD 14)
-option(TBB_TEST OFF)
 
 # Where to find CMake modules and OpenCV
 #================= NEED TO COMPILE AND LINK WITH OpenCV =====================
