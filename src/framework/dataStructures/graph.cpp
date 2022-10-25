@@ -3,6 +3,7 @@
 //
 
 #include "graph.h"
+#include <cstring>
 
 graph::graph(int pNbVertex) :
     nbVertex_{pNbVertex},

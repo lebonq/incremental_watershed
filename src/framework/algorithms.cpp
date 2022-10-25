@@ -230,6 +230,7 @@ void algorithms::addMarker(imageManager & im,int* markers,int nbMarkers) {
     QBT& qbt = im.getHierarchy().getQBT();
     int* parent = qbt.getParents();
     bool* historyVisited = new bool[im.getGraph().getNbVertex()]();
+
     std::vector<int> queueEdges;
     auto mstL = im.getGraph().getMst();
 
