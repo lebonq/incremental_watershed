@@ -913,7 +913,7 @@ static void BM_Add_Marker_5_Cell2_UPDATE_HIERARCHY(benchmark::State& state){
     }
 }
 
-#define bench_num 10
+#define bench_num 100
 // Register the function as a benchmark
 BENCHMARK(BM_Add_Marker_1_Cell2)->Unit(benchmark::kMillisecond)->Iterations(bench_num);
 BENCHMARK(BM_Add_Marker_1_Cell2_MP)->Unit(benchmark::kMillisecond)->Iterations(bench_num);

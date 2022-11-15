@@ -147,7 +147,6 @@ int main( int argc, char** argv )
                 subtract(markerMask_prev,markerMask,markerMask_sub);
             }
 
-            //subtract(markerMask,markerMask_prev,markerMask_sub);// ADD ABS
             markerMask.copyTo(markerMask_prev);
             Mat flatMarker;
             markerMask_sub.copyTo(flatMarker);
@@ -200,9 +199,18 @@ int main( int argc, char** argv )
                     cpt++;
                 }
             }
-            //wshed.at<Vec3b>(i,j) = colorTab[index - 1];
             wshed = wshed*0.5 + imgGray*0.5;
             imshow( "watershed transform", wshed );
+
+            std::string file_print = "";
+            for(int i = 0; i < nbmarkers; i++){
+                file_print.append(std::to_string(markers_idx[i]));
+                if(i != nbmarkers-1){
+                    file_print.append(",");
+                }
+            }
+
+            std::cout << file_print << std::endl;
 
             free(markers_idx);
 
