@@ -5,6 +5,8 @@
 #include "imageManager.h"
 #include <cstdio>
 #include <iostream>
+#include <string>
+#include <fstream>
 using namespace cv;
 using namespace std;
 static void help(char** argv)
@@ -95,7 +97,7 @@ int main( int argc, char** argv )
     img_backend = &ptr_imgman;
     img_backend->init();
     color_tab = (int*)malloc(sizeof(int)*img_backend->getGraph().getNbVertex());
-
+    int nb_change = 0;
     for(;;)
     {
         char c = (char)waitKey(0);
@@ -202,18 +204,38 @@ int main( int argc, char** argv )
             wshed = wshed*0.5 + imgGray*0.5;
             imshow( "watershed transform", wshed );
 
-            std::string file_print = "";
-            for(int i = 0; i < nbmarkers; i++){
-                file_print.append(std::to_string(markers_idx[i]));
-                if(i != nbmarkers-1){
-                    file_print.append(",");
-                }
+            std::string file_name = "";
+
+            if(add == true){
+                file_name.append("Add_" + std::to_string(nb_change) + ".txt");
+            }
+            else{
+                file_name.append("Remove_" + std::to_string(nb_change)  + ".txt");
             }
 
-            std::cout << file_print << std::endl;
+            std::cout << file_name << std::endl;
+            ofstream fw(file_name, std::ofstream::out);
+
+            if(fw.is_open()) {
+                for (int i = 0; i < nbmarkers; i++) {
+                    fw << std::to_string(markers_idx[i]);
+                    if (i != nbmarkers - 1) {
+                        fw << ",";
+                    }
+                }
+                fw.close();
+            }
+            else{
+                cout << "can't write markers." << endl;
+            }
+
+            file_name.append("meyer.png");
+            imwrite(file_name,markerMask);
 
             free(markers_idx);
-
+            nb_change++;
+            cout << markerMask.size << endl;
+            imwrite(filename + ".seg.jpg",wshed);
         }
     }
     return 0;

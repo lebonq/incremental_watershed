@@ -29,10 +29,7 @@ FetchContent_MakeAvailable(
         googletest
         googlebenchmark)
 
-add_executable (${PROJECT_NAME}
-        test.cpp
-        test.h
-        ../framework/algorithms.cpp
+set(COM_SOURCE ../framework/algorithms.cpp
         ../framework/algorithms.h
         ../framework/data.h
         ../framework/imageManager.cpp
@@ -49,10 +46,23 @@ add_executable (${PROJECT_NAME}
         ../framework/dataStructures/QT.h
         ../framework/dataStructures/partition.cpp
         ../framework/dataStructures/partition.h
+        ../framework/meyer_ws.cpp
+        ../framework/meyer_ws.h
         ../markers.h)
+
+add_executable (${PROJECT_NAME}
+        test.cpp
+        test.h
+        ${COM_SOURCE})
+
+add_executable (${PROJECT_NAME}-paper_tower
+        paper_tower.cpp
+        paper_tower.h
+        ${COM_SOURCE})
 
 # add libs you need
 set(OpenCV_LIBS opencv_core opencv_imgproc opencv_highgui opencv_imgcodecs)
 
 # linking
 target_link_libraries(${PROJECT_NAME} benchmark::benchmark OpenMP::OpenMP_CXX ${OpenCV_LIBS})
+target_link_libraries(${PROJECT_NAME}-paper_tower benchmark::benchmark OpenMP::OpenMP_CXX ${OpenCV_LIBS})

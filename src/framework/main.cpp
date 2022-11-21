@@ -3,13 +3,19 @@
 //
 #include "dataStructures/graph.h"
 #include "imageManager.h"
+#include "meyer_ws.h"
 #include "../markers.h"
 #include <opencv2/highgui/highgui.hpp>
 
 
 int main(int argc, char* argv[])
 {
+    auto meyer = meyer_ws("holiday_data/tower.jpg");
+    meyer.pre_process(0);
+    meyer.ws();
+    meyer.show();
 
+    /*
     for(int i = 0; i < 1; i++)
     {
         auto testim = cv::imread("cell2.jpg",cv::IMREAD_GRAYSCALE);
@@ -174,5 +180,5 @@ int main(int argc, char* argv[])
         std::cout << "Remove markers 1" << std::endl;
         coinImgManager.removeMarkers(markerCoin1,nbmarkerCoin1,true);
         algorithms::showSegmentationMP(coinImgManager,"coinImg" + std::to_string(i) + ".png");
-    }
+    }*/
 }
