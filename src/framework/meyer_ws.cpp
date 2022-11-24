@@ -59,6 +59,9 @@ void meyer_ws::pre_process(int ws_count) {
     }
 }
 
+/**
+ * Ref https://github.com/opencv/opencv/blob/4.x/modules/imgproc/src/segmentation.cpp line 88
+ */
 void meyer_ws::ws() {
     watershed( this->img0, this->markers );
 }
