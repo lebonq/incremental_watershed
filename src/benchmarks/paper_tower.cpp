@@ -27,10 +27,8 @@ static void BM_IW_STEP1(benchmark::State& state){
     auto testim = cv::imread("holiday_data/tower.jpg",cv::IMREAD_GRAYSCALE);
 
     for (auto _ : state) {
-        state.PauseTiming();
         imageManager testImg = imageManager("holiday_data/tower.jpg",testim);
         testImg.init();
-        state.ResumeTiming();
         testImg.addMarkers(markerTower,nbmarkerTower,false);
     }
 }
@@ -72,7 +70,7 @@ static void BM_IW_BATCH_STEP2(benchmark::State& state){
     }
 }
 
-#define bench_num 10
+#define bench_num 100
 // Register the function as a benchmark
 BENCHMARK(BM_MEYER_STEP1)->Unit(benchmark::kMillisecond)->Iterations(bench_num);
 BENCHMARK(BM_IW_STEP1)->Unit(benchmark::kMillisecond)->Iterations(bench_num);

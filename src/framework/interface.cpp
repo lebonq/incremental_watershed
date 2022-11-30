@@ -25,16 +25,21 @@ Point prevPt(-1, -1);
 int markerId = 1;
 double alpha = 0.5;
 imageManager* img_backend;int* color_tab;
+bool action =false;
 
 
 static void onMouse( int event, int x, int y, int flags, void* )
 {
     if( x < 0 || x >= img.cols || y < 0 || y >= img.rows )
         return;
-    if( event == EVENT_LBUTTONUP || !(flags & EVENT_FLAG_LBUTTON) )
-        prevPt = Point(-1,-1);
+    if( event == EVENT_LBUTTONUP && (flags & EVENT_FLAG_LBUTTON) ) {
+        action = true;
+        prevPt = Point(-1, -1);
+    }
+    else if( event == EVENT_LBUTTONUP || !(flags & EVENT_FLAG_LBUTTON) )
+        prevPt = Point(-1, -1);
     else if( event == EVENT_LBUTTONDOWN )
-        prevPt = Point(x,y);
+        prevPt = Point(x, y);
     else if( event == EVENT_MOUSEMOVE && (flags & EVENT_FLAG_LBUTTON) )
     {
         Point pt(x, y);
@@ -68,6 +73,7 @@ int main( int argc, char** argv )
     }
     string filename = samples::findFile(parser.get<string>("@input"));
     Mat img0 = imread(filename, 1), imgGray;
+    resize(img0, img0, Size(), 0.5, 0.5, 0);
     if( img0.empty() )
     {
         cout << "Couldn't open image ";
@@ -92,6 +98,8 @@ int main( int argc, char** argv )
 
     cout << "Create backend image manager" << endl;
     img_GS = imread(filename,IMREAD_GRAYSCALE);
+    cout << "Image in H " << img_GS.size << endl;
+    cout << "Image in I " << imgGray.size << endl;
 
     imageManager ptr_imgman = imageManager(filename,img_GS);
     img_backend = &ptr_imgman;
@@ -100,7 +108,7 @@ int main( int argc, char** argv )
     int nb_change = 0;
     for(;;)
     {
-        char c = (char)waitKey(0);
+        char c = (char)waitKey(100);
         if( c == 27 )
             break;
         if( c == 'r' )
@@ -119,34 +127,26 @@ int main( int argc, char** argv )
         if( c == 's'){
             markerId = 0;
         }
-        if( c == 'b'){
-            if(alpha > 0){
-                alpha=alpha-0.1;
-            }
-        }
-        if( c == 'n'){
-            if(alpha < 1){
-                alpha=alpha+0.1;
-            }
-            imshow("test",markerMask);
-        }
-        if( c == 'w' || c == ' ')
+        if( c == 'w' || action == true)
         {
+            Mat markerMask_rzs, markerMask_prev_rzs;
+            resize(markerMask, markerMask_rzs, Size(), 2, 2, 0);
+            resize(markerMask_prev, markerMask_prev_rzs, Size(), 2, 2, 0);
             bool add = false;
             Mat nonZeroCoordinates_markerMask, nonZeroCoordinates_markerMask_prev;
             //Check if we added or removed markers
-            findNonZero(markerMask, nonZeroCoordinates_markerMask);
-            findNonZero(markerMask_prev, nonZeroCoordinates_markerMask_prev);
+            findNonZero(markerMask_rzs, nonZeroCoordinates_markerMask);
+            findNonZero(markerMask_prev_rzs, nonZeroCoordinates_markerMask_prev);
 
             if(nonZeroCoordinates_markerMask_prev.total() < nonZeroCoordinates_markerMask.total()){
                 add = true;
             }
 
             if(add == true){
-                subtract(markerMask,markerMask_prev,markerMask_sub);
+                subtract(markerMask_rzs,markerMask_prev_rzs,markerMask_sub);
             }
             else{
-                subtract(markerMask_prev,markerMask,markerMask_sub);
+                subtract(markerMask_prev_rzs,markerMask_rzs,markerMask_sub);
             }
 
             markerMask.copyTo(markerMask_prev);
@@ -177,17 +177,17 @@ int main( int argc, char** argv )
             }
 
             int cpt = 0,seed,color;
-            for(int i = 0; i < markerMask.rows; i++ )
-                for(int j = 0; j < markerMask.cols; j++ )
+            for(int i = 0; i < markerMask_rzs.rows; i++ )
+                for(int j = 0; j < markerMask_rzs.cols; j++ )
                 {
-                    color = (int)markerMask.at<unsigned char>(i,j);
+                    color = (int)markerMask_rzs.at<unsigned char>(i,j);
                     if(color != 0) {
                         color_tab[img_backend->segments_[cpt]] = color;
                     }
                 cpt++;
             }
 
-            Mat wshed(overlay.size(), CV_8UC3);
+            Mat wshed(markerMask_rzs.size(), CV_8UC3);
             cpt = 0;
             for(int y = 0; y < img_backend->getHeight(); y++){
                 for(int x = 0; x < img_backend->getWidth(); x++){
@@ -201,8 +201,10 @@ int main( int argc, char** argv )
                     cpt++;
                 }
             }
+            resize(wshed, wshed, Size(), 0.5, 0.5, 0);
             wshed = wshed*0.5 + imgGray*0.5;
             imshow( "watershed transform", wshed );
+            moveWindow("watershed transform", getWindowImageRect("image").y,getWindowImageRect("image").x);
 
             std::string file_name = "";
 
@@ -230,12 +232,13 @@ int main( int argc, char** argv )
             }
 
             file_name.append("meyer.png");
-            imwrite(file_name,markerMask);
+            imwrite(file_name,markerMask_rzs);
 
             free(markers_idx);
             nb_change++;
-            cout << markerMask.size << endl;
+            cout << markerMask_rzs.size << endl;
             imwrite(filename + ".seg.jpg",wshed);
+            action = false;
         }
     }
     return 0;
