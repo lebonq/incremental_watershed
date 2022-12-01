@@ -209,13 +209,12 @@ int main( int argc, char** argv )
             std::string file_name = "";
 
             if(add == true){
-                file_name.append("Add_" + std::to_string(nb_change) + ".txt");
+                file_name.append("Step_" + std::to_string(nb_change) + "_add.txt");
             }
             else{
-                file_name.append("Remove_" + std::to_string(nb_change)  + ".txt");
+                file_name.append("Step" + std::to_string(nb_change)  + "_remove.txt");
             }
 
-            std::cout << file_name << std::endl;
             ofstream fw(file_name, std::ofstream::out);
 
             if(fw.is_open()) {
@@ -236,8 +235,8 @@ int main( int argc, char** argv )
 
             free(markers_idx);
             nb_change++;
-            cout << markerMask_rzs.size << endl;
-            imwrite(filename + ".seg.jpg",wshed);
+
+            imwrite(filename + "history/step" + std::to_string(nb_change) + ".png",wshed);
             action = false;
         }
     }
