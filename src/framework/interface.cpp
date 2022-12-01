@@ -54,8 +54,8 @@ static void onMouse( int event, int x, int y, int flags, void* )
                 line( overlay, prevPt, pt, Scalar::Vec(0,0,255,0), 5, 8, 0 );
                 break;
             case 0:
-                line( overlay, prevPt, pt, Scalar::all(0), 15, 8, 0 );
-                line( markerMask, prevPt, pt, Scalar::all(markerId), 15, 8, 0 );
+                line( overlay, prevPt, pt, Scalar::all(0), 30, 8, 0 );
+                line( markerMask, prevPt, pt, Scalar::all(markerId), 30, 8, 0 );
         }
 
         prevPt = pt;
@@ -207,12 +207,13 @@ int main( int argc, char** argv )
             moveWindow("watershed transform", getWindowImageRect("image").y,getWindowImageRect("image").x);
 
             std::string file_name = "";
+            std::string file_name_png = "";
 
             if(add == true){
-                file_name.append("Step_" + std::to_string(nb_change) + "_add.txt");
+                file_name.append(filename + "data/step_" + std::to_string(nb_change) + "_add.txt");
             }
             else{
-                file_name.append("Step" + std::to_string(nb_change)  + "_remove.txt");
+                file_name.append(filename + "data/step" + std::to_string(nb_change)  + "_remove.txt");
             }
 
             ofstream fw(file_name, std::ofstream::out);
@@ -230,13 +231,19 @@ int main( int argc, char** argv )
                 cout << "can't write markers." << endl;
             }
 
-            file_name.append("meyer.png");
-            imwrite(file_name,markerMask_rzs);
+            if(add == true){
+                file_name_png.append(filename + "data/step_" + std::to_string(nb_change) + "_add.png");
+            }
+            else{
+                file_name_png.append(filename + "data/step" + std::to_string(nb_change)  + "_remove.png");
+            }
+
+            imwrite(file_name_png,markerMask_rzs);
 
             free(markers_idx);
             nb_change++;
 
-            imwrite(filename + "history/step" + std::to_string(nb_change) + ".png",wshed);
+            imwrite(filename + "history/seg_step" + std::to_string(nb_change) + ".png",wshed);
             action = false;
         }
     }
