@@ -243,7 +243,14 @@ int main( int argc, char** argv )
             free(markers_idx);
             nb_change++;
 
-            imwrite(filename + "history/seg_step" + std::to_string(nb_change) + ".png",wshed);
+            //Create an overlay over th WSHED transform
+            Mat cpy_over;
+            overlay.copyTo(cpy_over);
+
+            cpy_over = wshed*0.5 + overlay*0.5;
+
+            //imwrite(filename + "history/seg_step" + std::to_string(nb_change) + ".png",wshed);
+            imwrite(filename + "history/marker_step" + std::to_string(nb_change) + ".png",cpy_over);
             action = false;
         }
     }
