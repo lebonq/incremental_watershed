@@ -40,6 +40,8 @@ static void onMouse( int event, int x, int y, int flags, void* )
         prevPt = Point(-1, -1);
     else if( event == EVENT_LBUTTONDOWN )
         prevPt = Point(x, y);
+    else if( event == EVENT_LBUTTONDOWN )
+        prevPt = Point(x, y);
     else if( event == EVENT_MOUSEMOVE && (flags & EVENT_FLAG_LBUTTON) )
     {
         Point pt(x, y);
@@ -204,7 +206,6 @@ int main( int argc, char** argv )
             resize(wshed, wshed, Size(), 0.5, 0.5, 0);
             wshed = wshed*0.5 + imgGray*0.5;
             imshow( "watershed transform", wshed );
-            moveWindow("watershed transform", getWindowImageRect("image").y,getWindowImageRect("image").x);
 
             std::string file_name = "";
             std::string file_name_png = "";
@@ -213,7 +214,7 @@ int main( int argc, char** argv )
                 file_name.append(filename + "data/step_" + std::to_string(nb_change) + "_add.txt");
             }
             else{
-                file_name.append(filename + "data/step" + std::to_string(nb_change)  + "_remove.txt");
+                file_name.append(filename + "data/step_" + std::to_string(nb_change)  + "_remove.txt");
             }
 
             ofstream fw(file_name, std::ofstream::out);
@@ -235,13 +236,12 @@ int main( int argc, char** argv )
                 file_name_png.append(filename + "data/step_" + std::to_string(nb_change) + "_add.png");
             }
             else{
-                file_name_png.append(filename + "data/step" + std::to_string(nb_change)  + "_remove.png");
+                file_name_png.append(filename + "data/step_" + std::to_string(nb_change)  + "_remove.png");
             }
 
             imwrite(file_name_png,markerMask_rzs);
 
-            free(markers_idx);
-            nb_change++;
+
 
             //Create an overlay over th WSHED transform
             Mat cpy_over;
@@ -252,6 +252,9 @@ int main( int argc, char** argv )
             //imwrite(filename + "history/seg_step" + std::to_string(nb_change) + ".png",wshed);
             imwrite(filename + "history/marker_step" + std::to_string(nb_change) + ".png",cpy_over);
             action = false;
+
+            free(markers_idx);
+            nb_change++;
         }
     }
     return 0;

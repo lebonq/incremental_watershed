@@ -6,14 +6,36 @@
 #include "meyer_ws.h"
 #include "../markers.h"
 #include <opencv2/highgui/highgui.hpp>
-
+#include <opencv2/core/utility.hpp>
+#include "opencv2/imgproc.hpp"
+#include "opencv2/imgcodecs.hpp"
+#include <fstream>
 
 int main(int argc, char* argv[])
 {
-    auto meyer = meyer_ws("holiday_data/tower.jpg");
-    meyer.pre_process(0);
+    /*auto meyer = meyer_ws("holiday_data/dwarf.jpg");
+    meyer.pre_process(21);
     meyer.ws();
-    meyer.show();
+    meyer.show();*/
+
+    //Store txt marker
+    std::vector<int> values;
+    std::vector<int> values_img;
+    int nbmarkers = 0;
+
+    algorithms::get_tab_from_image("holiday_data/dwarf.jpgdata/step_8",values_img);
+    algorithms::get_vector_from_txt("holiday_data/dwarf.jpgdata/step_9",values);
+
+    auto testim = cv::imread("holiday_data/dwarf.jpg",cv::IMREAD_GRAYSCALE);
+
+    imageManager testImg = imageManager("holiday_data/dwarf.jpg",testim);
+    testImg.init();
+
+    std::cout << "Add markers 1" << std::endl;
+    testImg.addMarkers(values_img.data(),values_img.size(),false);
+    algorithms::showSegmentation(testImg,"testImg.png");
+    testImg.addMarkers(values.data(),values.size(),false);
+    algorithms::showSegmentation(testImg,"testImg.png");
 
     /*
     for(int i = 0; i < 1; i++)

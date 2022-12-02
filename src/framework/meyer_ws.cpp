@@ -20,20 +20,20 @@ meyer_ws::meyer_ws(std::string sName) {
 
 }
 
-void meyer_ws::pre_process(int ws_count) {
+void meyer_ws::pre_process(int id) {
     int i, j;
 
-    switch (ws_count) {
-        case 0:
-            this->markerMask = cv::imread("Add_0.txtmeyer.png",CV_8UC1);
-            ws_count++;
-            break;
-
-        case 1:
-            cv::Mat mar0 = cv::imread("Add_0.txtmeyer.png",CV_8UC1);
-            cv::Mat mar1 = cv::imread("Add_1.txtmeyer.png",CV_8UC1);
-            this->markerMask = mar0 + mar1;
-            break;
+    try {
+        this->markerMask = cv::imread(this->file_name + "data/step_"+std::to_string(id)+"_add.png",CV_8UC1);
+    } catch (cv::Exception e) {
+        std::cout << "not add for step " << std::to_string(id) << std::endl;
+        try {
+            this->markerMask = cv::imread(this->file_name + +"data/step_" + std::to_string(id) + "_remove.png",
+                                          CV_8UC1);
+        } catch (cv::Exception e) {
+            std::cout << e.msg << std::endl;
+            std::exit(e.code);
+        }
     }
 
     std::vector<std::vector<cv::Point> > contours;
@@ -70,6 +70,20 @@ void meyer_ws::show() {
     int i,j;
     cv::Mat wshed(this->markers.size(), CV_8UC3);
     // paint the watershed image
+    //There is a BETTER way to show segments by markers ID instead of a double doubled for loop but it work just fine
+    for( i = 0; i < this->markers.rows; i++ )
+        for( j = 0; j < this->markers.cols; j++ )
+        {
+            int index = this->markers.at<int>(i,j);
+            int index_color = this->markerMask.at<uchar>(i,j);
+            if(index_color == 1){
+                this->colorTab[index-1]= cv::Vec3b((uchar)0, (uchar)255, (uchar)0);
+            }
+            if(index_color == 2){
+                this->colorTab[index-1]= cv::Vec3b((uchar)0, (uchar)0, (uchar)255);
+            }
+        }
+
     for( i = 0; i < this->markers.rows; i++ )
         for( j = 0; j < this->markers.cols; j++ )
         {
@@ -81,6 +95,7 @@ void meyer_ws::show() {
             else
                 wshed.at<cv::Vec3b>(i,j) = colorTab[index - 1];
         }
+
     wshed = wshed*0.5 + imgGray*0.5;
     cv::namedWindow( "Meyer WS", 1 );
     cv::imshow( "watershed transform", wshed );

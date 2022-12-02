@@ -10,8 +10,7 @@
 #include "dataStructures/Q.h"
 #include "dataStructures/graph.h"
 #include <omp.h>
-
-
+#include <fstream>
 #include "imageManager.fwd.h" //Break circular dependency
 
 class algorithms {
@@ -31,6 +30,8 @@ public:
     static void mergeSegmentMP(imageManager & im, std::vector<int> queueEdges);
     static void removeMarkerMP(imageManager & im,int* markers,int nbMarkers);
     static void showSegmentationMP(imageManager & im,std::string nameOfImage);
+    static void get_vector_from_txt(const std::string& file_path, std::vector<int> &vector);
+    static void get_tab_from_image(const std::string &file_path, std::vector<int> &values);
 };
 
 

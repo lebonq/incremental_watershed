@@ -595,3 +595,68 @@ void algorithms::showSegmentationMP(imageManager & im,std::string nameOfImage) {
     // wait for any keypress
     cv::waitKey(0);
 }
+
+void algorithms::get_vector_from_txt(const std::string& file_path, std::vector<int>& values){
+
+    std::string file_add = file_path + "_add.txt";
+    std::string file_remove = file_path + "_remove.txt";
+    std::cout << file_add << std::endl;
+
+    std::string line;       /* string to hold each line read from file  */
+    std::ifstream f (file_add);                  /* file stream to read  */
+
+    if(!f.is_open())
+        f = std::ifstream(file_remove);
+
+    while (getline (f, line)) { /* read each line into line */
+        /* if no digits in line - get next */
+        if (line.find_first_of("0123456789") == std::string::npos)
+            continue;
+        int itmp;                               /* temporary int */
+        std::stringstream ss (line);            /* stringstream from line */
+        while (ss >> itmp) {                    /* read int from stringstream */
+            std::string tmpstr;                 /* temporary string to ',' */
+            values.push_back(itmp);                /* add int to tmp */
+            if (!getline (ss, tmpstr, ','))     /* read to ',' w/tmpstr */
+                break;                          /* done if no more ',' */
+        }
+    }
+
+    /*std::cout << values.size() << std::endl;
+    for (auto col : values)
+        std::cout << "  " << col;
+    std::cout << '\n';*/
+}
+
+void algorithms::get_tab_from_image(const std::string& file_path, std::vector<int>& values){
+
+    cv::Mat marker_image;
+
+    try {
+        marker_image = cv::imread(file_path+"_add.png",CV_8UC1);
+    } catch (cv::Exception e) {;
+        try {
+            marker_image = cv::imread(file_path + "_remove.png",
+                                          CV_8UC1);
+        } catch (cv::Exception e) {
+            std::cout << e.msg << std::endl;
+            std::exit(e.code);
+        }
+    }
+
+    cv::Mat flatMarker;
+    marker_image.copyTo(flatMarker);
+    flatMarker = flatMarker.reshape(1,1);
+
+    cv::Mat nonZeroCoordinates_flat, nonZeroCoordinates_all;
+
+    findNonZero(flatMarker, nonZeroCoordinates_flat);
+    int nbmarkers = nonZeroCoordinates_flat.total();
+
+    //std::cout << *nbmarkers << std::endl;
+
+    for (int i = 0; i < nbmarkers; i++ ) {
+        values.push_back(nonZeroCoordinates_flat.at<cv::Point>(i).x);
+    }
+    std::cout << values[45] << std::endl;
+}

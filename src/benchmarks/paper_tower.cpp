@@ -70,7 +70,7 @@ static void BM_IW_BATCH_STEP2(benchmark::State& state){
     }
 }
 
-#define bench_num 100
+#define bench_num 1
 // Register the function as a benchmark
 BENCHMARK(BM_MEYER_STEP1)->Unit(benchmark::kMillisecond)->Iterations(bench_num);
 BENCHMARK(BM_IW_STEP1)->Unit(benchmark::kMillisecond)->Iterations(bench_num);
