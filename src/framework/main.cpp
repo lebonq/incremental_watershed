@@ -11,31 +11,106 @@
 #include "opencv2/imgcodecs.hpp"
 #include <fstream>
 
+int handleError( int status, const char* func_name,
+                 const char* err_msg, const char* file_name,
+                 int line, void* userdata )
+{
+    //Do nothing -- will suppress console output
+    return 0;   //Return value is not used
+}
+
 int main(int argc, char* argv[])
 {
-    /*auto meyer = meyer_ws("holiday_data/dwarf.jpg");
-    meyer.pre_process(21);
-    meyer.ws();
-    meyer.show();*/
+    cv::redirectError(handleError);//avoid printing opencv error
+    //cv::redirectError(nullptr);//restor printing opencv error
 
-    //Store txt marker
+    for (int i = 0; i < 73; ++i) {
+        double t_mean = 0;
+        for (int j = 0; j < 10; ++j) {
+            auto meyer = meyer_ws("holiday_data/plant.jpeg");
+            meyer.pre_process(i);
+            double t = (double) cv::getTickCount();
+            meyer.ws();
+            t = (double) cv::getTickCount() - t;
+            t_mean+= t * 1000. / cv::getTickFrequency();
+            //meyer.show();
+        }
+        printf("%g\n", i, t_mean/10);
+    }
+
+    /*auto testim = cv::imread("holiday_data/plant.jpeg",cv::IMREAD_GRAYSCALE);
+
+
+    for (int i = 0; i < 73; ++i) {
+        double t_mean = 0;
+        bool remove;
+        for (int j = 0; j < 10; ++j) {
+            imageManager testImg = imageManager("holiday_data/plant.jpeg",testim);
+            testImg.init();
+
+            if(i > 0){
+                std::string name = "holiday_data/plant.jpegdata/step_";
+                name.append(std::to_string(i-1));
+                std::vector<int> values_img;
+                algorithms::get_tab_from_image(name,values_img);
+                testImg.addMarkers(values_img.data(),values_img.size(),false);
+            }
+
+            std::vector<int> values;
+            std::string name = "holiday_data/plant.jpegdata/step_";
+            name.append(std::to_string(i));
+            remove = algorithms::get_vector_from_txt(name,values);
+
+            double t;
+            if(remove == true){
+                t = (double) cv::getTickCount();
+                testImg.removeMarkers(values.data(),values.size(),false);
+                t = (double) cv::getTickCount() - t;
+            }
+            else{
+                t = (double) cv::getTickCount();
+                testImg.addMarkers(values.data(),values.size(),false);
+                t = (double) cv::getTickCount() - t;
+            }
+            t_mean+= t * 1000. / cv::getTickFrequency();
+            //meyer.show();
+        }
+        //algorithms::showSegmentation(testImg,"testImg.png");
+        if(remove){
+            printf("%g\n", i, t_mean/10);
+        }
+        else{
+            printf("%g\n", i, t_mean/10);
+        }
+
+    }*/
+
+
+
+
+
+    /*//Store txt marker
     std::vector<int> values;
     std::vector<int> values_img;
     int nbmarkers = 0;
 
-    algorithms::get_tab_from_image("holiday_data/dwarf.jpgdata/step_8",values_img);
-    algorithms::get_vector_from_txt("holiday_data/dwarf.jpgdata/step_9",values);
+    algorithms::get_tab_from_image("holiday_data/coral.jpgdata/step_3",values_img);
+    bool remove = algorithms::get_vector_from_txt("holiday_data/coral.jpgdata/step_4",values);
 
-    auto testim = cv::imread("holiday_data/dwarf.jpg",cv::IMREAD_GRAYSCALE);
+    auto testim = cv::imread("holiday_data/coral.jpg",cv::IMREAD_GRAYSCALE);
 
-    imageManager testImg = imageManager("holiday_data/dwarf.jpg",testim);
+    imageManager testImg = imageManager("holiday_data/coral.jpg",testim);
     testImg.init();
 
-    std::cout << "Add markers 1" << std::endl;
     testImg.addMarkers(values_img.data(),values_img.size(),false);
     algorithms::showSegmentation(testImg,"testImg.png");
-    testImg.addMarkers(values.data(),values.size(),false);
-    algorithms::showSegmentation(testImg,"testImg.png");
+    if(remove == true){
+        testImg.removeMarkers(values.data(),values.size(),false);
+    }
+    else{
+        testImg.addMarkers(values.data(),values.size(),false);
+    }*/
+    //algorithms::showSegmentation(testImg,"testImg.png");
 
     /*
     for(int i = 0; i < 1; i++)

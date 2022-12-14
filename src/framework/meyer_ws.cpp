@@ -25,14 +25,18 @@ void meyer_ws::pre_process(int id) {
 
     try {
         this->markerMask = cv::imread(this->file_name + "data/step_"+std::to_string(id)+"_add.png",CV_8UC1);
+        if(this->markerMask.empty()){
+            this->markerMask = cv::imread(this->file_name + +"data/step_" + std::to_string(id) + "_remove.png",
+                                          CV_8UC1);
+        }
     } catch (cv::Exception e) {
         std::cout << "not add for step " << std::to_string(id) << std::endl;
         try {
             this->markerMask = cv::imread(this->file_name + +"data/step_" + std::to_string(id) + "_remove.png",
                                           CV_8UC1);
-        } catch (cv::Exception e) {
-            std::cout << e.msg << std::endl;
-            std::exit(e.code);
+        } catch (cv::Exception ee) {
+            std::cout << ee.msg << std::endl;
+            std::exit(ee.code);
         }
     }
 
@@ -57,6 +61,7 @@ void meyer_ws::pre_process(int id) {
         int r = cv::theRNG().uniform(0, 255);
         this->colorTab.push_back(cv::Vec3b((uchar)b, (uchar)g, (uchar)r));
     }
+
 }
 
 /**

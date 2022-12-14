@@ -596,17 +596,21 @@ void algorithms::showSegmentationMP(imageManager & im,std::string nameOfImage) {
     cv::waitKey(0);
 }
 
-void algorithms::get_vector_from_txt(const std::string& file_path, std::vector<int>& values){
+bool algorithms::get_vector_from_txt(const std::string& file_path, std::vector<int>& values){
 
     std::string file_add = file_path + "_add.txt";
     std::string file_remove = file_path + "_remove.txt";
-    std::cout << file_add << std::endl;
+    //std::cout << file_add << std::endl;
 
     std::string line;       /* string to hold each line read from file  */
     std::ifstream f (file_add);                  /* file stream to read  */
+    bool remove = false;
 
-    if(!f.is_open())
+    if(!f.is_open()){
         f = std::ifstream(file_remove);
+        remove = true;
+    }
+
 
     while (getline (f, line)) { /* read each line into line */
         /* if no digits in line - get next */
@@ -622,6 +626,8 @@ void algorithms::get_vector_from_txt(const std::string& file_path, std::vector<i
         }
     }
 
+    return  remove;
+
     /*std::cout << values.size() << std::endl;
     for (auto col : values)
         std::cout << "  " << col;
@@ -632,8 +638,13 @@ void algorithms::get_tab_from_image(const std::string& file_path, std::vector<in
 
     cv::Mat marker_image;
 
+
     try {
         marker_image = cv::imread(file_path+"_add.png",CV_8UC1);
+        if(marker_image.empty()){
+            marker_image = cv::imread(file_path + "_remove.png",
+                                      CV_8UC1);
+        }
     } catch (cv::Exception e) {;
         try {
             marker_image = cv::imread(file_path + "_remove.png",
@@ -658,5 +669,5 @@ void algorithms::get_tab_from_image(const std::string& file_path, std::vector<in
     for (int i = 0; i < nbmarkers; i++ ) {
         values.push_back(nonZeroCoordinates_flat.at<cv::Point>(i).x);
     }
-    std::cout << values[45] << std::endl;
+
 }
