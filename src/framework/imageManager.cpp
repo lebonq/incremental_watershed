@@ -4,19 +4,18 @@
 
 #include "imageManager.h"
 
-imageManager::imageManager(std::string path,cv::Mat image)
-    : pathFile_{path},
-    image_{image},
-    height_{image.size().height},
-    width_{image.size().width},
-    graph_{this->height_*this->width_},
-    qbet_{this->height_*this->width_},
-    partitionMP_{this->height_*this->width_}
-{}
+imageManager::imageManager(std::string path, cv::Mat image)
+        : pathFile_{path},
+          image_{image},
+          height_{image.size().height},
+          width_{image.size().width},
+          graph_{this->height_ * this->width_},
+          qbet_{this->height_ * this->width_},
+          partitionMP_{this->height_ * this->width_} {}
 
 void imageManager::toGraph() {
     int index = 0;
-    for(int y = 0; y < this->height_; y++) {
+    for (int y = 0; y < this->height_; y++) {
         for (int x = 0; x < this->width_; x++) {
             auto a = (int) this->image_.at<uchar>(y, x);
             if (x + 1 < this->width_) { // Element right
@@ -42,13 +41,13 @@ void imageManager::init() {
     this->graph_.init_sortedEdges(); // Sort the edges of the graph
 
     //TODO Temp
-    this->indexTemp = new int[this->graph_.getNbVertex()*2]();
-    for(int i = 0; i < this->graph_.getNbVertex()*2; i++){
+    this->indexTemp = new int[this->graph_.getNbVertex() * 2]();
+    for (int i = 0; i < this->graph_.getNbVertex() * 2; i++) {
         this->indexTemp[i] = -1;
     }
 
     this->nbVertex_ = this->graph_.getNbVertex();
-    algorithms::kruskal(this->graph_,this->qbet_,this->width_,this->indexTemp); // Apply the kruskal algorithm
+    algorithms::kruskal(this->graph_, this->qbet_, this->width_, this->indexTemp); // Apply the kruskal algorithm
 
 
     this->segments_ = new int[this->graph_.getNbVertex()](); //There is a ID for each vertex
@@ -57,7 +56,7 @@ void imageManager::init() {
     this->ws_ = new bool[this->qbet_.getQBT().getSize()](); //There is size nodes
     this->mstEdit_ = new bool[this->graph_.getMst().size()]; //Size of the MST
 
-    for(int i = 0; i < this->graph_.getMst().size(); i++) { //At start all edges are in the MST
+    for (int i = 0; i < this->graph_.getMst().size(); i++) { //At start all edges are in the MST
         this->mstEdit_[i] = true;
     }
 
@@ -65,29 +64,25 @@ void imageManager::init() {
 
 }
 
-void imageManager::addMarkers(int* markers, int nbMarkers, bool isMp) {
-    if(isMp)
-    {
+void imageManager::addMarkers(int *markers, int nbMarkers, bool isMp) {
+    if (isMp) {
         algorithms::addMarkerMP(*this, markers, nbMarkers);
-    }
-    else
-    {
+    } else {
         algorithms::addMarker(*this, markers, nbMarkers);
     }
 }
 
-void imageManager::removeMarkers(int* markers, int nbMarkers, bool isMp) {
-    if(isMp){
+void imageManager::removeMarkers(int *markers, int nbMarkers, bool isMp) {
+    if (isMp) {
         algorithms::removeMarkerMP(*this, markers, nbMarkers);
-    }
-    else{
+    } else {
         algorithms::removeMarker(*this, markers, nbMarkers);
     }
 }
 
-int imageManager::getEdge(int n){
-    if(n < this->nbVertex_){
-        std::cout<<"Error : n is not a valid node"<<std::endl;
+int imageManager::getEdge(int n) {
+    if (n < this->nbVertex_) {
+        std::cout << "Error : n is not a valid node" << std::endl;
         std::exit(EXIT_FAILURE);
     }
     return n - this->nbVertex_;
