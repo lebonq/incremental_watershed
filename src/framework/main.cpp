@@ -11,16 +11,14 @@
 #include "opencv2/imgcodecs.hpp"
 #include <fstream>
 
-int handleError( int status, const char* func_name,
-                 const char* err_msg, const char* file_name,
-                 int line, void* userdata )
-{
+int handleError(int status, const char *func_name,
+                const char *err_msg, const char *file_name,
+                int line, void *userdata) {
     //Do nothing -- will suppress console output
     return 0;   //Return value is not used
 }
 
-int main(int argc, char* argv[])
-{
+int main(int argc, char *argv[]) {
     cv::redirectError(handleError);//avoid printing opencv error
     //cv::redirectError(nullptr);//restor printing opencv error
 
@@ -32,10 +30,10 @@ int main(int argc, char* argv[])
             double t = (double) cv::getTickCount();
             meyer.ws();
             t = (double) cv::getTickCount() - t;
-            t_mean+= t * 1000. / cv::getTickFrequency();
+            t_mean += t * 1000. / cv::getTickFrequency();
             //meyer.show();
         }
-        printf("%g\n", i, t_mean/10);
+        printf("%g\n", i, t_mean / 10);
     }
 
     /*auto testim = cv::imread("holiday_data/plant.jpeg",cv::IMREAD_GRAYSCALE);
