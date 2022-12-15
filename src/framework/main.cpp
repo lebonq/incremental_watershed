@@ -9,7 +9,10 @@
 #include <opencv2/core/utility.hpp>
 #include "opencv2/imgproc.hpp"
 #include "opencv2/imgcodecs.hpp"
+#include "../matplotlibcpp.h"
 #include <fstream>
+
+namespace plt = matplotlibcpp;
 
 int handleError(int status, const char *func_name,
                 const char *err_msg, const char *file_name,
@@ -22,9 +25,14 @@ int main(int argc, char *argv[]) {
     cv::redirectError(handleError);//avoid printing opencv error
     //cv::redirectError(nullptr);//restor printing opencv error
 
+    std::vector<double> time_meyer;
+    std::vector<double> time_IW;
+
+    const int nb_bench = 10;
+
     for (int i = 0; i < 73; ++i) {
         double t_mean = 0;
-        for (int j = 0; j < 10; ++j) {
+        for (int j = 0; j < nb_bench; ++j) {
             auto meyer = meyer_ws("holiday_data/plant.jpeg");
             meyer.pre_process(i);
             double t = (double) cv::getTickCount();
@@ -33,16 +41,17 @@ int main(int argc, char *argv[]) {
             t_mean += t * 1000. / cv::getTickFrequency();
             //meyer.show();
         }
-        printf("%g\n", i, t_mean / 10);
+        printf("%g\n", i, t_mean / nb_bench);
+        time_meyer.push_back(t_mean/nb_bench);
     }
 
-    /*auto testim = cv::imread("holiday_data/plant.jpeg",cv::IMREAD_GRAYSCALE);
+    auto testim = cv::imread("holiday_data/plant.jpeg",cv::IMREAD_GRAYSCALE);
 
 
     for (int i = 0; i < 73; ++i) {
         double t_mean = 0;
         bool remove;
-        for (int j = 0; j < 10; ++j) {
+        for (int j = 0; j < nb_bench; ++j) {
             imageManager testImg = imageManager("holiday_data/plant.jpeg",testim);
             testImg.init();
 
@@ -71,20 +80,23 @@ int main(int argc, char *argv[]) {
                 t = (double) cv::getTickCount() - t;
             }
             t_mean+= t * 1000. / cv::getTickFrequency();
-            //meyer.show();
+
         }
+        time_IW.push_back(t_mean/nb_bench);
         //algorithms::showSegmentation(testImg,"testImg.png");
         if(remove){
-            printf("%g\n", i, t_mean/10);
+            printf("%g\n", i, t_mean/nb_bench);
         }
         else{
-            printf("%g\n", i, t_mean/10);
+            printf("%g\n", i, t_mean/nb_bench);
         }
 
-    }*/
+    }
 
-
-
+    plt::named_plot("IWS", time_IW);
+    plt::named_plot("OpenCV WS", time_meyer);
+    plt::title("Average computational time in ms");
+    plt::show();
 
 
     /*//Store txt marker
