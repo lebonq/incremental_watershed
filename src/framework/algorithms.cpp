@@ -672,3 +672,24 @@ void algorithms::get_tab_from_image(const std::string &file_path, std::vector<in
     }
 
 }
+
+template<class T>
+void algorithms::vector_to_csv(std::vector<T>& vector){
+        // Open an output filestream and create a CSV file
+    std::ofstream outputFile("numbers.csv");
+
+    // Write each element of the vector to the CSV file, separated by a comma
+    for (size_t i = 0; i < vector.size(); i++)
+    {
+        // Check if the current element is the last one
+        if (i == vector.size() - 1)
+            // If it is, write the element without a comma after it
+            outputFile << vector[i];
+        else
+            // If it's not the last element, write the element followed by a comma
+            outputFile << vector[i] << ",";
+    }
+
+    // Close the file
+    outputFile.close();
+}
