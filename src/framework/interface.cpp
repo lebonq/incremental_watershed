@@ -41,8 +41,6 @@ static void onMouse(int event, int x, int y, int flags, void *) {
         prevPt = Point(-1, -1);
     else if (event == EVENT_LBUTTONDOWN)
         prevPt = Point(x, y);
-    else if (event == EVENT_LBUTTONDOWN)
-        prevPt = Point(x, y);
     else if (event == EVENT_MOUSEMOVE && (flags & EVENT_FLAG_LBUTTON)) {
         Point pt(x, y);
         if (prevPt.x < 0)
@@ -116,13 +114,13 @@ int main(int argc, char **argv) {
             img0.copyTo(img);
             imshow("image", img);
         }
-        if (c == '1') {
+        if (c == 'u') {
             markerId = 1;
         }
-        if (c == '2') {
+        if (c == 'i') {
             markerId = 2;
         }
-        if (c == 's') {
+        if (c == 'o') {
             markerId = 0;
         }
         if (c == 'w' || action == true) {

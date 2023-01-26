@@ -12,6 +12,7 @@
 #include "../matplotlibcpp.h"
 #include <fstream>
 
+
 namespace plt = matplotlibcpp;
 
 int handleError(int status, const char *func_name,
@@ -28,8 +29,9 @@ int main(int argc, char *argv[]) {
     std::vector<double> time_meyer;
     std::vector<double> time_IW;
 
-    const int nb_bench = 10;
+    const int nb_bench = 1;
 
+    // OPENCV IMPLEMENTATION
     for (int i = 0; i < 73; ++i) {
         double t_mean = 0;
         for (int j = 0; j < nb_bench; ++j) {
@@ -47,13 +49,21 @@ int main(int argc, char *argv[]) {
 
     auto testim = cv::imread("holiday_data/plant.jpeg",cv::IMREAD_GRAYSCALE);
 
-
+    double t_mean = 0;
+    bool remove;
+    double t;
     for (int i = 0; i < 73; ++i) {
-        double t_mean = 0;
-        bool remove;
+        t_mean = 0;
         for (int j = 0; j < nb_bench; ++j) {
             imageManager testImg = imageManager("holiday_data/plant.jpeg",testim);
+            t = (double) cv::getTickCount();
             testImg.init();
+            t = (double) cv::getTickCount() - t;
+
+            //For first marker add we count the time to init the image
+            if(i == 0){
+                t_mean+= t * 1000. / cv::getTickFrequency();
+            }
 
             if(i > 0){
                 std::string name = "holiday_data/plant.jpegdata/step_";
@@ -68,7 +78,6 @@ int main(int argc, char *argv[]) {
             name.append(std::to_string(i));
             remove = algorithms::get_vector_from_txt(name,values);
 
-            double t;
             if(remove == true){
                 t = (double) cv::getTickCount();
                 testImg.removeMarkers(values.data(),values.size(),false);
