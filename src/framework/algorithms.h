@@ -33,8 +33,7 @@ public:
     static void showSegmentationMP(imageManager & im,std::string nameOfImage);
     static bool get_vector_from_txt(const std::string& file_path, std::vector<int> &vector);
     static void get_tab_from_image(const std::string &file_path, std::vector<int> &values);
-    template<class T>
-    void vector_to_csv(std::vector<T>& vector);
+    static void vector_to_csv(std::vector<double>& vector,std::string file_path);
 };
 
 

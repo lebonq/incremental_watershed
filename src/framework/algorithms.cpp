@@ -4,6 +4,10 @@
 
 #include "algorithms.h"
 
+#define PIXELS_COUNT
+
+int nb_pixels_visited = 0;
+
 void algorithms::kruskal(graph &G, Q &Q, int w, int *temp) {
 
     for (int i = 0; i < G.getNbVertex(); i++) {
@@ -143,6 +147,9 @@ void algorithms::splitSegment(imageManager &im, bool *historyVisited,
                 im.tag_.push_back(tag2);
             }
             historyVisited[newTag] = true;
+#ifdef PIXELS_COUNT
+            nb_pixels_visited += sizeSeg[newTag];
+#endif
         }
 
         if (!historyVisited[tag1]) {
@@ -159,6 +166,9 @@ void algorithms::splitSegment(imageManager &im, bool *historyVisited,
                 im.tag_.push_back(tag1);
             }
             historyVisited[newTag] = true;
+#ifdef PIXELS_COUNT
+            nb_pixels_visited += sizeSeg[newTag];
+#endif
         }
     }
 }
@@ -196,10 +206,17 @@ void algorithms::mergeSegment(int edge, imageManager &im) {
     sizeSeg[tag2] = 0;
     im.tag_.push_back(tag2);
 
-    breadthFirstSearchLabel(im, tag1, p2);
+    int count = breadthFirstSearchLabel(im, tag1, p2);
+
+#ifdef PIXELS_COUNT
+    nb_pixels_visited += count;
+#endif
 }
 
 void algorithms::removeMarker(imageManager &im, int *markers, int nbMarkers) {
+#ifdef PIXELS_COUNT
+    nb_pixels_visited = 0;
+#endif
     int marker, up = 0;
     QBT &qbt = im.getHierarchy().getQBT();
     int *parent = qbt.getParents();
@@ -219,9 +236,15 @@ void algorithms::removeMarker(imageManager &im, int *markers, int nbMarkers) {
             up = parent[up];
         }
     }
+#ifdef PIXELS_COUNT
+    std::cout << "nb_pixels_visited: " << nb_pixels_visited << std::endl;
+#endif
 }
 
 void algorithms::addMarker(imageManager &im, int *markers, int nbMarkers) {
+#ifdef PIXELS_COUNT
+    nb_pixels_visited = 0;
+#endif
     int marker, up = 0;
     QBT &qbt = im.getHierarchy().getQBT();
     int *parent = qbt.getParents();
@@ -248,6 +271,9 @@ void algorithms::addMarker(imageManager &im, int *markers, int nbMarkers) {
     splitSegment(im, historyVisited, queueEdges);
 
     delete[] historyVisited;
+#ifdef PIXELS_COUNT
+    std::cout << "nb_pixels_visited: " << nb_pixels_visited << std::endl;
+#endif
 }
 
 /**
@@ -673,14 +699,12 @@ void algorithms::get_tab_from_image(const std::string &file_path, std::vector<in
 
 }
 
-template<class T>
-void algorithms::vector_to_csv(std::vector<T>& vector){
-        // Open an output filestream and create a CSV file
-    std::ofstream outputFile("numbers.csv");
+void algorithms::vector_to_csv(std::vector<double> &vector, std::string file_path) {
+    // Open an output filestream and create a CSV file
+    std::ofstream outputFile(file_path);
 
     // Write each element of the vector to the CSV file, separated by a comma
-    for (size_t i = 0; i < vector.size(); i++)
-    {
+    for (size_t i = 0; i < vector.size(); i++) {
         // Check if the current element is the last one
         if (i == vector.size() - 1)
             // If it is, write the element without a comma after it

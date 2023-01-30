@@ -29,7 +29,7 @@ void meyer_ws::pre_process(int id) {
                                           CV_8UC1);
         }
     } catch (cv::Exception e) {
-        std::cout << "not add for step " << std::to_string(id) << std::endl;
+        //std::cout << "not add for step " << std::to_string(id) << std::endl;
         try {
             this->markerMask = cv::imread(this->file_name + +"data/step_" + std::to_string(id) + "_remove.png",
                                           CV_8UC1);

@@ -29,13 +29,15 @@ int main(int argc, char *argv[]) {
     std::vector<double> time_meyer;
     std::vector<double> time_IW;
 
-    const int nb_bench = 1;
+    const int nb_bench = 15;
+    const int nb_images = 26;
+    const std::string image_path = "holiday_data/coral.jpg";
 
     // OPENCV IMPLEMENTATION
-    for (int i = 0; i < 73; ++i) {
+    for (int i = 0; i < nb_images; ++i) {
         double t_mean = 0;
         for (int j = 0; j < nb_bench; ++j) {
-            auto meyer = meyer_ws("holiday_data/plant.jpeg");
+            auto meyer = meyer_ws(image_path);
             meyer.pre_process(i);
             double t = (double) cv::getTickCount();
             meyer.ws();
@@ -47,15 +49,15 @@ int main(int argc, char *argv[]) {
         time_meyer.push_back(t_mean/nb_bench);
     }
 
-    auto testim = cv::imread("holiday_data/plant.jpeg",cv::IMREAD_GRAYSCALE);
+    auto testim = cv::imread(image_path,cv::IMREAD_GRAYSCALE);
 
     double t_mean = 0;
     bool remove;
     double t;
-    for (int i = 0; i < 73; ++i) {
+    for (int i = 0; i < nb_images; ++i) {
         t_mean = 0;
         for (int j = 0; j < nb_bench; ++j) {
-            imageManager testImg = imageManager("holiday_data/plant.jpeg",testim);
+            imageManager testImg = imageManager(image_path,testim);
             t = (double) cv::getTickCount();
             testImg.init();
             t = (double) cv::getTickCount() - t;
@@ -66,7 +68,7 @@ int main(int argc, char *argv[]) {
             }
 
             if(i > 0){
-                std::string name = "holiday_data/plant.jpegdata/step_";
+                std::string name = image_path + "data/step_";
                 name.append(std::to_string(i-1));
                 std::vector<int> values_img;
                 algorithms::get_tab_from_image(name,values_img);
@@ -74,7 +76,7 @@ int main(int argc, char *argv[]) {
             }
 
             std::vector<int> values;
-            std::string name = "holiday_data/plant.jpegdata/step_";
+            std::string name = image_path +  "data/step_";
             name.append(std::to_string(i));
             remove = algorithms::get_vector_from_txt(name,values);
 
@@ -101,6 +103,9 @@ int main(int argc, char *argv[]) {
         }
 
     }
+
+    algorithms::vector_to_csv(time_meyer,"time_meyer.csv");
+    algorithms::vector_to_csv(time_IW,"time_IW.csv");
 
     plt::named_plot("IWS", time_IW);
     plt::named_plot("OpenCV WS", time_meyer);
