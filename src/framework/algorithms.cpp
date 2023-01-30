@@ -4,7 +4,7 @@
 
 #include "algorithms.h"
 
-#define PIXELS_COUNT
+//#define PIXELS_COUNT
 
 int nb_pixels_visited = 0;
 

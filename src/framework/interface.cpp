@@ -227,8 +227,6 @@ int main(int argc, char **argv) {
 
             imwrite(file_name_png, markerMask_rzs);
 
-
-
             //Create an overlay over th WSHED transform
             Mat cpy_over;
             overlay.copyTo(cpy_over);

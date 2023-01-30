@@ -29,10 +29,10 @@ int main(int argc, char *argv[]) {
     std::vector<double> time_meyer;
     std::vector<double> time_IW;
 
-    const int nb_bench = 15;
-    const int nb_images = 26;
-    const std::string image_path = "holiday_data/coral.jpg";
-
+    const int nb_bench = 50;
+    const int nb_images = 29;
+    const std::string image_path = "holiday_data/dwarf.jpg";
+/*
     // OPENCV IMPLEMENTATION
     for (int i = 0; i < nb_images; ++i) {
         double t_mean = 0;
@@ -64,7 +64,7 @@ int main(int argc, char *argv[]) {
 
             //For first marker add we count the time to init the image
             if(i == 0){
-                t_mean+= t * 1000. / cv::getTickFrequency();
+               std::cout << "Init" << t * 1000. / cv::getTickFrequency() << std::endl;
             }
 
             if(i > 0){
@@ -110,9 +110,121 @@ int main(int argc, char *argv[]) {
     plt::named_plot("IWS", time_IW);
     plt::named_plot("OpenCV WS", time_meyer);
     plt::title("Average computational time in ms");
-    plt::show();
+    plt::show()*/
+
+    //Illustration
 
 
+
+    for(int img_n =0; img_n < nb_images;img_n++ ){
+        auto imgGray = cv::imread(image_path,cv::IMREAD_GRAYSCALE);
+        auto imgColor = cv::imread(image_path);
+        int *color_tab;
+        cv::Mat markerMask_rzs, markerMask_prev_rzs;
+        imageManager img_backend = imageManager(image_path, imgGray);
+        img_backend.init();
+        color_tab = (int *) malloc(sizeof(int) * img_backend.getGraph().getNbVertex());
+
+        if (img_n > 0) {
+            std::string name = image_path + "data/step_";
+            name.append(std::to_string(img_n - 1));
+            std::vector<int> values_img;
+            algorithms::get_tab_from_image(name, values_img);
+            img_backend.addMarkers(values_img.data(), values_img.size(), false);
+        }
+
+        std::vector<int> values;
+        std::string name = image_path + "data/step_";
+        name.append(std::to_string(img_n));
+        bool remove = algorithms::get_vector_from_txt(name, values);
+
+        if (remove == true) {
+            img_backend.removeMarkers(values.data(), values.size(), false);
+        } else {
+            img_backend.addMarkers(values.data(), values.size(), false);
+        }
+
+        cv::Mat marker_image;
+
+        try {
+            marker_image = cv::imread(image_path + "data/step_" +std::to_string((img_n))+ "_add.png", CV_8UC1);
+            if (marker_image.empty()) {
+                marker_image = cv::imread(image_path + "data/step_" +std::to_string((img_n))+ "_remove.png",
+                                          CV_8UC1);
+            }
+        } catch (cv::Exception e) { ;
+            try {
+                marker_image = cv::imread(image_path + "data/step_" +std::to_string((img_n))+ "_remove.png",
+                                          CV_8UC1);
+            } catch (cv::Exception e) {
+                std::cout << e.msg << std::endl;
+                std::exit(e.code);
+            }
+        }
+
+
+        int cpt = 0, seed, color;
+        for (int i = 0; i < marker_image.rows; i++)
+            for (int j = 0; j < marker_image.cols; j++) {
+                color = (int) marker_image.at<unsigned char>(i, j);
+                if (color != 0) {
+                    color_tab[img_backend.segments_[cpt]] = color;
+                }
+                cpt++;
+            }
+
+        cv::Mat wshed(marker_image.size(), CV_8UC3);
+        cpt = 0;
+        for (int y = 0; y < img_backend.getHeight(); y++) {
+            for (int x = 0; x < img_backend.getWidth(); x++) {
+                seed = color_tab[img_backend.segments_[cpt]];
+                if (seed == 1) {
+                    wshed.at<cv::Vec3b>(y, x) = cv::Vec3b(0, 255, 0);
+                } else {
+                    wshed.at<cv::Vec3b>(y, x) = cv::Vec3b(0, 0, 255);
+                }
+                cpt++;
+            }
+        }
+
+        cv::Mat cont(wshed.size(), CV_8UC4);
+        cont = cv::Scalar(255, 255, 255, 0);
+
+        cv::Mat binary;
+        cv::cvtColor(wshed, binary, cv::COLOR_BGR2GRAY);
+        cv::threshold(binary, binary, 128, 255, cv::THRESH_BINARY);
+        std::vector<std::vector<cv::Point>> contours;
+        cv::findContours(binary, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
+        for (auto contour : contours) {
+            cv::drawContours(imgColor, contours, -1, cv::Scalar(0, 0, 0,255), 8);
+        }
+
+
+      cv::Mat imgRGBA(marker_image.size(), CV_8UC4);
+      for (int i = 0; i < marker_image.rows; i++) {
+        for (int j = 0; j < marker_image.cols; j++) {
+          int value = marker_image.at<uchar>(i, j);
+          if (value == 1) {
+            imgColor.at<cv::Vec3b>(i, j) = cv::Vec3b(0, 255, 0);
+          } else if (value == 2) {
+            imgColor.at<cv::Vec3b>(i, j) = cv::Vec3b(0, 0, 255);
+          } else {
+
+          }
+        }
+      }
+
+        //Create an overlay over th WSHED transform
+        cv::Mat cpy_over;
+        //overlay.copyTo(cpy_over);
+
+        //cpy_over = wshed * 0.5 + overlay * 0.5;
+
+        //imwrite(filename + "history/seg_step" + std::to_string(nb_change) + ".png",wshed);
+        imwrite(image_path + "illustration/marker_step" + std::to_string(img_n) + ".jpg", imgColor);
+
+        free(color_tab);
+    }
     /*//Store txt marker
     std::vector<int> values;
     std::vector<int> values_img;
