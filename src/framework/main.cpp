@@ -29,10 +29,12 @@ int main(int argc, char *argv[]) {
     std::vector<double> time_meyer;
     std::vector<double> time_IW;
 
-    const int nb_bench = 50;
-    const int nb_images = 29;
-    const std::string image_path = "holiday_data/dwarf.jpg";
-/*
+    const int nb_bench = 20;
+    const int nb_images = 60;
+    const std::string image_path = "holiday_data/tower.jpg";
+
+
+    /*
     // OPENCV IMPLEMENTATION
     for (int i = 0; i < nb_images; ++i) {
         double t_mean = 0;
@@ -47,11 +49,12 @@ int main(int argc, char *argv[]) {
         }
         printf("%g\n", i, t_mean / nb_bench);
         time_meyer.push_back(t_mean/nb_bench);
-    }
+    }*/
 
     auto testim = cv::imread(image_path,cv::IMREAD_GRAYSCALE);
 
     double t_mean = 0;
+    double init_mean = 0;
     bool remove;
     double t;
     for (int i = 0; i < nb_images; ++i) {
@@ -64,10 +67,11 @@ int main(int argc, char *argv[]) {
 
             //For first marker add we count the time to init the image
             if(i == 0){
-               std::cout << "Init" << t * 1000. / cv::getTickFrequency() << std::endl;
+               init_mean += t * 1000. / cv::getTickFrequency();
             }
 
             if(i > 0){
+                printf("Init : %g\n", init_mean/nb_bench);
                 std::string name = image_path + "data/step_";
                 name.append(std::to_string(i-1));
                 std::vector<int> values_img;
@@ -104,18 +108,17 @@ int main(int argc, char *argv[]) {
 
     }
 
+
     algorithms::vector_to_csv(time_meyer,"time_meyer.csv");
     algorithms::vector_to_csv(time_IW,"time_IW.csv");
 
     plt::named_plot("IWS", time_IW);
     plt::named_plot("OpenCV WS", time_meyer);
     plt::title("Average computational time in ms");
-    plt::show()*/
+    plt::show();
 
     //Illustration
-
-
-
+/*
     for(int img_n =0; img_n < nb_images;img_n++ ){
         auto imgGray = cv::imread(image_path,cv::IMREAD_GRAYSCALE);
         auto imgColor = cv::imread(image_path);
@@ -225,6 +228,8 @@ int main(int argc, char *argv[]) {
 
         free(color_tab);
     }
+
+    */
     /*//Store txt marker
     std::vector<int> values;
     std::vector<int> values_img;
