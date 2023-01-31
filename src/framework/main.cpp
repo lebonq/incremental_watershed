@@ -49,7 +49,7 @@ int main(int argc, char *argv[]) {
         }
         printf("%g\n", i, t_mean / nb_bench);
         time_meyer.push_back(t_mean/nb_bench);
-    }*/
+    }
 
     auto testim = cv::imread(image_path,cv::IMREAD_GRAYSCALE);
 
@@ -67,7 +67,7 @@ int main(int argc, char *argv[]) {
 
             //For first marker add we count the time to init the image
             if(i == 0){
-               init_mean += t * 1000. / cv::getTickFrequency();
+               std::cout << "Init" << t * 1000. / cv::getTickFrequency() << std::endl;
             }
 
             if(i > 0){
@@ -118,7 +118,9 @@ int main(int argc, char *argv[]) {
     plt::show();
 
     //Illustration
-/*
+
+
+
     for(int img_n =0; img_n < nb_images;img_n++ ){
         auto imgGray = cv::imread(image_path,cv::IMREAD_GRAYSCALE);
         auto imgColor = cv::imread(image_path);
