@@ -11,30 +11,22 @@
 #include "opencv2/imgcodecs.hpp"
 #include "../matplotlibcpp.h"
 #include <fstream>
-
+#include "segmentation/watercut.h"
 
 namespace plt = matplotlibcpp;
 
-int handleError(int status, const char *func_name,
-                const char *err_msg, const char *file_name,
-                int line, void *userdata) {
-    //Do nothing -- will suppress console output
-    return 0;   //Return value is not used
-}
-
 int main(int argc, char *argv[]) {
-    cv::redirectError(handleError);//avoid printing opencv error
-    //cv::redirectError(nullptr);//restor printing opencv error
 
     std::vector<double> time_meyer;
+    std::vector<double> time_IFT;
     std::vector<double> time_IW;
+    std::vector<double> time_NIW;
 
     const int nb_bench = 20;
-    const int nb_images = 60;
-    const std::string image_path = "holiday_data/tower.jpg";
+    const int nb_images = 26;
+    const std::string image_path = "holiday_data/coral.jpg";
 
 
-    /*
     // OPENCV IMPLEMENTATION
     for (int i = 0; i < nb_images; ++i) {
         double t_mean = 0;
@@ -50,6 +42,47 @@ int main(int argc, char *argv[]) {
         printf("%g\n", i, t_mean / nb_bench);
         time_meyer.push_back(t_mean/nb_bench);
     }
+
+    //IFT
+    /*auto img = cv::imread(image_path,cv::IMREAD_GRAYSCALE);
+    cv::Mat img_float;
+    img.convertTo(img_float, CV_32FC1);
+    auto marker = cv::imread(image_path + "data/step_1_add.png",cv::IMREAD_GRAYSCALE);
+    std::vector<int> marker_int;
+
+    for(int j=0; j<marker.rows; ++j) {
+        for(int i=0; i<marker.cols; ++i) {
+            marker_int.push_back((int)marker.at<uchar>(j,i)-1 );
+        }
+    }
+
+    segm::Image<float> original(img.cols, img.rows, 1, (float*)img_float.data);
+    segm::Image<int> markers(marker.cols, marker.rows, marker_int.data());
+    segm::WaterCut cut(original);
+
+    double t = (double) cv::getTickCount();
+    cut.run(markers);
+    t = (double) cv::getTickCount() - t;
+    printf("%g\n",t*1000/ cv::getTickFrequency());
+
+
+    segm::Image<int> label = cut.getLabel();
+
+    cv::Mat img_res;
+    img.copyTo(img_res);
+    cvtColor(img, img_res, cv::COLOR_GRAY2BGR);
+    int cpt = 0;
+    for(int j=0; j<img_res.rows; ++j) {
+        for(int i=0; i<img_res.cols; ++i) {
+                if (label(cpt) == 0) {
+                    img_res.at<cv::Vec3b>(j, i) = cv::Vec3b(0, 255, 0);
+                } else {
+                    img_res.at<cv::Vec3b>(j, i) = cv::Vec3b(0, 0, 255);
+                }
+                cpt++;
+        }
+    }
+    imwrite("testIFT.jpg", img_res);*/
 
     auto testim = cv::imread(image_path,cv::IMREAD_GRAYSCALE);
 
@@ -67,11 +100,11 @@ int main(int argc, char *argv[]) {
 
             //For first marker add we count the time to init the image
             if(i == 0){
-               std::cout << "Init" << t * 1000. / cv::getTickFrequency() << std::endl;
+               init_mean += t * 1000. / cv::getTickFrequency();
             }
 
             if(i > 0){
-                printf("Init : %g\n", init_mean/nb_bench);
+                //printf("Init : %g\n", init_mean/nb_bench);
                 std::string name = image_path + "data/step_";
                 name.append(std::to_string(i-1));
                 std::vector<int> values_img;
@@ -108,15 +141,47 @@ int main(int argc, char *argv[]) {
 
     }
 
+    testim = cv::imread(image_path,cv::IMREAD_GRAYSCALE);
+
+    t_mean = 0;
+    init_mean = 0;
+    remove;
+    t;
+    for (int i = 0; i < nb_images; ++i) {
+        t_mean = 0;
+        for (int j = 0; j < nb_bench; ++j) {
+            imageManager testImg = imageManager(image_path,testim);
+            t = (double) cv::getTickCount();
+            testImg.init();
+            t = (double) cv::getTickCount() - t;
+
+            std::vector<int> values;
+            std::string name = image_path +  "data/step_";
+            name.append(std::to_string(i));
+            algorithms::get_tab_from_image(name,values);
+
+            t = (double) cv::getTickCount();
+            testImg.addMarkers(values.data(),values.size(),false);
+            t = (double) cv::getTickCount() - t;
+            t_mean+= t * 1000. / cv::getTickFrequency();
+            //algorithms::showSegmentation(testImg,"testImg.png");
+        }
+        time_NIW.push_back(t_mean/nb_bench);
+        printf("%g\n", i, t_mean/nb_bench);
+
+    }
+
 
     algorithms::vector_to_csv(time_meyer,"time_meyer.csv");
     algorithms::vector_to_csv(time_IW,"time_IW.csv");
+    algorithms::vector_to_csv(time_NIW,"time_NIW.csv");
 
     plt::named_plot("IWS", time_IW);
+    plt::named_plot("NIWS", time_NIW);
     plt::named_plot("OpenCV WS", time_meyer);
     plt::title("Average computational time in ms");
     plt::show();
-
+/*
     //Illustration
 
 
