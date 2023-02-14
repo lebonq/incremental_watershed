@@ -699,6 +699,75 @@ void algorithms::get_tab_from_image(const std::string &file_path, std::vector<in
 
 }
 
+void algorithms::get_DIFT_seed_from_image(const std::string &file_path, const int id) {
+
+    std::string fp_cur = file_path + std::to_string(id);
+    std::string fp_prev = file_path + std::to_string(id-1);
+    cv::Mat marker_image_cur;
+    cv::Mat marker_image_prev;
+    std::string name_out;
+
+    bool remove = false;
+
+    try {
+        marker_image_cur = cv::imread(fp_cur + "_add.png", CV_8UC1);
+        name_out = fp_cur + "_add_DIFT.txt";
+        if (marker_image_cur.empty()) {
+            marker_image_cur = cv::imread(fp_cur + "_remove.png",
+                                      CV_8UC1);
+            name_out = fp_cur + "_remove_DIFT.txt";
+            remove = true;
+        }
+    } catch (cv::Exception e) { ;
+        std::cout << e.msg << std::endl;
+        std::exit(e.code);
+    }
+
+    try {
+        marker_image_prev = cv::imread(fp_prev + "_add.png", CV_8UC1);
+        if (marker_image_prev.empty()) {
+            marker_image_prev = cv::imread(fp_prev + "_remove.png",
+                                      CV_8UC1);
+        }
+    } catch (cv::Exception e) { ;
+        std::cout << e.msg << std::endl;
+        std::exit(e.code);
+    }
+
+    cv::Mat marker_image;
+    if (id == 0) marker_image = marker_image_cur;
+    else if( remove == true){
+        subtract(marker_image_prev, marker_image_cur, marker_image);
+    }
+    else{
+        subtract(marker_image_cur, marker_image_prev, marker_image);
+    }
+
+    cv::Mat nonZero;
+    findNonZero(marker_image, nonZero);
+
+    int nb_markers = nonZero.total();
+    int width = marker_image.cols;
+    int height = marker_image.rows;
+
+
+    std::ofstream outputFile(name_out);
+
+    outputFile << nb_markers << " " << width << " " << height << std::endl;
+
+    for (int y = 0; y < height; ++y) {
+        for (int x = 0; x < width; ++x) {
+            if(int(marker_image.at<uchar>(y,x)) == 1){
+                    outputFile << x << " " << y << " 0 " << 0 << std::endl;
+            }
+            else if(int(marker_image.at<uchar>(y,x)) == 2){
+                    outputFile << x << " " << y << " 1 " << 1 << std::endl;
+            }
+        }
+    }
+    outputFile.close();
+}
+
 void algorithms::vector_to_csv(std::vector<double> &vector, std::string file_path) {
     // Open an output filestream and create a CSV file
     std::ofstream outputFile(file_path);

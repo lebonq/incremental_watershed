@@ -20,14 +20,14 @@ private:
     int height_; // Height of the image
     cv::Mat image_; // Opencv Data of the image
     graph graph_; // Graph representation of the image
-    QEBT qbet_; // Hierarchy
+    // Hierarchy
     void toGraph();// Convert image to a graph TODO : Add a way to choose cost function
 
     int nbVertex_; // Number of vertex in the graph for better performance in getEdge(n)
 public:
     //Data structures needed for add/remove not private because they exist to be modified
     int* segments_; //Associate to vertex index a segment ID
-    int* marks_; //Keep track
+    int* marks_; //visitCount in the paper
     int* sizePart_;
     bool* ws_;
     bool* mstEdit_;
@@ -50,6 +50,8 @@ public:
     int getWidth(){return this->width_;};
     int getHeight(){return this->height_;};
     ~imageManager();
+
+    QEBT qbet_;
 };
 
 #endif //INCREMENTAL_WATERSHED_IMAGEMANAGER_H

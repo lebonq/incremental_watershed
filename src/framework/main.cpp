@@ -23,8 +23,9 @@ int main(int argc, char *argv[]) {
     std::vector<double> time_NIW;
 
     const int nb_bench = 20;
-    const int nb_images = 26;
-    const std::string image_path = "holiday_data/coral.jpg";
+    const int nb_images = 28;
+    const std::string image_path = "holiday_data/tower.jpg";
+
     auto img_gray_pgm = cv::imread(image_path,cv::IMREAD_GRAYSCALE);
     imwrite(image_path + ".pgm", img_gray_pgm);
     cv::Mat gradient_pgm;
@@ -32,15 +33,21 @@ int main(int argc, char *argv[]) {
     cv::Mat abs_grad_x, abs_grad_y;
     Sobel(img_gray_pgm, grad_x, CV_16S, 1, 0);
     Sobel(img_gray_pgm, grad_y, CV_16S, 0, 1);
-    // converting back to CV_8U
+
     convertScaleAbs(grad_x, abs_grad_x);
     convertScaleAbs(grad_y, abs_grad_y);
     addWeighted(abs_grad_x, 0.5, abs_grad_y, 0.5, 0, gradient_pgm);
     imwrite(image_path + ".gradient.pgm", gradient_pgm);
 
 
-    // OPENCV IMPLEMENTATION
-    /*for (int i = 0; i < nb_images; ++i) {
+    for (int i = 0; i < nb_images; ++i) {
+        std::string name = image_path + "data/step_";
+        algorithms::get_DIFT_seed_from_image(name,i);
+    }
+    return 0;
+
+    /*// OPENCV IMPLEMENTATION
+    for (int i = 0; i < nb_images; ++i) {
         double t_mean = 0;
         for (int j = 0; j < nb_bench; ++j) {
             auto meyer = meyer_ws(image_path);
@@ -53,9 +60,11 @@ int main(int argc, char *argv[]) {
         }
         printf("%g\n", i, t_mean / nb_bench);
         time_meyer.push_back(t_mean/nb_bench);
-    }
+    }*/
 
     auto testim = cv::imread(image_path,cv::IMREAD_GRAYSCALE);
+
+    int* marks_saved;
 
     double t_mean = 0;
     double init_mean = 0;
@@ -68,6 +77,7 @@ int main(int argc, char *argv[]) {
             t = (double) cv::getTickCount();
             testImg.init();
             t = (double) cv::getTickCount() - t;
+            marks_saved = (int*)malloc(sizeof(int)*testImg.qbet_.getQBT().getSize());
 
             //For first marker add we count the time to init the image
             if(i == 0){
@@ -100,6 +110,8 @@ int main(int argc, char *argv[]) {
             }
             t_mean+= t * 1000. / cv::getTickFrequency();
 
+            //memcpy(Tab2, Tab1, sizeof Tab2);
+
         }
         time_IW.push_back(t_mean/nb_bench);
         //algorithms::showSegmentation(testImg,"testImg.png");
@@ -112,7 +124,7 @@ int main(int argc, char *argv[]) {
 
     }
 
-    testim = cv::imread(image_path,cv::IMREAD_GRAYSCALE);
+    /*testim = cv::imread(image_path,cv::IMREAD_GRAYSCALE);
 
     t_mean = 0;
     init_mean = 0;
@@ -140,7 +152,7 @@ int main(int argc, char *argv[]) {
         time_NIW.push_back(t_mean/nb_bench);
         printf("%g\n", i, t_mean/nb_bench);
 
-    }
+    }*/
 
 
     algorithms::vector_to_csv(time_meyer,"time_meyer.csv");
@@ -151,7 +163,7 @@ int main(int argc, char *argv[]) {
     plt::named_plot("NIWS", time_NIW);
     plt::named_plot("OpenCV WS", time_meyer);
     plt::title("Average computational time in ms");
-    plt::show();*/
+    plt::show();
 /*
     //Illustration
 

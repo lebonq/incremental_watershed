@@ -34,6 +34,8 @@ public:
     static bool get_vector_from_txt(const std::string& file_path, std::vector<int> &vector);
     static void get_tab_from_image(const std::string &file_path, std::vector<int> &values);
     static void vector_to_csv(std::vector<double>& vector,std::string file_path);
+    static void get_DIFT_seed_from_image(const std::string &file_path, const int id);
+
 };
 
 
