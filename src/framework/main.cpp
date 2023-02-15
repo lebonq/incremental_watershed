@@ -44,7 +44,7 @@ int main(int argc, char *argv[]) {
         std::string name = image_path + "data/step_";
         algorithms::get_DIFT_seed_from_image(name,i);
     }
-    return 0;
+
 
     /*// OPENCV IMPLEMENTATION
     for (int i = 0; i < nb_images; ++i) {
@@ -64,9 +64,7 @@ int main(int argc, char *argv[]) {
 
     auto testim = cv::imread(image_path,cv::IMREAD_GRAYSCALE);
 
-    int* marks_saved;
-
-    double t_mean = 0;
+    /*double t_mean = 0;
     double init_mean = 0;
     bool remove;
     double t;
@@ -77,7 +75,6 @@ int main(int argc, char *argv[]) {
             t = (double) cv::getTickCount();
             testImg.init();
             t = (double) cv::getTickCount() - t;
-            marks_saved = (int*)malloc(sizeof(int)*testImg.qbet_.getQBT().getSize());
 
             //For first marker add we count the time to init the image
             if(i == 0){
@@ -110,7 +107,52 @@ int main(int argc, char *argv[]) {
             }
             t_mean+= t * 1000. / cv::getTickFrequency();
 
-            //memcpy(Tab2, Tab1, sizeof Tab2);
+            Mat wshed(markerMask_rzs.size(), CV_8UC3);
+            std::vector<int> labeled_image(img_backend->getWidth()*img_backend->getHeight());
+            auto green = cv::Vec3b(0, 255, 0);
+            auto red = cv::Vec3b(0, 0, 255);
+
+            double t = (double) getTickCount();
+
+            #pragma omp parallel for
+            for (int i = 0; i < markerMask_rzs.rows; i++)
+                for (int j = 0; j < markerMask_rzs.cols; j++) {
+                    int color = (int) markerMask_rzs.at<unsigned char>(i, j);
+                    if (color != 0) {
+                        color_tab[img_backend->segments_[j + (i*markerMask_rzs.cols)]] = color;
+                    }
+                }
+
+            #pragma omp parallel for
+            for (int y = 0; y < img_backend->getHeight(); y++) {
+                for (int x = 0; x < img_backend->getWidth(); x++) {
+                    int idx = x + (y*img_backend->getWidth());
+                    int seed = color_tab[img_backend->segments_[idx]];
+                    if (seed == 1) {
+                        labeled_image[idx] = 0; //green, object
+                    } else {
+                        labeled_image[idx] = 1; //red, background
+                    }
+                }
+            }
+            t = (double) getTickCount() - t;
+
+                int cpt = 0;
+            for (int y = 0; y < img_backend->getHeight(); y++) {
+                for (int x = 0; x < img_backend->getWidth(); x++) {
+                    int color = labeled_image[cpt];
+                    if (color == 0) {
+                        wshed.at<Vec3b>(y, x) = cv::Vec3b(0, 255, 0);
+                    } else {
+                        wshed.at<Vec3b>(y, x) = cv::Vec3b(0, 0, 255);
+                    }
+                    cpt++;
+                }
+            }
+
+            printf("execution time for color tab = %gms\n", t * 1000. / getTickFrequency());
+            resize(wshed, wshed, Size(), 0.5, 0.5, 0);
+            wshed = wshed * 0.5 + imgGray * 0.5;
 
         }
         time_IW.push_back(t_mean/nb_bench);
@@ -122,8 +164,55 @@ int main(int argc, char *argv[]) {
             printf("%g\n", i, t_mean/nb_bench);
         }
 
+    }*/
+
+    imageManager testImg = imageManager(image_path,testim);
+    testImg.init();
+
+    std::string name = image_path + "data/step_";
+    name.append(std::to_string(25));
+    std::vector<int> values_img;
+    algorithms::get_tab_from_image(name,values_img);
+    testImg.addMarkers(values_img.data(),values_img.size(),false);
+    name.append("_add.png");
+    cv::Mat markerMask = cv::imread(name, CV_8UC1);
+
+    for (int bench = 0; bench < nb_bench; ++bench) {
+        cv::Mat wshed(markerMask.size(), CV_8UC3);
+        std::vector<int> labeled_image(testImg.getWidth() * testImg.getHeight());
+        auto green = cv::Vec3b(0, 255, 0);
+        auto red = cv::Vec3b(0, 0, 255);
+
+        int *color_tab = (int *) malloc(sizeof(int) * testImg.getGraph().getNbVertex());
+        double t = (double) cv::getTickCount();
+
+#pragma omp parallel for
+        for (int i = 0; i < markerMask.rows; i++)
+            for (int j = 0; j < markerMask.cols; j++) {
+                int color = (int) markerMask.at<unsigned char>(i, j);
+                if (color != 0) {
+                    color_tab[testImg.segments_[j + (i * markerMask.cols)]] = color;
+                }
+            }
+
+#pragma omp parallel for
+        for (int y = 0; y < testImg.getHeight(); y++) {
+            for (int x = 0; x < testImg.getWidth(); x++) {
+                int idx = x + (y * testImg.getWidth());
+                int seed = color_tab[testImg.segments_[idx]];
+                if (seed == 1) {
+                    labeled_image[idx] = 0; //green, object
+                } else {
+                    labeled_image[idx] = 1; //red, background
+                }
+            }
+        }
+        t = (double) cv::getTickCount() - t;
+
+        printf("execution time for color tab = %gms\n", t * 1000. / cv::getTickFrequency());
     }
 
+    //NIWS
     /*testim = cv::imread(image_path,cv::IMREAD_GRAYSCALE);
 
     t_mean = 0;
@@ -155,7 +244,7 @@ int main(int argc, char *argv[]) {
     }*/
 
 
-    algorithms::vector_to_csv(time_meyer,"time_meyer.csv");
+    /*algorithms::vector_to_csv(time_meyer,"time_meyer.csv");
     algorithms::vector_to_csv(time_IW,"time_IW.csv");
     algorithms::vector_to_csv(time_NIW,"time_NIW.csv");
 
@@ -163,7 +252,7 @@ int main(int argc, char *argv[]) {
     plt::named_plot("NIWS", time_NIW);
     plt::named_plot("OpenCV WS", time_meyer);
     plt::title("Average computational time in ms");
-    plt::show();
+    plt::show();*/
 /*
     //Illustration
 

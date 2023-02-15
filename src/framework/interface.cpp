@@ -169,22 +169,41 @@ int main(int argc, char **argv) {
                 printf("execution time for removing = %gms\n", t * 1000. / getTickFrequency());
             }
 
-            int cpt = 0, seed, color;
+            Mat wshed(markerMask_rzs.size(), CV_8UC3);
+            std::vector<int> labeled_image(img_backend->getWidth()*img_backend->getHeight());
+            auto green = cv::Vec3b(0, 255, 0);
+            auto red = cv::Vec3b(0, 0, 255);
+
+            double t = (double) getTickCount();
+
+            #pragma omp parallel for
             for (int i = 0; i < markerMask_rzs.rows; i++)
                 for (int j = 0; j < markerMask_rzs.cols; j++) {
-                    color = (int) markerMask_rzs.at<unsigned char>(i, j);
+                    int color = (int) markerMask_rzs.at<unsigned char>(i, j);
                     if (color != 0) {
-                        color_tab[img_backend->segments_[cpt]] = color;
+                        color_tab[img_backend->segments_[j + (i*markerMask_rzs.cols)]] = color;
                     }
-                    cpt++;
                 }
 
-            Mat wshed(markerMask_rzs.size(), CV_8UC3);
-            cpt = 0;
+            #pragma omp parallel for
             for (int y = 0; y < img_backend->getHeight(); y++) {
                 for (int x = 0; x < img_backend->getWidth(); x++) {
-                    seed = color_tab[img_backend->segments_[cpt]];
+                    int idx = x + (y*img_backend->getWidth());
+                    int seed = color_tab[img_backend->segments_[idx]];
                     if (seed == 1) {
+                        labeled_image[idx] = 0; //green, object
+                    } else {
+                        labeled_image[idx] = 1; //red, background
+                    }
+                }
+            }
+            t = (double) getTickCount() - t;
+
+                int cpt = 0;
+            for (int y = 0; y < img_backend->getHeight(); y++) {
+                for (int x = 0; x < img_backend->getWidth(); x++) {
+                    int color = labeled_image[cpt];
+                    if (color == 0) {
                         wshed.at<Vec3b>(y, x) = cv::Vec3b(0, 255, 0);
                     } else {
                         wshed.at<Vec3b>(y, x) = cv::Vec3b(0, 0, 255);
@@ -192,6 +211,8 @@ int main(int argc, char **argv) {
                     cpt++;
                 }
             }
+
+            printf("execution time for color tab = %gms\n", t * 1000. / getTickFrequency());
             resize(wshed, wshed, Size(), 0.5, 0.5, 0);
             wshed = wshed * 0.5 + imgGray * 0.5;
             imshow("watershed transform", wshed);

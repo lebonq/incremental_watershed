@@ -47,4 +47,4 @@ set(OpenCV_LIBS opencv_core opencv_imgproc opencv_highgui opencv_imgcodecs)
 
 # linking
 target_link_libraries(${PROJECT_NAME}-interface ${OpenCV_LIBS} OpenMP::OpenMP_CXX)
-target_link_libraries(${PROJECT_NAME} matplotlib_cpp ${OpenCV_LIBS} OpenMP::OpenMP_CXX segm)
+target_link_libraries(${PROJECT_NAME} matplotlib_cpp ${OpenCV_LIBS} OpenMP::OpenMP_CXX)
