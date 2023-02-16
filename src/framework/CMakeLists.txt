@@ -39,8 +39,8 @@ include_directories(${OpenCV_INCLUDE_DIRS})
 
 find_package(OpenMP REQUIRED)
 
-add_executable (${PROJECT_NAME}-interface ${SOURCE_FILES}  ${HEADER_FILES} ../markers.h "interface.cpp")
-add_executable (${PROJECT_NAME} ${SOURCE_FILES}  ${HEADER_FILES} ../markers.h "main.cpp")
+add_executable (${PROJECT_NAME}-interface ${SOURCE_FILES}  ${HEADER_FILES} "interface.cpp")
+add_executable (${PROJECT_NAME} ${SOURCE_FILES}  ${HEADER_FILES} "main.cpp")
 
 # add libs you need
 set(OpenCV_LIBS opencv_core opencv_imgproc opencv_highgui opencv_imgcodecs)
