@@ -4,7 +4,6 @@
 #include "dataStructures/graph.h"
 #include "imageManager.h"
 #include "meyer_ws.h"
-#include "../markers.h"
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/core/utility.hpp>
 #include "opencv2/imgproc.hpp"
@@ -22,10 +21,12 @@ int main(int argc, char *argv[]) {
     std::vector<double> time_IW;
     std::vector<double> time_NIW;
 
-    const int nb_bench = 20;
+    const int nb_bench = 1;
     const int nb_images = 28;
-    const std::string image_path = "holiday_data/tower.jpg";
+    const std::string image_path = "data/tower.jpg";
 
+    //===================== Generate data for DIFT ========================================
+    std::cout << "Generate data for DIFT benchmark" << std::endl;
     auto img_gray_pgm = cv::imread(image_path,cv::IMREAD_GRAYSCALE);
     imwrite(image_path + ".pgm", img_gray_pgm);
     cv::Mat gradient_pgm;
@@ -39,14 +40,13 @@ int main(int argc, char *argv[]) {
     addWeighted(abs_grad_x, 0.5, abs_grad_y, 0.5, 0, gradient_pgm);
     imwrite(image_path + ".gradient.pgm", gradient_pgm);
 
-
     for (int i = 0; i < nb_images; ++i) {
         std::string name = image_path + "data/step_";
         algorithms::get_DIFT_seed_from_image(name,i);
     }
 
-
-    /*// OPENCV IMPLEMENTATION
+    //=========================== OPENCV IMPLEMENTATION ========================================
+    std::cout << "Benchmarking OpenCV implementation" << std::endl;
     for (int i = 0; i < nb_images; ++i) {
         double t_mean = 0;
         for (int j = 0; j < nb_bench; ++j) {
@@ -58,162 +58,67 @@ int main(int argc, char *argv[]) {
             t_mean += t * 1000. / cv::getTickFrequency();
             //meyer.show();
         }
-        printf("%g\n", i, t_mean / nb_bench);
+        printf("Set #%d : %g ms\n", i, t_mean / nb_bench);
         time_meyer.push_back(t_mean/nb_bench);
-    }*/
+    }
 
     auto testim = cv::imread(image_path,cv::IMREAD_GRAYSCALE);
 
-    /*double t_mean = 0;
+    //=========================== IWS IMPLEMENTATION ========================================
+    std::cout << "Benchmarking IWS implementation" << std::endl;
+
+    double t_mean = 0;
     double init_mean = 0;
     bool remove;
     double t;
     for (int i = 0; i < nb_images; ++i) {
         t_mean = 0;
         for (int j = 0; j < nb_bench; ++j) {
-            imageManager testImg = imageManager(image_path,testim);
+            imageManager testImg = imageManager(image_path, testim);
             t = (double) cv::getTickCount();
             testImg.init();
             t = (double) cv::getTickCount() - t;
 
             //For first marker add we count the time to init the image
-            if(i == 0){
-               init_mean += t * 1000. / cv::getTickFrequency();
+            if (i == 0) {
+                init_mean += t * 1000. / cv::getTickFrequency();
             }
 
-            if(i > 0){
+            if (i > 0) {
                 //printf("Init : %g\n", init_mean/nb_bench);
                 std::string name = image_path + "data/step_";
-                name.append(std::to_string(i-1));
+                name.append(std::to_string(i - 1));
                 std::vector<int> values_img;
-                algorithms::get_tab_from_image(name,values_img);
-                testImg.addMarkers(values_img.data(),values_img.size(),false);
+                algorithms::get_tab_from_image(name, values_img);
+                testImg.addMarkers(values_img.data(), values_img.size());
             }
 
             std::vector<int> values;
-            std::string name = image_path +  "data/step_";
+            std::string name = image_path + "data/step_";
             name.append(std::to_string(i));
-            remove = algorithms::get_vector_from_txt(name,values);
+            remove = algorithms::get_vector_from_txt(name, values);
 
-            if(remove == true){
+            if (remove == true) {
                 t = (double) cv::getTickCount();
-                testImg.removeMarkers(values.data(),values.size(),false);
+                testImg.removeMarkers(values.data(), values.size());
+                t = (double) cv::getTickCount() - t;
+            } else {
+                t = (double) cv::getTickCount();
+                testImg.addMarkers(values.data(), values.size());
                 t = (double) cv::getTickCount() - t;
             }
-            else{
-                t = (double) cv::getTickCount();
-                testImg.addMarkers(values.data(),values.size(),false);
-                t = (double) cv::getTickCount() - t;
-            }
-            t_mean+= t * 1000. / cv::getTickFrequency();
-
-            Mat wshed(markerMask_rzs.size(), CV_8UC3);
-            std::vector<int> labeled_image(img_backend->getWidth()*img_backend->getHeight());
-            auto green = cv::Vec3b(0, 255, 0);
-            auto red = cv::Vec3b(0, 0, 255);
-
-            double t = (double) getTickCount();
-
-            #pragma omp parallel for
-            for (int i = 0; i < markerMask_rzs.rows; i++)
-                for (int j = 0; j < markerMask_rzs.cols; j++) {
-                    int color = (int) markerMask_rzs.at<unsigned char>(i, j);
-                    if (color != 0) {
-                        color_tab[img_backend->segments_[j + (i*markerMask_rzs.cols)]] = color;
-                    }
-                }
-
-            #pragma omp parallel for
-            for (int y = 0; y < img_backend->getHeight(); y++) {
-                for (int x = 0; x < img_backend->getWidth(); x++) {
-                    int idx = x + (y*img_backend->getWidth());
-                    int seed = color_tab[img_backend->segments_[idx]];
-                    if (seed == 1) {
-                        labeled_image[idx] = 0; //green, object
-                    } else {
-                        labeled_image[idx] = 1; //red, background
-                    }
-                }
-            }
-            t = (double) getTickCount() - t;
-
-                int cpt = 0;
-            for (int y = 0; y < img_backend->getHeight(); y++) {
-                for (int x = 0; x < img_backend->getWidth(); x++) {
-                    int color = labeled_image[cpt];
-                    if (color == 0) {
-                        wshed.at<Vec3b>(y, x) = cv::Vec3b(0, 255, 0);
-                    } else {
-                        wshed.at<Vec3b>(y, x) = cv::Vec3b(0, 0, 255);
-                    }
-                    cpt++;
-                }
-            }
-
-            printf("execution time for color tab = %gms\n", t * 1000. / getTickFrequency());
-            resize(wshed, wshed, Size(), 0.5, 0.5, 0);
-            wshed = wshed * 0.5 + imgGray * 0.5;
-
+            t_mean += t * 1000. / cv::getTickFrequency();
         }
-        time_IW.push_back(t_mean/nb_bench);
-        //algorithms::showSegmentation(testImg,"testImg.png");
-        if(remove){
-            printf("%g\n", i, t_mean/nb_bench);
+        time_IW.push_back(t_mean / nb_bench);
+        if (remove) {
+            printf("Remove set #%d : %g ms\n", i, t_mean / nb_bench);
+        } else {
+            printf("Add set #%d : %g ms\n", i, t_mean / nb_bench);
         }
-        else{
-            printf("%g\n", i, t_mean/nb_bench);
-        }
-
-    }*/
-
-    imageManager testImg = imageManager(image_path,testim);
-    testImg.init();
-
-    std::string name = image_path + "data/step_";
-    name.append(std::to_string(25));
-    std::vector<int> values_img;
-    algorithms::get_tab_from_image(name,values_img);
-    testImg.addMarkers(values_img.data(),values_img.size(),false);
-    name.append("_add.png");
-    cv::Mat markerMask = cv::imread(name, CV_8UC1);
-
-    for (int bench = 0; bench < nb_bench; ++bench) {
-        cv::Mat wshed(markerMask.size(), CV_8UC3);
-        std::vector<int> labeled_image(testImg.getWidth() * testImg.getHeight());
-        auto green = cv::Vec3b(0, 255, 0);
-        auto red = cv::Vec3b(0, 0, 255);
-
-        int *color_tab = (int *) malloc(sizeof(int) * testImg.getGraph().getNbVertex());
-        double t = (double) cv::getTickCount();
-
-#pragma omp parallel for
-        for (int i = 0; i < markerMask.rows; i++)
-            for (int j = 0; j < markerMask.cols; j++) {
-                int color = (int) markerMask.at<unsigned char>(i, j);
-                if (color != 0) {
-                    color_tab[testImg.segments_[j + (i * markerMask.cols)]] = color;
-                }
-            }
-
-#pragma omp parallel for
-        for (int y = 0; y < testImg.getHeight(); y++) {
-            for (int x = 0; x < testImg.getWidth(); x++) {
-                int idx = x + (y * testImg.getWidth());
-                int seed = color_tab[testImg.segments_[idx]];
-                if (seed == 1) {
-                    labeled_image[idx] = 0; //green, object
-                } else {
-                    labeled_image[idx] = 1; //red, background
-                }
-            }
-        }
-        t = (double) cv::getTickCount() - t;
-
-        printf("execution time for color tab = %gms\n", t * 1000. / cv::getTickFrequency());
     }
 
-    //NIWS
-    /*testim = cv::imread(image_path,cv::IMREAD_GRAYSCALE);
+    //=========================== NIWS IMPLEMENTATION ========================================
+    std::cout << "Benchmarking NIWS implementation" << std::endl;
 
     t_mean = 0;
     init_mean = 0;
@@ -222,41 +127,39 @@ int main(int argc, char *argv[]) {
     for (int i = 0; i < nb_images; ++i) {
         t_mean = 0;
         for (int j = 0; j < nb_bench; ++j) {
-            imageManager testImg = imageManager(image_path,testim);
+            imageManager testImg = imageManager(image_path, testim);
             t = (double) cv::getTickCount();
             testImg.init();
             t = (double) cv::getTickCount() - t;
 
             std::vector<int> values;
-            std::string name = image_path +  "data/step_";
+            std::string name = image_path + "data/step_";
             name.append(std::to_string(i));
-            algorithms::get_tab_from_image(name,values);
+            algorithms::get_tab_from_image(name, values);
 
             t = (double) cv::getTickCount();
-            testImg.addMarkers(values.data(),values.size(),false);
+            testImg.addMarkers(values.data(), values.size());
             t = (double) cv::getTickCount() - t;
-            t_mean+= t * 1000. / cv::getTickFrequency();
+            t_mean += t * 1000. / cv::getTickFrequency();
             //algorithms::showSegmentation(testImg,"testImg.png");
         }
-        time_NIW.push_back(t_mean/nb_bench);
-        printf("%g\n", i, t_mean/nb_bench);
+        time_NIW.push_back(t_mean / nb_bench);
+        printf("Set #%d : %g ms\n", i, t_mean / nb_bench);
 
-    }*/
+    }
 
-
-    /*algorithms::vector_to_csv(time_meyer,"time_meyer.csv");
+    algorithms::vector_to_csv(time_meyer,"time_meyer.csv");
     algorithms::vector_to_csv(time_IW,"time_IW.csv");
     algorithms::vector_to_csv(time_NIW,"time_NIW.csv");
 
     plt::named_plot("IWS", time_IW);
     plt::named_plot("NIWS", time_NIW);
-    plt::named_plot("OpenCV WS", time_meyer);
+    plt::named_plot("OpenCV", time_meyer);
+    plt::legend();
     plt::title("Average computational time in ms");
-    plt::show();*/
-/*
-    //Illustration
+    plt::show();
 
-
+    //Illustration of every step/interaction
 
     for(int img_n =0; img_n < nb_images;img_n++ ){
         auto imgGray = cv::imread(image_path,cv::IMREAD_GRAYSCALE);
@@ -272,7 +175,7 @@ int main(int argc, char *argv[]) {
             name.append(std::to_string(img_n - 1));
             std::vector<int> values_img;
             algorithms::get_tab_from_image(name, values_img);
-            img_backend.addMarkers(values_img.data(), values_img.size(), false);
+            img_backend.addMarkers(values_img.data(), values_img.size());
         }
 
         std::vector<int> values;
@@ -281,9 +184,9 @@ int main(int argc, char *argv[]) {
         bool remove = algorithms::get_vector_from_txt(name, values);
 
         if (remove == true) {
-            img_backend.removeMarkers(values.data(), values.size(), false);
+            img_backend.removeMarkers(values.data(), values.size());
         } else {
-            img_backend.addMarkers(values.data(), values.size(), false);
+            img_backend.addMarkers(values.data(), values.size());
         }
 
         cv::Mat marker_image;
@@ -367,195 +270,4 @@ int main(int argc, char *argv[]) {
 
         free(color_tab);
     }
-
-    */
-    /*//Store txt marker
-    std::vector<int> values;
-    std::vector<int> values_img;
-    int nbmarkers = 0;
-
-    algorithms::get_tab_from_image("holiday_data/coral.jpgdata/step_3",values_img);
-    bool remove = algorithms::get_vector_from_txt("holiday_data/coral.jpgdata/step_4",values);
-
-    auto testim = cv::imread("holiday_data/coral.jpg",cv::IMREAD_GRAYSCALE);
-
-    imageManager testImg = imageManager("holiday_data/coral.jpg",testim);
-    testImg.init();
-
-    testImg.addMarkers(values_img.data(),values_img.size(),false);
-    algorithms::showSegmentation(testImg,"testImg.png");
-    if(remove == true){
-        testImg.removeMarkers(values.data(),values.size(),false);
-    }
-    else{
-        testImg.addMarkers(values.data(),values.size(),false);
-    }*/
-    //algorithms::showSegmentation(testImg,"testImg.png");
-
-    /*
-    for(int i = 0; i < 1; i++)
-    {
-        auto testim = cv::imread("cell2.jpg",cv::IMREAD_GRAYSCALE);
-
-        imageManager testImg = imageManager("cell2.jpg",testim);
-        testImg.init();
-
-        std::cout << "Add markers 1" << std::endl;
-        testImg.addMarkers(markers1Cell2,nbMarkers1Cell2,true);
-
-        std::cout << "Show image #1" << std::endl;
-        algorithms::showSegmentationMP(testImg,"testImg" + std::to_string(i) + ".png");
-
-        std::cout << "Add markers 2" << std::endl;
-        testImg.addMarkers(markers2Cell2,nbMarkers2Cell2,true);
-
-        std::cout << "Show image #2" << std::endl;
-        algorithms::showSegmentationMP(testImg,"testImg" + std::to_string(i) + ".png");
-
-        std::cout << "Remove markers 3" << std::endl;
-        testImg.removeMarkers(markers3Cell2,nbMarkers3Cell2,true);
-
-        std::cout << "Show image #3" << std::endl;
-        algorithms::showSegmentationMP(testImg,"testImg" + std::to_string(i) + ".png");
-
-        std::cout << "Remove markers 4" << std::endl;
-        testImg.removeMarkers(markers4Cell2,nbMarkers4Cell2,true);
-
-        std::cout << "Show image #4" << std::endl;
-        algorithms::showSegmentationMP(testImg,"testImg" + std::to_string(i) + ".png");
-
-        std::cout << "Add markers 5" << std::endl;
-        testImg.addMarkers(markers5Cell2,nbMarkers5Cell2,true);
-
-        std::cout << "Show image #5" << std::endl;
-        algorithms::showSegmentationMP(testImg,"testImg" + std::to_string(i) + ".png");
-
-    }
-
-    for(int i = 0; i< 1; i++){
-        auto coinImg = cv::imread("coins.gray.png",cv::IMREAD_GRAYSCALE);
-        imageManager coinImgManager = imageManager("coins.gray.png",coinImg);
-        coinImgManager.init();
-
-        std::cout << "Add markers 1" << std::endl;
-        coinImgManager.addMarkers(markerCoin1,nbmarkerCoin1,true);
-        algorithms::showSegmentationMP(coinImgManager,"coinImg" + std::to_string(i) + ".png");
-
-        std::cout << "Add markers 2" << std::endl;
-        coinImgManager.addMarkers(markerCoin2,nbmarkerCoin2,true);
-        algorithms::showSegmentationMP(coinImgManager,"coinImg" + std::to_string(i) + ".png");
-
-        std::cout << "Add markers 3" << std::endl;
-        coinImgManager.addMarkers(markerCoin3,nbmarkerCoin3,true);
-        algorithms::showSegmentationMP(coinImgManager,"coinImg" + std::to_string(i) + ".png");
-
-        std::cout << "Add markers 4" << std::endl;
-        coinImgManager.addMarkers(markerCoin4,nbmarkerCoin4,true);
-        algorithms::showSegmentationMP(coinImgManager,"coinImg" + std::to_string(i) + ".png");
-
-        std::cout << "Add markers 5" << std::endl;
-        coinImgManager.addMarkers(markerCoin5,nbmarkerCoin5,true);
-        algorithms::showSegmentationMP(coinImgManager,"coinImg" + std::to_string(i) + ".png");
-
-        std::cout << "Add markers 6" << std::endl;
-        coinImgManager.addMarkers(markerCoin6,nbmarkerCoin6,true);
-        algorithms::showSegmentationMP(coinImgManager,"coinImg" + std::to_string(i) + ".png");
-
-        std::cout << "Add markers 7" << std::endl;
-        coinImgManager.addMarkers(markerCoin7,nbmarkerCoin7,true);
-        algorithms::showSegmentationMP(coinImgManager,"coinImg" + std::to_string(i) + ".png");
-
-        std::cout << "Add markers 8" << std::endl;
-        coinImgManager.addMarkers(markerCoin8,nbmarkerCoin8,true);
-        algorithms::showSegmentationMP(coinImgManager,"coinImg" + std::to_string(i) + ".png");
-
-        std::cout << "Add markers 9" << std::endl;
-        coinImgManager.addMarkers(markerCoin9,nbmarkerCoin9,true);
-
-        algorithms::showSegmentationMP(coinImgManager,"coinImg" + std::to_string(i) + ".png");
-
-        std::cout << "Add markers 10" << std::endl;
-        coinImgManager.addMarkers(markerCoin10,nbmarkerCoin10,true);
-        algorithms::showSegmentationMP(coinImgManager,"coinImg" + std::to_string(i) + ".png");
-
-        std::cout << "Add markers 11" << std::endl;
-        coinImgManager.addMarkers(markerCoin11,nbmarkerCoin11,true);
-        algorithms::showSegmentationMP(coinImgManager,"coinImg" + std::to_string(i) + ".png");
-
-        std::cout << "Add markers 12" << std::endl;
-        coinImgManager.addMarkers(markerCoin12,nbmarkerCoin12,true);
-        algorithms::showSegmentationMP(coinImgManager,"coinImg" + std::to_string(i) + ".png");
-
-        std::cout << "Add markers 13" << std::endl;
-        coinImgManager.addMarkers(markerCoin13,nbmarkerCoin13,true);
-        algorithms::showSegmentationMP(coinImgManager,"coinImg" + std::to_string(i) + ".png");
-
-        std::cout << "Add markers 14" << std::endl;
-        coinImgManager.addMarkers(markerCoin14,nbmarkerCoin14,true);
-        algorithms::showSegmentationMP(coinImgManager,"coinImg" + std::to_string(i) + ".png");
-
-        std::cout << "Add markers 15" << std::endl;
-        coinImgManager.addMarkers(markerCoin15,nbmarkerCoin15,true);
-        algorithms::showSegmentationMP(coinImgManager,"coinImg" + std::to_string(i) + ".png");
-
-        std::cout << "Remove markers 15" << std::endl;
-        coinImgManager.removeMarkers(markerCoin15,nbmarkerCoin15,true);
-        algorithms::showSegmentationMP(coinImgManager,"coinImg" + std::to_string(i) + ".png");
-
-        std::cout << "Remove markers 14" << std::endl;
-        coinImgManager.removeMarkers(markerCoin14,nbmarkerCoin14,true);
-        algorithms::showSegmentationMP(coinImgManager,"coinImg" + std::to_string(i) + ".png");
-
-        std::cout << "Remove markers 13" << std::endl;
-        coinImgManager.removeMarkers(markerCoin13,nbmarkerCoin13,true);
-        algorithms::showSegmentationMP(coinImgManager,"coinImg" + std::to_string(i) + ".png");
-
-        std::cout << "Remove markers 12" << std::endl;
-        coinImgManager.removeMarkers(markerCoin12,nbmarkerCoin12,true);
-        algorithms::showSegmentationMP(coinImgManager,"coinImg" + std::to_string(i) + ".png");
-
-        std::cout << "Remove markers 11" << std::endl;
-        coinImgManager.removeMarkers(markerCoin11,nbmarkerCoin11,true);
-        algorithms::showSegmentationMP(coinImgManager,"coinImg" + std::to_string(i) + ".png");
-
-        std::cout << "Remove markers 10" << std::endl;
-        coinImgManager.removeMarkers(markerCoin10,nbmarkerCoin10,true);
-        algorithms::showSegmentationMP(coinImgManager,"coinImg" + std::to_string(i) + ".png");
-
-        std::cout << "Remove markers 9" << std::endl;
-        coinImgManager.removeMarkers(markerCoin9,nbmarkerCoin9,true);
-        algorithms::showSegmentationMP(coinImgManager,"coinImg" + std::to_string(i) + ".png");
-
-        std::cout << "Remove markers 8" << std::endl;
-        coinImgManager.removeMarkers(markerCoin8,nbmarkerCoin8,true);
-        algorithms::showSegmentationMP(coinImgManager,"coinImg" + std::to_string(i) + ".png");
-
-        std::cout << "Remove markers 7" << std::endl;
-        coinImgManager.removeMarkers(markerCoin7,nbmarkerCoin7,true);
-        algorithms::showSegmentationMP(coinImgManager,"coinImg" + std::to_string(i) + ".png");
-
-        std::cout << "Remove markers 6" << std::endl;
-        coinImgManager.removeMarkers(markerCoin6,nbmarkerCoin6,true);
-        algorithms::showSegmentationMP(coinImgManager,"coinImg" + std::to_string(i) + ".png");
-
-        std::cout << "Remove markers 5" << std::endl;
-        coinImgManager.removeMarkers(markerCoin5,nbmarkerCoin5,true);
-        algorithms::showSegmentationMP(coinImgManager,"coinImg" + std::to_string(i) + ".png");
-
-        std::cout << "Remove markers 4" << std::endl;
-        coinImgManager.removeMarkers(markerCoin4,nbmarkerCoin4,true);
-        algorithms::showSegmentationMP(coinImgManager,"coinImg" + std::to_string(i) + ".png");
-
-        std::cout << "Remove markers 3" << std::endl;
-        coinImgManager.removeMarkers(markerCoin3,nbmarkerCoin3,true);
-        algorithms::showSegmentationMP(coinImgManager,"coinImg" + std::to_string(i) + ".png");
-
-        std::cout << "Remove markers 2" << std::endl;
-        coinImgManager.removeMarkers(markerCoin2,nbmarkerCoin2,true);
-        algorithms::showSegmentationMP(coinImgManager,"coinImg" + std::to_string(i) + ".png");
-
-        std::cout << "Remove markers 1" << std::endl;
-        coinImgManager.removeMarkers(markerCoin1,nbmarkerCoin1,true);
-        algorithms::showSegmentationMP(coinImgManager,"coinImg" + std::to_string(i) + ".png");
-    }*/
 }

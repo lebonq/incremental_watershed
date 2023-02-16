@@ -8,8 +8,8 @@
 graph::graph(int pNbVertex) :
         nbVertex_{pNbVertex},
         edges_{new int[pNbVertex * 2]},
-        count_{new int[max_value_count]()},
-        sortedEdges_{new int *[max_value_count]} {
+        count_{new int[256]()},
+        sortedEdges_{new int *[256]} {
 }
 
 /**
@@ -37,13 +37,13 @@ bool graph::setWeight(int pIndex, int pWeight) {
 void graph::init_sortedEdges() {
 
     //Init all the array at the right size
-    for (int i = 0; i < max_value_count; i++) {
+    for (int i = 0; i < 256; i++) {
         this->sortedEdges_[i] = new int[this->count_[i]];
     }
 
     //Creating an array which will keep track of the index in the sorted edges matrix
-    int *count_local = new int[max_value_count];
-    memset(count_local, 0, max_value_count * sizeof(int));
+    int *count_local = new int[256];
+    memset(count_local, 0, 256 * sizeof(int));
 
     //Fill the array
     for (int i = 0; i < this->nbVertex_ * 2; i++) {
@@ -60,7 +60,7 @@ graph::~graph() {
     delete[] this->edges_;
     delete[] this->count_;
 
-    for (int i = 0; i < max_value_count; i++) {
+    for (int i = 0; i < 256; i++) {
         delete[] this->sortedEdges_[i];
     }
     delete[] this->sortedEdges_;

@@ -159,12 +159,12 @@ int main(int argc, char **argv) {
 
             if (add == true) {
                 double t = (double) getTickCount();
-                img_backend->addMarkers(markers_idx, nbmarkers, false);
+                img_backend->addMarkers(markers_idx, nbmarkers);
                 t = (double) getTickCount() - t;
                 printf("execution time for adding = %gms\n", t * 1000. / getTickFrequency());
             } else {
                 double t = (double) getTickCount();
-                img_backend->removeMarkers(markers_idx, nbmarkers, false);
+                img_backend->removeMarkers(markers_idx, nbmarkers);
                 t = (double) getTickCount() - t;
                 printf("execution time for removing = %gms\n", t * 1000. / getTickFrequency());
             }

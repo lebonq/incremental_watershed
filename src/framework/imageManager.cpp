@@ -64,20 +64,12 @@ void imageManager::init() {
 
 }
 
-void imageManager::addMarkers(int *markers, int nbMarkers, bool isMp) {
-    if (isMp) {
-        algorithms::addMarkerMP(*this, markers, nbMarkers);
-    } else {
-        algorithms::addMarker(*this, markers, nbMarkers);
-    }
+void imageManager::addMarkers(int *markers, int nbMarkers) {
+    algorithms::addMarker(*this, markers, nbMarkers);
 }
 
-void imageManager::removeMarkers(int *markers, int nbMarkers, bool isMp) {
-    if (isMp) {
-        algorithms::removeMarkerMP(*this, markers, nbMarkers);
-    } else {
-        algorithms::removeMarker(*this, markers, nbMarkers);
-    }
+void imageManager::removeMarkers(int *markers, int nbMarkers) {
+    algorithms::removeMarker(*this, markers, nbMarkers);
 }
 
 int imageManager::getEdge(int n) {

@@ -6,7 +6,6 @@
 #define INCREMENTAL_WATERSHED_QBT_H
 #include "Q.h"
 #include <iostream>
-#include "../data.h"
 
 class QBT : public Q {
 private:

@@ -5,8 +5,6 @@
 #define INCREMENTAL_WATERSHED_GRAPH_H
 #include <iostream>
 #include <vector>
-#include "../data.h"
-
 
 class graph {
 private:
