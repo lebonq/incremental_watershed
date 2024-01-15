@@ -3,7 +3,7 @@ project(incremental_watershed_framework)
 
 include(FetchContent)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 
 file(
         GLOB_RECURSE

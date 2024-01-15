@@ -49,7 +49,6 @@ void imageManager::init() {
     this->nbVertex_ = this->graph_.getNbVertex();
     algorithms::kruskal(this->graph_, this->qbet_, this->width_, this->indexTemp); // Apply the kruskal algorithm
 
-
     this->segments_ = new int[this->graph_.getNbVertex()](); //There is a ID for each vertex
     this->marks_ = new int[this->qbet_.getQBT().getSize()](); //There is size nodes
     this->sizePart_ = new int[this->graph_.getNbVertex()](); //There is at most |V| segments
