@@ -24,8 +24,8 @@ int main(int argc, char *argv[]) {
     std::vector<double> time_init_IW;
     std::vector<double> time_NIW;
 
-    const int nb_bench = 10;
-    const int nb_images = 25;
+    const int nb_bench = 1;
+    const int nb_images = 2;
 
     std::vector<std::string> images_name;
 
@@ -82,7 +82,7 @@ int main(int argc, char *argv[]) {
         }
 
         //=========================== OPENCV IMPLEMENTATION ========================================
-        std::cout << "Benchmarking OpenCV implementation" << std::endl;
+        /*std::cout << "Benchmarking OpenCV implementation" << std::endl;
         for (int i = 0; i < nb_images; ++i) {
             double t_mean = 0;
             for (int j = 0; j < nb_bench; ++j) {
@@ -97,7 +97,7 @@ int main(int argc, char *argv[]) {
             printf("Set #%d : %g ns/px\n", i, (t_mean * 1e9 / nb_bench)/nb_pixel);
             printf("Set #%d : %g ms\n", i, (t_mean * 1000. / nb_bench));
             time_meyer.push_back((t_mean *1e9 / nb_bench)/nb_pixel);
-        }
+        }*/
 
         auto testim = cv::imread(image_path, cv::IMREAD_GRAYSCALE);
 
@@ -197,16 +197,16 @@ int main(int argc, char *argv[]) {
 
         idx_bench++;
 
-        /*plt::named_plot("IWS", time_IW);
-        plt::named_plot("NIWS", time_NIW);
-        plt::named_plot("OpenCV", time_meyer);
-        plt::legend();
-        plt::title("Average computational time in ms");
-        plt::show();*/
+        //plt::named_plot("IWS", time_IW);
+        //plt::named_plot("NIWS", time_NIW);
+        //plt::named_plot("OpenCV", time_meyer);
+        //plt::legend();
+        //plt::title("Average computational time in ms");
+        //plt::show();
 
         //Illustration of every step/interaction
 
-        /*for (int img_n = 0; img_n < nb_images; img_n++) {
+        for (int img_n = 0; img_n < nb_images; img_n++) {
             auto imgGray = cv::imread(image_path, cv::IMREAD_GRAYSCALE);
             auto imgColor = cv::imread(image_path);
             int *color_tab;
@@ -286,7 +286,7 @@ int main(int argc, char *argv[]) {
             std::vector<std::vector<cv::Point>> contours;
             cv::findContours(binary, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
             for (auto contour: contours) {
-                cv::drawContours(imgColor, contours, -1, cv::Scalar(0, 128, 128, 255), 8);
+                cv::drawContours(imgColor, contours, -1, cv::Scalar(0, 0, 0, 0), 8);
             }
 
 
@@ -314,7 +314,7 @@ int main(int argc, char *argv[]) {
             imwrite(image_path + "illustration/marker_step" + std::to_string(img_n) + ".jpg", imgColor);
 
             free(color_tab);
-        }*/
+        }
     }
 
     algorithms::vector_to_csv(time_init_IW, "time_init_IW.csv");

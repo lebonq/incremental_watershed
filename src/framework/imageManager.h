@@ -35,7 +35,8 @@ public:
     int tagCount_ = 1;
     std::vector<int> tag_;
 
-    int* indexTemp;//tab de correcpondence
+    int* map_graph_mst; //Mapping array wich allow us to make correspond an edge of the graph to an edge of the MST
+                        //As the ID of the mst and the grapha re different
 
     //For MP
     partition partitionMP_;
