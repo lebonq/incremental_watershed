@@ -8,7 +8,7 @@
 #include "dcmtk/dcmdata/dctk.h"
 #include "dcmtk/dcmimgle/dcmimage.h"
 #include <vector>
-
+#include <filesystem>
 
 class volumeManager {
 private:
@@ -16,7 +16,7 @@ private:
 
 public:
     DicomImage* loadDicomFile(const std::string& filename);
-    void loadVolume(const std::vector<std::string>& filenames);
+    void loadVolume(const std::string& folder_name);
     ~volumeManager();
 };
 

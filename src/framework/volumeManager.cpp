@@ -16,20 +16,28 @@ DicomImage* volumeManager::loadDicomFile(const std::string& filename)
         return nullptr;
     }
 
-    DicomImage* image = new DicomImage(&fileformat, EXS_Unknown, CIF_MayDetachPixelData);
-    if (image != nullptr && image->getStatus())
+    auto* image = new DicomImage(&fileformat, EXS_Unknown, CIF_MayDetachPixelData);
+    auto status_image = image->getStatus();
+    if (status_image != EIS_Normal)
     {
         std::cerr << "Error: cannot load DICOM image (" << DicomImage::getString(image->getStatus()) << ")" <<
             std::endl;
         delete image;
         image = nullptr;
+        exit(-1);
     }
 
     return image;
 }
 
-void volumeManager::loadVolume(const std::vector<std::string>& filenames)
+void volumeManager::loadVolume(const std::string& folder_name)
 {
+    std::vector<std::string> filenames;
+    for (const auto& entry : std::filesystem::directory_iterator(folder_name))
+    {
+        filenames.push_back(entry.path().string());
+    }
+
     for (const auto& filename : filenames)
     {
         DicomImage* image = this->loadDicomFile(filename);
@@ -38,6 +46,7 @@ void volumeManager::loadVolume(const std::vector<std::string>& filenames)
             volume_.push_back(image);
         }
     }
+
 }
 
 volumeManager::~volumeManager()
