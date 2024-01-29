@@ -9,7 +9,7 @@ imageManager::imageManager(std::string path, cv::Mat image)
           image_{image},
           height_{image.size().height},
           width_{image.size().width},
-          graph_{this->height_ * this->width_},
+          graph_{this->height_ * this->width_,256,this->height_*this->width_*2},
           qbet_{this->height_ * this->width_},
           partitionMP_{this->height_ * this->width_} {}
 

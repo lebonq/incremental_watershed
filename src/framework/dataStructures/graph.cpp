@@ -5,12 +5,15 @@
 #include "graph.h"
 #include <cstring>
 
-graph::graph(int pNbVertex) :
+graph::graph(int pNbVertex, int histSize, int pNbEdge) :
         nbVertex_{pNbVertex},
-        edges_{new int[pNbVertex * 2]},
-        count_{new int[256]()},
-        sortedEdges_{new int *[256]} {
+        nbEdge_{pNbEdge},
+        histSize_{histSize}, // initialize histSize_
+        edges_{new int[pNbEdge]},
+        count_{new int[histSize]()}, // use histSize_ instead of 256
+        sortedEdges_{new int *[histSize]} { // use histSize_ instead of 256
 }
+
 
 /**
  * Associate a weight to an edge
@@ -31,24 +34,20 @@ bool graph::setWeight(int pIndex, int pWeight) {
     }
 }
 
-/**
- * Allocate memories to store the sorted edges
- */
 void graph::init_sortedEdges() {
 
     //Init all the array at the right size
-    for (int i = 0; i < 256; i++) {
+    for (int i = 0; i < histSize_; i++) { // use histSize_ instead of 256
         this->sortedEdges_[i] = new int[this->count_[i]];
     }
 
     //Creating an array which will keep track of the index in the sorted edges matrix
-    int *count_local = new int[256];
-    memset(count_local, 0, 256 * sizeof(int));
+    int *count_local = new int[histSize_]; // use histSize_ instead of 256
+    memset(count_local, 0, histSize_ * sizeof(int)); // use histSize_ instead of 256
 
     //Fill the array
     for (int i = 0; i < this->nbVertex_ * 2; i++) {
-        if (this->edges_[i] >= 0) {//To filter gosht edge
-            //std::cout << "this->sortedEdges_[" << this->edges_[i]<< "][" << count_local[this->edges_[i]] << "] = " << i << std::endl;
+        if (this->edges_[i] >= 0) {//To filter ghost edge
             this->sortedEdges_[this->edges_[i]][count_local[this->edges_[i]]] = i;
             count_local[this->edges_[i]]++;
         }
@@ -60,7 +59,7 @@ graph::~graph() {
     delete[] this->edges_;
     delete[] this->count_;
 
-    for (int i = 0; i < 256; i++) {
+    for (int i = 0; i < histSize_; i++) { // use histSize_ instead of 256
         delete[] this->sortedEdges_[i];
     }
     delete[] this->sortedEdges_;

@@ -82,7 +82,7 @@ int main(int argc, char *argv[]) {
         }
 
         //=========================== OPENCV IMPLEMENTATION ========================================
-        std::cout << "Benchmarking OpenCV implementation" << std::endl;
+        /*std::cout << "Benchmarking OpenCV implementation" << std::endl;
         for (int i = 0; i < nb_images; ++i) {
             double t_mean = 0;
             for (int j = 0; j < nb_bench; ++j) {
@@ -97,7 +97,7 @@ int main(int argc, char *argv[]) {
             printf("Set #%d : %g ns/px\n", i, (t_mean * 1e9 / nb_bench)/nb_pixel);
             printf("Set #%d : %g ms\n", i, (t_mean * 1000. / nb_bench));
             time_meyer.push_back((t_mean *1e9 / nb_bench)/nb_pixel);
-        }
+        }*/
 
         auto testim = cv::imread(image_path, cv::IMREAD_GRAYSCALE);
 
@@ -155,7 +155,7 @@ int main(int argc, char *argv[]) {
             }
         }
 
-
+        /*
         //=========================== NIWS IMPLEMENTATION ========================================
         std::cout << "Benchmarking NIWS implementation" << std::endl;
 
@@ -187,7 +187,7 @@ int main(int argc, char *argv[]) {
             printf("Set #%d : %g ms\n", i, (t_mean *1000. / nb_bench));
 
         }
-
+*/
         algorithms::vector_to_csv(time_meyer, std::to_string(idx_bench) + "_time_meyer.csv");
         time_meyer.clear();
         algorithms::vector_to_csv(time_IW, std::to_string(idx_bench) + "_time_IW.csv");

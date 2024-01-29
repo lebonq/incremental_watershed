@@ -35,6 +35,7 @@ set(OpenCV_DIR "C:\\Lib\\OpenCV\\build_vs\\install")
 set(OpenCV_INCLUDE_DIR "C:\\Lib\\OpenCV\\build_vs\\install\\include" )
 
 find_package(OpenCV REQUIRED)
+find_package(DCMTK REQUIRED)
 include_directories(${OpenCV_INCLUDE_DIRS})
 
 find_package(OpenMP REQUIRED)
@@ -47,4 +48,4 @@ set(OpenCV_LIBS opencv_core opencv_imgproc opencv_highgui opencv_imgcodecs)
 
 # linking
 target_link_libraries(${PROJECT_NAME}-interface ${OpenCV_LIBS} OpenMP::OpenMP_CXX)
-target_link_libraries(${PROJECT_NAME} matplotlib_cpp ${OpenCV_LIBS} OpenMP::OpenMP_CXX)
+target_link_libraries(${PROJECT_NAME} matplotlib_cpp ${OpenCV_LIBS} OpenMP::OpenMP_CXX ${DCMTK_LIBRARIES})
