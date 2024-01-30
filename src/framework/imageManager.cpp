@@ -41,13 +41,13 @@ void imageManager::init() {
     this->graph_.init_sortedEdges(); // Sort the edges of the graph
 
     //TODO Temp
-    this->indexTemp = new int[this->graph_.getNbVertex() * 2]();
+    this->map_graph_mst = new int[this->graph_.getNbVertex() * 2]();
     for (int i = 0; i < this->graph_.getNbVertex() * 2; i++) {
-        this->indexTemp[i] = -1;
+        this->map_graph_mst[i] = -1;
     }
 
     this->nbVertex_ = this->graph_.getNbVertex();
-    algorithms::kruskal(this->graph_, this->qbet_, this->width_, this->indexTemp); // Apply the kruskal algorithm
+    algorithms::kruskal(this->graph_, this->qbet_, this->width_, this->map_graph_mst); // Apply the kruskal algorithm
 
     this->segments_ = new int[this->graph_.getNbVertex()](); //There is a ID for each vertex
     this->marks_ = new int[this->qbet_.getQBT().getSize()](); //There is size nodes
@@ -87,5 +87,5 @@ imageManager::~imageManager() {
     delete[] this->sizePart_;
     delete[] this->ws_;
     delete[] this->mstEdit_;
-    delete[] this->indexTemp;
+    delete[] this->map_graph_mst;
 }

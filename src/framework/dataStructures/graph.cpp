@@ -22,7 +22,7 @@ graph::graph(int pNbVertex, int histSize, int pNbEdge) :
  * @return If the operation success
  */
 bool graph::setWeight(int pIndex, int pWeight) {
-    if (pIndex >= this->nbVertex_ * 2) {
+    if (pIndex >= this->nbEdge_) {
         std::cout << "Error to set weight to an edge : Index out of range" << std::endl;
         return false;
     } else {
@@ -46,7 +46,7 @@ void graph::init_sortedEdges() {
     memset(count_local, 0, histSize_ * sizeof(int)); // use histSize_ instead of 256
 
     //Fill the array
-    for (int i = 0; i < this->nbVertex_ * 2; i++) {
+    for (int i = 0; i < this->nbEdge_; i++) {
         if (this->edges_[i] >= 0) {//To filter ghost edge
             this->sortedEdges_[this->edges_[i]][count_local[this->edges_[i]]] = i;
             count_local[this->edges_[i]]++;
