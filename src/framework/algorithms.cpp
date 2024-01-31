@@ -4,6 +4,8 @@
 
 #include "algorithms.h"
 
+#include "volumeManager.h"
+
 //#define PIXELS_COUNT
 
 int nb_pixels_visited = 0;
@@ -56,70 +58,6 @@ void algorithms::kruskal(graph &G, Q &Q, int w, int *temp) {
     }*/
 }
 
-void algorithms::kruskal3D(graph &G, Q &Q, int w, int h, int *temp) {
-
-    //Creation of sigleton for each vertex
-    for (int i = 0; i < G.getNbVertex(); i++) {
-        Q.makeSet(i);
-    }
-
-    std::vector<int> &mst = G.getMst();
-    int count = 0;
-
-    int prev = 1;
-
-    // Loop over all possible pixel intensity values from 0 to 255.
-    // This is done because the algorithm is processing the graph edges based on their weights,
-
-    for (int j = 0; j < 256; j++) {
-        for (int i = 0; i < G.count_[j]; i++) {
-            int cx, cy = 0;
-            int edge = G.sortedEdges_[j][i];
-
-            //std::cerr << "edge : " << edge << std::endl;
-
-            int dir = edge % 3;//Compute which direction the edge is
-
-            cx = (edge-dir)/3;//Compute the orign of the edge
-
-            switch (dir) {//Compute the destination of the edge
-                case 0:
-                    cy = cx + 1;
-                    break;
-                case 1:
-                    cy = cx + w;
-                    break;
-                case 2:
-                    cy = cx + w*h;
-                    break;
-            }
-
-            //std::cerr << "cx : " << cx << " cy : " << cy << std::endl;
-
-            cx = Q.findCannonical(cx);
-            cy = Q.findCannonical(cy);
-            //std::cout << "Canonical : cx : " << cx << " cy : " << cy << std::endl;
-
-            if (cx != cy) {
-                Q.makeUnion(cx, cy);
-                mst.push_back(edge);//add edge in mst
-
-                temp[edge] = count;// Allow us to know where an edge is in the MST
-                count++;
-            }
-        }
-    }
-    //std::cerr << "There is " << count << " edges in the hierarchy" << std::endl;
-    //Print the MST
-    /*
-    for(int i = 0; i < G.getNbVertex()*2; i++) {
-        if(G.getMst()[i]) {
-            std::cout << i << " ";
-        }
-    }*/
-}
-
-
 int algorithms::breadthFirstSearchLabel(imageManager &im, int tag, int p) {
     std::vector<int> queue;
     queue.push_back(p);
@@ -146,7 +84,7 @@ int algorithms::breadthFirstSearchLabel(imageManager &im, int tag, int p) {
                 queue.push_back(vRight);
                 im.segments_[vRight] = tag;
                 count++;
-            }
+                }
         }
 
         if (vLeft >= 0 && v % w != 0) {

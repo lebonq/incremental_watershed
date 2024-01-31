@@ -29,4 +29,8 @@ int main(int argc, char* argv[])
     end = std::chrono::high_resolution_clock::now();
     diff = end-start;
     std::cout << "buildHierarchy took " << diff.count() << " seconds" << std::endl;
+
+
+
+    delete volume_manager;
 }

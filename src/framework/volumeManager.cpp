@@ -134,7 +134,18 @@ void volumeManager::createGraph()
 
 void volumeManager::buildHierarchy()
 {
-    algorithms::kruskal3D(*this->graph_, *this->hierarchy_, this->width_, this->height_, this->map_graph_mst_->data());
+    algorithms3D::kruskal(*this->graph_, *this->hierarchy_, this->width_, this->height_, this->map_graph_mst_->data());
+}
+
+void volumeManager::initPostprocessStructure()
+{
+    this->segments_ = std::make_unique<std::vector<int>>(this->graph_->getNbVertex());
+    this->marks_ = std::make_unique<std::vector<int>>(this->hierarchy_->getQBT().getSize());
+    this->sizePart_ = std::make_unique<std::vector<int>>(this->graph_->getNbVertex());
+    this->sizePart_->at(0) = this->graph_->getNbVertex();
+    this->ws_ = std::make_unique<std::vector<bool>>(this->hierarchy_->getQBT().getSize());
+    this->mstEdit_ = std::make_unique<std::vector<bool>>(this->graph_->getMst().size(), true);
+
 }
 
 volumeManager::~volumeManager()

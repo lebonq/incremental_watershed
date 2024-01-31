@@ -17,7 +17,6 @@
 class algorithms {
 public:
     static void kruskal(graph& G,Q& Q, int w,int* temp);
-    static void kruskal3D(graph& G,Q& Q, int w, int h,int* temp);
     static int breadthFirstSearchLabel(imageManager& im, int tag, int p);
     static void splitSegment(imageManager & im, bool* historyVisited,std::vector<int> queueEdges);
     static void mergeSegment(int edge, imageManager & im);
