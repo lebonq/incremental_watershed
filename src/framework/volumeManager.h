@@ -8,6 +8,10 @@
 #include "dcmtk/dcmimgle/dcmimage.h"
 #include <vector>
 #include <filesystem>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/core/utility.hpp>
+#include "opencv2/imgproc.hpp"
+#include "opencv2/imgcodecs.hpp"
 #include "dataStructures/graph.h"
 #include "algorithms3D.h"
 #include "dataStructures/QEBT.h"
@@ -36,8 +40,11 @@ public:
     DicomImage* loadDicomFile(const std::string& filename);
     void loadVolume(const std::string& folder_name);
     void createGraph();
+    void createToyGraph();
     void buildHierarchy();
     void initPostprocessStructure();
+    cv::Mat getSegmentedSlice(int z);
+    std::vector<cv::Mat> getSegmentedVolume();
 
     int getWidth() const { return this->width_; };
     int getHeight() const { return this->height_; };
@@ -46,24 +53,26 @@ public:
     int getTagCount() const { return this->tagCount_; }
     void setTagCount(int tagCount) { this->tagCount_ = tagCount; }
 
+    void addMarkers(std::vector<int>& markers, int nbMarkers);
+    void removeMarkers(std::vector<int>& markers, int nbMarkers);
+
     std::vector<int>& getMapGraphMst() const { return *this->map_graph_mst_; }
     std::vector<int>& getSegments() const { return *this->segments_; }
-    std::vector<int>& getMarks() const { return *this->marks_; }
-    std::vector<int>& getSizePart() const { return *this->sizePart_; }
-    std::vector<bool>& getWs() const { return *this->ws_; }
-    std::vector<bool>& getMstEdit() const { return *this->mstEdit_; }
+    void modifySegments(int index, int value) { this->segments_->at(index) = value; }
+    std::vector<int>& getMarks() { return *marks_.get(); }
+    void modifyMarks(int index, int value) { this->marks_->at(index) = value; }
+    std::vector<int>& getSizePart() { return *this->sizePart_; }
+    void setSizePart(int index, int value) { this->sizePart_->at(index) = value; }
+    std::vector<bool>& getWs() { return *this->ws_; }
+    void modifyWs(int index, bool value) { this->ws_->at(index) = value; }
+    std::vector<bool>& getMstEdit() { return *this->mstEdit_; }
+    void modifyMstEdit(int index, bool value) { this->mstEdit_->at(index) = value; }
 
-    QEBT& getHierarchy() const { return *this->hierarchy_; }
-    graph& getGraph() const { return *this->graph_; }
+    QEBT& getHierarchy() { return *this->hierarchy_; }
+    graph& getGraph() { return *this->graph_; }
 
     //Give us the edge id from the node ID
-    int getEdge(int n){
-        if (n < this->graph_->getNbVertex()) {
-            std::cout << "Error : n is not a valid node" << std::endl;
-            std::exit(EXIT_FAILURE);
-        }
-        return n - this->graph_->getNbVertex();
-    };
+    int getEdge(int n);
 
     ~volumeManager();
 };

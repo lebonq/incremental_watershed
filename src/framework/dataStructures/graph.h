@@ -26,6 +26,7 @@ public:
     void init_sortedEdges();
     int& getNbVertex() { return this->nbVertex_; }
     int& getNbEdge() { return this->nbEdge_; }
+    const int getHistSize() const{ return this->histSize_; } // new member function for histogram size
     std::vector<int>& getMst() { return this->mst_; }
     ~graph();
 };

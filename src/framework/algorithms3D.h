@@ -14,15 +14,19 @@
 #include "volumeManager.h"
 
 
-class algorithms3D {
+class algorithms3D
+{
 public:
-    static void kruskal(graph& G,Q& Q, int w, int h,int* temp);
+    static int from3Dto1D(int x, int y, int z, int w, int h);
+    static std::tuple<int,int,int> from1Dto3D(int p, int w, int h, int d);
+    static void kruskal(graph& G, Q& Q, int w, int h, int* temp);
     static int breadthFirstSearchLabel(volumeManager& vol, int tag, int p);
-    void algorithms3D::splitSegment(volumeManager &vol, bool *historyVisited,
-                              std::vector<int> queueEdges);
-    void algorithms3D::mergeSegment(int edge, volumeManager &vol);
+    static void splitSegment(volumeManager& vol, std::vector<bool>& historyVisited,
+                      std::vector<int>& queueEdges);
+    static void mergeSegment(int edge, volumeManager& vol);
+    static void removeMarker(volumeManager& vol, std::vector<int>& markers, int nbMarkers);
+    static void addMarker(volumeManager& vol, std::vector<int>& markers, int nbMarkers);
 };
-
 
 
 #endif //ALGORITHMS_3D_H

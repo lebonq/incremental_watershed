@@ -4,8 +4,6 @@
 
 #include "algorithms.h"
 
-#include "volumeManager.h"
-
 //#define PIXELS_COUNT
 
 int nb_pixels_visited = 0;
@@ -116,7 +114,7 @@ int algorithms::breadthFirstSearchLabel(imageManager &im, int tag, int p) {
 }
 
 void algorithms::splitSegment(imageManager &im, bool *historyVisited,
-                              std::vector<int> queueEdges) {
+                              std::vector<int>& queueEdges) {
     int p1, p2, tag1, tag2, newTag; //Are being erased
     int w = im.getWidth();
     int *seg = im.segments_;
