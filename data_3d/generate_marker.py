@@ -23,7 +23,7 @@ volume = []
 volume_eroded = []
 volume_dilated = []
 
-volume_marked = [[]]
+volume_marked = []
 
 rand_pos_add3D_object = np.zeros((nb_batch, nb_marker, 3), dtype=int)
 rand_pos_add3D_background = np.zeros((nb_batch, nb_marker, 3), dtype=int)
