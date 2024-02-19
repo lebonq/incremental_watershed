@@ -25,7 +25,7 @@ public:
                       std::vector<int>& queueEdges);
     static void mergeSegment(int edge, volumeManager& vol);
     static void removeMarker(volumeManager& vol, std::vector<int>& markers, int nbMarkers);
-    static void addMarker(volumeManager& vol, std::vector<int>& markers, int nbMarkers);
+    static void addMarker(volumeManager& vol, std::vector<int>& markers);
 };
 
 

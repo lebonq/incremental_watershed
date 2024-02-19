@@ -29,14 +29,16 @@ std::vector<int> load_marker_from_txt(std::vector<std::string>& files_path)
 
 int main(int argc, char* argv[])
 {
-    std::vector<std::string> paths;
+    std::vector<std::string> paths_object;
+    std::vector<std::string> paths_background;
     //do it in aloop
     for (int i = 0; i < 29; i++)
     {
-        paths.push_back("data_3d/markers_background_" + std::to_string(i) + ".txt");
-        paths.push_back("data_3d/markers_object_" + std::to_string(i) + ".txt");
+        paths_background.push_back("data_3d/markers_background_" + std::to_string(i) + ".txt");
+        paths_object.push_back("data_3d/markers_object_" + std::to_string(i) + ".txt");
     }
-    auto markers = load_marker_from_txt(paths);
+    auto markers_object = load_marker_from_txt(paths_object);
+    auto markers_background = load_marker_from_txt(paths_background);
 
     auto volume_manager = new volumeManager();
 
@@ -62,7 +64,23 @@ int main(int argc, char* argv[])
     diff = end-start;
     std::cout << "buildHierarchy took " << diff.count() << " seconds" << std::endl;
 
-    volume_manager->addMarkers(markers, markers.size());
+    //benchmark addMarkers object
+    start = std::chrono::high_resolution_clock::now();
+    volume_manager->addMarkers(markers_object);
+    end = std::chrono::high_resolution_clock::now();
+    diff = end-start;
+    std::cout << "addMarkers object took " << diff.count() << " seconds" << std::endl;
+    volume_manager->dualisation_segmentation(markers_object, 255);
+
+    //bencmark addMarkers background
+    start = std::chrono::high_resolution_clock::now();
+    volume_manager->addMarkers(markers_background);
+    end = std::chrono::high_resolution_clock::now();
+    diff = end-start;
+    std::cout << "addMarkers background took " << diff.count() << " seconds" << std::endl;
+    volume_manager->dualisation_segmentation(markers_background, 0);
+
+
 
     //write the volume in 260 slices in files
     std::vector<cv::Mat> volume = volume_manager->getSegmentedVolume();

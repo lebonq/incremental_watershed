@@ -315,7 +315,7 @@ void algorithms3D::removeMarker(volumeManager& vol, std::vector<int>& markers, i
     }
 }
 
-void algorithms3D::addMarker(volumeManager& vol, std::vector<int>& markers, int nbMarkers)
+void algorithms3D::addMarker(volumeManager& vol, std::vector<int>& markers)
 {
     int up = 0;
     QBT& qbt = vol.getHierarchy().getQBT();

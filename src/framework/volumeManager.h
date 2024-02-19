@@ -33,6 +33,8 @@ private:
     std::unique_ptr<std::vector<int>> sizePart_; //Size of each segment
     std::unique_ptr<std::vector<bool>> ws_; //Is the node a watershed
     std::unique_ptr<std::vector<bool>> mstEdit_; //Is the edge in the MST
+    std::unique_ptr<std::vector<bool>> isMarked_; //avoid to add/remove marker at the same pixel twice
+    std::unique_ptr<std::vector<int>> colorTab_; //Color for each segment
     int tagCount_ = 1;
 
 public:
@@ -53,9 +55,10 @@ public:
     int getTagCount() const { return this->tagCount_; }
     void setTagCount(int tagCount) { this->tagCount_ = tagCount; }
 
-    void addMarkers(std::vector<int>& markers, int nbMarkers);
+    void addMarkers(std::vector<int>& markers);
     void removeMarkers(std::vector<int>& markers, int nbMarkers);
     bool isInMStEdit(int edge);
+    void dualisation_segmentation(std::vector<int> &markers, int value);
 
     std::vector<int>& getMapGraphMst() const { return *this->map_graph_mst_; }
     std::vector<int>& getSegments() const { return *this->segments_; }

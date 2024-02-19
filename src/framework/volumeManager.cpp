@@ -4,8 +4,6 @@
 
 #include "volumeManager.h"
 
-
-
 cv::Mat volumeManager::loadDicomFile(const std::string& filename)
 {
     auto image = cv::imread(filename, cv::IMREAD_GRAYSCALE);
@@ -104,7 +102,6 @@ void volumeManager::createGraph()
     this->graph_->init_sortedEdges();
     std::cerr << "Graph sorted" << std::endl;
 
-    this->map_graph_mst_ = std::make_unique<std::vector<int>>(this->graph_->getNbEdge(),-1);
 }
 
 void volumeManager::createToyGraph()
@@ -174,20 +171,20 @@ void volumeManager::createToyGraph()
     std::cerr << "Graph should have " << this->graph_->getNbVertex() - 1<< " edges in the MST" << std::endl;
     this->graph_->init_sortedEdges();
     std::cerr << "Graph sorted" << std::endl;
-
-    this->map_graph_mst_ = std::make_unique<std::vector<int>>(this->graph_->getNbEdge(),-1);
 }
 
 void volumeManager::buildHierarchy()
 {
-    std::cout << (*this->map_graph_mst_)[1] << std::endl;
+    this->map_graph_mst_ = std::make_unique<std::vector<int>>(this->graph_->getNbEdge(),-1);
+
     algorithms3D::kruskal(*this->graph_, *this->hierarchy_, this->width_, this->height_, this->map_graph_mst_->data());
-    std::cout << (*this->map_graph_mst_)[1] << std::endl;
+
     this->initPostprocessStructure();
 }
 
 void volumeManager::initPostprocessStructure()
 {
+    this->isMarked_ = std::make_unique<std::vector<bool>>(this->graph_->getNbVertex(),false);
     this->segments_ = std::make_unique<std::vector<int>>(this->graph_->getNbVertex(),0);
     this->marks_ = std::make_unique<std::vector<int>>(this->hierarchy_->getQBT().getSize(),0);
     std::cout << "Marks is of size : " << this->marks_->size() << std::endl;
@@ -195,6 +192,7 @@ void volumeManager::initPostprocessStructure()
     this->sizePart_->at(0) = this->graph_->getNbVertex();
     this->ws_ = std::make_unique<std::vector<bool>>(this->hierarchy_->getQBT().getSize(),false);
     this->mstEdit_ = std::make_unique<std::vector<bool>>(this->graph_->getMst().size(), true);
+    this->colorTab_ = std::make_unique<std::vector<int>>(this->graph_->getNbVertex()*2, 0);
 
 }
 int volumeManager::getEdge(int n)
@@ -216,9 +214,9 @@ cv::Mat volumeManager::getSegmentedSlice(int z)
     int cpt = 0+(z*this->getWidth()*this->getHeight()), seed;
     for (int y = 0; y < this->getHeight(); y++) {
         for (int x = 0; x < this->getWidth(); x++) {
-            seed = this->segments_->at(cpt);
-            srand(seed);
-            img.at<cv::Vec3b>(y, x) = cv::Vec3b(rand() % 255, rand() % 255, rand() % 255);
+            auto color = this->colorTab_->at(this->segments_->at(cpt));
+            //srand(seed);
+            img.at<cv::Vec3b>(y, x) = cv::Vec3b(color, color/2, color/3);
             cpt++;
         }
     }
@@ -240,14 +238,57 @@ std::vector<cv::Mat> volumeManager::getSegmentedVolume()
     return volume;
 }
 
-void volumeManager::addMarkers(std::vector<int>& markers, int nbMarkers)
+void volumeManager::addMarkers(std::vector<int>& markers)
 {
-    algorithms3D::addMarker(std::ref(*this), markers, nbMarkers);
+    auto mark_it = markers.begin();
+    while( mark_it != markers.end())
+    {
+        if(this->isMarked_->at(*mark_it) == true)
+        {
+            mark_it = markers.erase(mark_it);
+            //std::cout << "Pixel already marked, it will be remove from the list" << std::endl;
+        }
+        else
+        {
+            this->isMarked_->at(*mark_it) = true;
+            mark_it++;
+        }
+    }
+
+    algorithms3D::addMarker(std::ref(*this), markers);
 }
 
 void volumeManager::removeMarkers(std::vector<int>& markers, int nbMarkers)
 {
+    auto mark_it = markers.begin();
+    while( mark_it != markers.end())
+    {
+        if(this->isMarked_->at(*mark_it) == false)
+        {
+            mark_it = markers.erase(mark_it);
+            std::cout << "Pixel was not mark, it will be remove from the list" << std::endl;
+        }
+        else
+        {
+            this->isMarked_->at(*mark_it) = false;
+            mark_it++;
+        }
+    }
     algorithms3D::removeMarker(std::ref(*this), markers, nbMarkers);
+}
+
+
+/**
+ * \brief
+ * \param markers A set of marker that represent the object ot beckground
+ * \param value The color you want to give to the segments of the object or the background
+ */
+void volumeManager::dualisation_segmentation(std::vector<int> &markers, int value)
+{
+    for(auto marker : markers)
+    {
+        this->colorTab_->at(this->segments_->at(marker)) = value;
+    }
 }
 
 bool volumeManager::isInMStEdit(int edge)

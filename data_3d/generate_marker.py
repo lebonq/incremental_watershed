@@ -18,7 +18,7 @@ path = "patient_1_liver/image_"
 nb_images = 260
 
 nb_batch = 30
-nb_marker = 10
+nb_marker = 100
 
 volume = []
 volume_eroded = []
@@ -46,7 +46,7 @@ for i in range(0, nb_images):
     #0 is 0 and 1 is 255 but above one is 125
     volume[i] = cv.normalize(volume[i], None, 0, 255, cv.NORM_MINMAX)
     #erode
-    kernel = np.ones((5,5), np.uint8)
+    kernel = np.ones((10,10), np.uint8)
     #seen as uint
     volume[i] = volume[i].astype(np.uint8)
 
