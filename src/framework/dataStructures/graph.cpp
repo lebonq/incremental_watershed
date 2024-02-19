@@ -48,6 +48,8 @@ void graph::init_sortedEdges() {
     //Fill the array
     for (int i = 0; i < this->nbEdge_; i++) {
         if (this->edges_[i] >= 0) {//To filter ghost edge
+            auto edges = this->edges_[i];
+            auto count_lol =  count_local[this->edges_[i]];
             this->sortedEdges_[this->edges_[i]][count_local[this->edges_[i]]] = i;
             count_local[this->edges_[i]]++;
         }

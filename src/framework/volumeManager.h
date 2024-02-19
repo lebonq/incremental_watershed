@@ -19,7 +19,7 @@
 
 class volumeManager {
 private:
-    std::vector<DicomImage*> volume_;
+    std::vector<cv::Mat> volume_;
 
     int width_;
     int height_;
@@ -37,7 +37,7 @@ private:
 
 public:
     volumeManager() = default;
-    DicomImage* loadDicomFile(const std::string& filename);
+    cv::Mat loadDicomFile(const std::string& filename);
     void loadVolume(const std::string& folder_name);
     void createGraph();
     void createToyGraph();
@@ -55,6 +55,7 @@ public:
 
     void addMarkers(std::vector<int>& markers, int nbMarkers);
     void removeMarkers(std::vector<int>& markers, int nbMarkers);
+    bool isInMStEdit(int edge);
 
     std::vector<int>& getMapGraphMst() const { return *this->map_graph_mst_; }
     std::vector<int>& getSegments() const { return *this->segments_; }

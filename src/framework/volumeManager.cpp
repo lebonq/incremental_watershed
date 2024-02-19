@@ -6,28 +6,9 @@
 
 
 
-DicomImage* volumeManager::loadDicomFile(const std::string& filename)
+cv::Mat volumeManager::loadDicomFile(const std::string& filename)
 {
-    DcmFileFormat fileformat;
-    OFCondition status = fileformat.loadFile(filename.c_str());
-
-    if (status.bad())
-    {
-        std::cerr << "Error: cannot read DICOM file (" << status.text() << ")" << std::endl;
-        return nullptr;
-    }
-
-    auto* image = new DicomImage(&fileformat, EXS_Unknown, CIF_MayDetachPixelData);
-    auto status_image = image->getStatus();
-    if (status_image != EIS_Normal)
-    {
-        std::cerr << "Error: cannot load DICOM image (" << DicomImage::getString(image->getStatus()) << ")" <<
-            std::endl;
-        delete image;
-        image = nullptr;
-        exit(-1);
-    }
-
+    auto image = cv::imread(filename, cv::IMREAD_GRAYSCALE);
     return image;
 }
 
@@ -43,16 +24,13 @@ void volumeManager::loadVolume(const std::string& folder_name)
 
     for (const auto& filename : filenames)
     {
-        DicomImage* image = this->loadDicomFile(filename);
-        if (image != nullptr)
-        {
-            volume_.push_back(image);
-        }
+        cv::Mat image = this->loadDicomFile(filename);
+        volume_.push_back(image);
         //std::cerr << "Image " << filename << " loaded" << std::endl;
     }
 
-    this->width_ = volume_[0]->getWidth();
-    this->height_ = volume_[0]->getHeight();
+    this->width_ = volume_[0].size().width;
+    this->height_ = volume_[0].size().height;
     this->depth_ = volume_.size();
 
     this->hierarchy_ = std::make_unique<QEBT>(this->width_ * this->height_ * this->depth_);
@@ -66,29 +44,24 @@ void volumeManager::createGraph()
 
     for (int z = 0; z < this->depth_; z++)
     {
-        auto image = (Uint16*)(this->volume_[z]->getOutputData(16));
-        Uint16* image_next;
+        auto image = this->volume_[z];
+        cv::Mat image_next;
         if (z + 1 < this->depth_)
         {
-            image_next = (Uint16*)(this->volume_[z + 1]->getOutputData(16));
+            image_next = this->volume_[z + 1];
         }
 
         for (int y = 0; y < this->height_; y++)
         {
             for (int x = 0; x < this->width_; x++)
             {
-                //Conver to 8bits and normalize
-                Uint8 pixel = (image[x + y * this->width_] - 31744) / 8;
-
-                if (pixel > 255)
-                {
-                    std::cerr << "Pixel out of 8bits range  value is : " << pixel << std::endl;
-                }
+                auto pixel = (int) image.at<uchar>(y, x);
 
                 if (x + 1 < this->width_)
                 {
                     // Element right
-                    Uint8 x_value = (image[(x + 1) + y * this->width_] - 31744) / 8;
+                    //Uint16 x_value = image[(x + 1) + y * this->width_];
+                    auto x_value = (int) image.at<uchar>(y, x + 1);
                     this->graph_->setWeight(index, std::abs(pixel - x_value));
                 }
                 else
@@ -100,7 +73,8 @@ void volumeManager::createGraph()
                 if (y + 1 < this->height_)
                 {
                     //Element below
-                    Uint8 y_value = (image[x + (y + 1) * this->width_] - 31744) / 8;
+                    //Uint16 y_value = image[x + (y + 1) * this->width_];
+                    auto y_value = (int) image.at<uchar>(y + 1, x);
                     this->graph_->setWeight(index, std::abs(pixel - y_value));
                 }
                 else
@@ -111,7 +85,8 @@ void volumeManager::createGraph()
                 if (z + 1 < this->depth_)
                 {
                     //Element in next slice
-                    Uint8 pixel_z_next = (image_next[x + y * this->width_] - 31744) / 8;
+                    //Uint16 pixel_z_next = image_next[x + y * this->width_];
+                    auto pixel_z_next = (int) image_next.at<uchar>(y, x);
                     this->graph_->setWeight(index, std::abs(pixel - pixel_z_next));
                 }
                 else
@@ -129,7 +104,7 @@ void volumeManager::createGraph()
     this->graph_->init_sortedEdges();
     std::cerr << "Graph sorted" << std::endl;
 
-    this->map_graph_mst_ = std::make_unique<std::vector<int>>(this->graph_->getNbEdge());
+    this->map_graph_mst_ = std::make_unique<std::vector<int>>(this->graph_->getNbEdge(),-1);
 }
 
 void volumeManager::createToyGraph()
@@ -275,11 +250,17 @@ void volumeManager::removeMarkers(std::vector<int>& markers, int nbMarkers)
     algorithms3D::removeMarker(std::ref(*this), markers, nbMarkers);
 }
 
+bool volumeManager::isInMStEdit(int edge)
+{
+    if(edge < 0)
+    {
+        return false;
+    }
+    return this->mstEdit_->at(edge);
+}
+
 
 volumeManager::~volumeManager()
 {
-    for (auto image : this->volume_)
-    {
-        delete image;
-    }
+
 }

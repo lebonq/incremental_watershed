@@ -4,6 +4,7 @@ import numpy as np
 from tqdm import tqdm
 import cv2 as cv
 
+
 def generate_random_position(volume):
     rand_x = np.random.randint(0, volume[0].shape[0])
     rand_y = np.random.randint(0, volume[0].shape[1])
@@ -75,9 +76,9 @@ for set in  tqdm(range(nb_batch)):
         while stop == False:
             rand_x, rand_y, rand_z = generate_random_position(volume_dilated)
             if volume_dilated[rand_z][rand_x, rand_y] == 0 and rand_x > 5 and rand_x < 507 and rand_y > 5 and rand_y < 507:
-                cv.circle(volume_marked[rand_z], (rand_x,rand_y), 5, (255, 255, 255), -1)
+                #cv.circle(volume_marked[rand_z], (rand_x,rand_y), 5, (255, 255, 255), -1)
                 #save as an image
-                cv.imwrite("marker_" + str(set) + "_" + str(id) + "_" + str(rand_z) + ".png", volume_marked[rand_z])
+                #cv.imwrite("marker_" + str(set) + "_" + str(id) + "_" + str(rand_z) + ".png", volume_marked[rand_z])
                 rand_pos_add3D_background[set][id] = (rand_x, rand_y, rand_z)
                 stop = True
 
@@ -107,15 +108,17 @@ for set in tqdm(range(nb_batch)):
                     rand_pos_add1D_background[set][id][cpt] = get_1D(x + i, y + j, z, volume)
                 cpt += 1
 
-#save 1D in a text file
+#save 1D in a text file, with 1 number = 1 line
 for set in range(nb_batch):
     file = open("markers_object_" + str(set) + ".txt", "w")
     for id in range(nb_marker):
-        file.write(str(rand_pos_add1D_object[set][id]) + "\n")
+        for num in rand_pos_add1D_object[set][id]:
+            file.write(str(num) + "\n")
     file.close()
 
 for set in range(nb_batch):
     file = open("markers_background_" + str(set) + ".txt", "w")
     for id in range(nb_marker):
-        file.write(str(rand_pos_add1D_background[set][id]) + "\n")
+        for num in rand_pos_add1D_background[set][id]:
+            file.write(str(num) + "\n")
     file.close()

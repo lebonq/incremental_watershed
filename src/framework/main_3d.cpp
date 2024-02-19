@@ -5,8 +5,39 @@
 #include "volumeManager.h"
 #include <chrono>
 
+std::vector<int> load_marker_from_txt(std::vector<std::string>& files_path)
+{
+    std::vector<int> markers;
+    for (auto file_path : files_path)
+    {
+        std::ifstream file(file_path);
+
+        if (file.is_open()) {
+            std::istream_iterator<std::string> fileIterator(file);
+            std::istream_iterator<std::string> endIterator;
+
+            while (fileIterator != endIterator) {
+                markers.push_back(std::stoi(*fileIterator));
+                ++fileIterator;
+            }
+
+            file.close();
+        }
+    }
+    return markers;
+}
+
 int main(int argc, char* argv[])
 {
+    std::vector<std::string> paths;
+    //do it in aloop
+    for (int i = 0; i < 29; i++)
+    {
+        paths.push_back("data_3d/markers_background_" + std::to_string(i) + ".txt");
+        paths.push_back("data_3d/markers_object_" + std::to_string(i) + ".txt");
+    }
+    auto markers = load_marker_from_txt(paths);
+
     auto volume_manager = new volumeManager();
 
     // Benchmark loadVolume
@@ -31,39 +62,7 @@ int main(int argc, char* argv[])
     diff = end-start;
     std::cout << "buildHierarchy took " << diff.count() << " seconds" << std::endl;
 
-
-    auto mst = volume_manager->getGraph().getMst();
-    auto mst_map = volume_manager->getMapGraphMst();
-    auto edges = volume_manager->getGraph().getEdges();
-
-    /*int cpt = 0;
-    for( auto edge : mst)
-    {
-
-        std::cout <<  "Edge weight " << edges[edge] << std::endl;
-    }
-
-    std::vector<int> markers = {4,6,7};
-    volume_manager->addMarkers(markers,markers.size());
-     auto segments = volume_manager->getSegments();
-
-    for(int i = 0; i < segments.size(); i++)
-    {
-        std::cout << "Segment " << i << " : " << segments[i] << std::endl;
-    }*/
-
-    std::srand(std::time(nullptr)); // use current time as seed for random generator
-    std::vector<int> randomNumbers;
-    int upperLimit = 512*512*260;
-
-
-    randomNumbers.push_back(0);
-    for(int i = 0; i < 100000; i++) {
-        randomNumbers.push_back(std::rand() % upperLimit); // generate random number between 0 and upperLimit
-    }
-
-    std::cout << "CAdd" << std::endl;
-    volume_manager->addMarkers(randomNumbers, randomNumbers.size());
+    volume_manager->addMarkers(markers, markers.size());
 
     //write the volume in 260 slices in files
     std::vector<cv::Mat> volume = volume_manager->getSegmentedVolume();

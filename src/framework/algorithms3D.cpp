@@ -19,7 +19,6 @@ std::tuple<int, int, int> algorithms3D::from1Dto3D(int p, int w, int h, int d)
 
 int algorithms3D::breadthFirstSearchLabel(volumeManager& vol, int tag, int p)
 {
-    std::cout << "in the BFS " << std::endl;
     std::vector<int> queue;
     queue.push_back(p);
     int count = 1;
@@ -29,8 +28,6 @@ int algorithms3D::breadthFirstSearchLabel(volumeManager& vol, int tag, int p)
     int wh = w * h;
 
     //print wich id of MST EDIT is true
-
-
     int v_1D, vRight_1D, vLeft_1D, vUp_1D, vDown_1D, vFoward_1D, vBackward_1D;
     std::tuple<int, int, int> v_3D;
     while (!queue.empty())
@@ -47,73 +44,78 @@ int algorithms3D::breadthFirstSearchLabel(volumeManager& vol, int tag, int p)
         vFoward_1D = v_1D + wh;
         vBackward_1D = v_1D - wh;
 
+
+        //Right
         if (std::get<0>(v_3D) + 1 < w)
         {
             //check if adjacent to v exist
-            if (vol.getMstEdit()[vol.getMapGraphMst()[3 * v_1D]] == true &&
+            if (vol.isInMStEdit(vol.getMapGraphMst()[3 * v_1D]) == true &&
                 vol.getSegments()[vRight_1D] != tag)
             {
                 //If yes we check if the edge is revealnt and present in MST
                 queue.push_back(vRight_1D);
-                //segments[vRight] = tag;
                 vol.modifySegments(vRight_1D, tag);
                 count++;
             }
         }
 
-        if (std::get<0>(v_3D)-1 > 0)
+        //left
+        if (std::get<0>(v_3D)-1 >= 0)
         {
-            if (vol.getMstEdit()[vol.getMapGraphMst()[3 * (v_1D - 1)]] == true && vol.getSegments()[vLeft_1D] != tag)
+            if (vol.isInMStEdit(vol.getMapGraphMst()[3 * (v_1D - 1)]) == true && vol.getSegments()[vLeft_1D] != tag)
             {
                 queue.push_back(vLeft_1D);
-                //segments[vLeft] = tag;
                 vol.modifySegments(vLeft_1D, tag);
                 count++;
             }
         }
 
+        //Down
         if (std::get<1>(v_3D) + 1 < h)
         {
-            if (vol.getMstEdit()[vol.getMapGraphMst()[3 * v_1D + 1]] == true && vol.getSegments()[vDown_1D] != tag)
+            if (vol.isInMStEdit(vol.getMapGraphMst()[3 * v_1D + 1]) == true && vol.getSegments()[vDown_1D] != tag)
             {
                 queue.push_back(vDown_1D);
-                //segments[vDown] = tag;
                 vol.modifySegments(vDown_1D, tag);
                 count++;
             }
         }
 
-
-        /*if (std::get<1>(v_3D) - 1 > 0)
+        //Up
+        if (std::get<1>(v_3D) - 1 >= 0)
         {
-            if (vol.getMstEdit()[vol.getMapGraphMst()[(v_1D - w) * 3 + 1]] == true && vol.getSegments()[vUp_1D] != tag)
+            if (vol.isInMStEdit(vol.getMapGraphMst()[(v_1D - w) * 3 + 1]) == true && vol.getSegments()[vUp_1D] != tag)
             {
                 queue.push_back(vUp_1D);
                 vol.modifySegments(vUp_1D, tag);
                 count++;
             }
-        }*/
+        }
 
+
+        //Foward
         if (std::get<2>(v_3D) + 1 < d)
         {
-            if (vol.getMstEdit()[vol.getMapGraphMst()[3 * v_1D + 2]] == true && vol.getSegments()[vFoward_1D] != tag)
+            if (vol.isInMStEdit(vol.getMapGraphMst()[3 * v_1D + 2]) == true && vol.getSegments()[vFoward_1D] != tag)
             {
                 queue.push_back(vFoward_1D);
                 vol.modifySegments(vFoward_1D, tag);
                 count++;
             }
         }
-        /*
-        if (std::get<2>(v_3D) - 1 > 0)
+
+        //backward
+        if (std::get<2>(v_3D) - 1 >= 0)
         {
-            if (vol.getMstEdit()[vol.getMapGraphMst()[(v_1D - (w * h)) * 3 + 2]] == true && vol.getSegments()[
+
+            if (vol.isInMStEdit(vol.getMapGraphMst()[(v_1D - w * h) * 3 + 2]) == true && vol.getSegments()[
                 vBackward_1D] != tag)
             {
                 queue.push_back(vBackward_1D);
                 vol.modifySegments(vBackward_1D, tag);
                 count++;
             }
-        }*/
+        }
     }
     return count;
 }
@@ -133,6 +135,8 @@ void algorithms3D::kruskal(graph& G, Q& Q, int w, int h, int* temp)
 
     // Loop over all possible pixel intensity values from 0 to 255.
     // This is done because the algorithm is processing the graph edges based on their weights,
+
+    int sum = 0;
 
     for (int j = 0; j < G.getHistSize(); j++)
     {
@@ -175,6 +179,8 @@ void algorithms3D::kruskal(graph& G, Q& Q, int w, int h, int* temp)
                 Q.makeUnion(cx, cy);
                 mst.push_back(edge); //add edge in mst
 
+                sum+=j;
+
                 temp[edge] = count; // Allow us to know where an edge is in the MST
                 count++;
             }
@@ -210,7 +216,6 @@ void algorithms3D::splitSegment(volumeManager& vol, std::vector<bool>& historyVi
             break;
         }
 
-        std::cout << "p1 : " << p1 << " p2 : " << p2 << std::endl;
 
         tag1 = vol.getSegments()[p1];
         tag2 = vol.getSegments()[p2];
@@ -221,7 +226,6 @@ void algorithms3D::splitSegment(volumeManager& vol, std::vector<bool>& historyVi
             vol.setTagCount(newTag + 1);
 
             vol.getSizePart()[newTag] = breadthFirstSearchLabel(vol, newTag, p2);
-            std::cout << "size of newTag : " << vol.getSizePart()[newTag] << std::endl;
             vol.getSizePart()[tag2] -= vol.getSizePart()[newTag];
 
             historyVisited[newTag] = true;
@@ -233,7 +237,6 @@ void algorithms3D::splitSegment(volumeManager& vol, std::vector<bool>& historyVi
             vol.setTagCount(newTag + 1);
 
             vol.getSizePart()[newTag] = breadthFirstSearchLabel(vol, newTag, p1);
-            std::cout << "size of newTag : " << vol.getSizePart()[newTag] << std::endl;
             vol.getSizePart()[tag1] -= vol.getSizePart()[newTag];
 
             historyVisited[newTag] = true;
