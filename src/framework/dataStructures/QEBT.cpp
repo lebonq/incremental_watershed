@@ -34,6 +34,12 @@ int QEBT::makeUnion(int q1, int q2) {
 
 }
 
-QEBT::~QEBT() {
+void QEBT::clean_memory()
+{
     delete[] root_;
+    this->qt.cleanMemory();
+}
+
+QEBT::~QEBT() {
+
 }

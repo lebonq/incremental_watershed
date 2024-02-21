@@ -27,6 +27,7 @@ public:
     int& getNbVertex() { return this->nbVertex_; }
     int& getNbEdge() { return this->nbEdge_; }
     const int getHistSize() const{ return this->histSize_; } // new member function for histogram size
+    void cleanMemory();
     std::vector<int>& getMst() { return this->mst_; }
     ~graph();
 };

@@ -57,7 +57,8 @@ void graph::init_sortedEdges() {
     delete[] count_local;
 }
 
-graph::~graph() {
+void graph::cleanMemory()
+{
     delete[] this->edges_;
     delete[] this->count_;
 
@@ -65,4 +66,14 @@ graph::~graph() {
         delete[] this->sortedEdges_[i];
     }
     delete[] this->sortedEdges_;
+}
+
+graph::~graph() {
+    /*delete[] this->edges_;
+    delete[] this->count_;
+
+    for (int i = 0; i < histSize_; i++) { // use histSize_ instead of 256
+        delete[] this->sortedEdges_[i];
+    }
+    delete[] this->sortedEdges_;*/
 }

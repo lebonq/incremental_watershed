@@ -18,10 +18,10 @@ namespace fs = std::filesystem;
 
 int main(int argc, char *argv[]) {
 
-    auto test_kruskal = cv::imread("data_3d/test_kruskal/test_kruskal.png", cv::IMREAD_GRAYSCALE);
-    imageManager kruskal_manager = imageManager("data_3d/test_kruskal/test_kruskal.png", test_kruskal);
+    auto test_kruskal = cv::imread("data/jo.png", cv::IMREAD_GRAYSCALE);
+    imageManager kruskal_manager = imageManager("data/jo.png", test_kruskal);
     kruskal_manager.init();
-    std::vector<int> markers = {0,12,24};
+    std::vector<int> markers = {0,18492};
     kruskal_manager.addMarkers(markers.data(),markers.size());
     algorithms::showSegmentation(kruskal_manager,"testkru.png");
 

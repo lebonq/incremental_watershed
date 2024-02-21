@@ -95,12 +95,10 @@ void volumeManager::createGraph()
             }
         }
     }
-    std::cerr << "Graph created" << std::endl;
-    std::cerr << "Graph has " << this->graph_->getNbVertex() << " vertex" << std::endl;
-    std::cerr << "Graph has " << this->graph_->getNbEdge() << " edges" << std::endl;
-    std::cerr << "Graph should have " << this->graph_->getNbVertex() - 1<< " edges in the MST" << std::endl;
+    std::cout << "Graph has " << this->graph_->getNbVertex() << " vertex" << std::endl;
+    std::cout << "Graph has " << this->graph_->getNbEdge() << " edges" << std::endl;
+    //std::cerr << "Graph should have " << this->graph_->getNbVertex() - 1<< " edges in the MST" << std::endl;
     this->graph_->init_sortedEdges();
-    std::cerr << "Graph sorted" << std::endl;
 
 }
 
@@ -165,12 +163,9 @@ void volumeManager::createToyGraph()
     this->graph_->setWeight(34, -1);
     this->graph_->setWeight(35, -1);
 
-    std::cerr << "Graph created" << std::endl;
-    std::cerr << "Graph has " << this->graph_->getNbVertex() << " vertex" << std::endl;
-    std::cerr << "Graph has " << this->graph_->getNbEdge() << " edges" << std::endl;
-    std::cerr << "Graph should have " << this->graph_->getNbVertex() - 1<< " edges in the MST" << std::endl;
+    std::cout << "Graph has " << this->graph_->getNbVertex() << " vertex" << std::endl;
+    std::cout << "Graph has " << this->graph_->getNbEdge() << " edges" << std::endl;
     this->graph_->init_sortedEdges();
-    std::cerr << "Graph sorted" << std::endl;
 }
 
 void volumeManager::buildHierarchy()
@@ -180,6 +175,8 @@ void volumeManager::buildHierarchy()
     algorithms3D::kruskal(*this->graph_, *this->hierarchy_, this->width_, this->height_, this->map_graph_mst_->data());
 
     this->initPostprocessStructure();
+    this->hierarchy_->clean_memory(); //delete uselesss data structure after the hierarchy is built
+    this->graph_->cleanMemory();
 }
 
 void volumeManager::initPostprocessStructure()
@@ -187,7 +184,6 @@ void volumeManager::initPostprocessStructure()
     this->isMarked_ = std::make_unique<std::vector<bool>>(this->graph_->getNbVertex(),false);
     this->segments_ = std::make_unique<std::vector<int>>(this->graph_->getNbVertex(),0);
     this->marks_ = std::make_unique<std::vector<int>>(this->hierarchy_->getQBT().getSize(),0);
-    std::cout << "Marks is of size : " << this->marks_->size() << std::endl;
     this->sizePart_ = std::make_unique<std::vector<int>>(this->graph_->getNbVertex(),0);
     this->sizePart_->at(0) = this->graph_->getNbVertex();
     this->ws_ = std::make_unique<std::vector<bool>>(this->hierarchy_->getQBT().getSize(),false);
