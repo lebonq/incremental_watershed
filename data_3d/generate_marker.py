@@ -4,6 +4,7 @@ import numpy as np
 from tqdm import tqdm
 import cv2 as cv
 
+np.random.seed(42)
 
 def generate_random_position(volume):
     rand_x = np.random.randint(0, volume[0].shape[0])
