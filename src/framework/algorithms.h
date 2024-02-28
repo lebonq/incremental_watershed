@@ -21,7 +21,9 @@ class algorithms {
 public:
     static void kruskal(graph& G,Q& Q, int w,int* temp);
     static int breadthFirstSearchLabel(imageManager& im, int tag, int p);
-    static void breadthFirstSearchLabel_optimised(imageManager& im, int* p, int* old_tag, bool* re_init, bool* re_init_c,std::condition_variable& finish, std::mutex& finish_m, bool* finish_b);
+    static void breadthFirstSearchLabel_optimised(imageManager& im, int* p, int* old_tag, bool* re_init, bool* re_init_c,
+        std::condition_variable& finish, std::mutex& finish_m, bool* finish_b,
+            std::condition_variable& start, std::mutex& start_m, bool* start_b);
     static void splitSegment(imageManager & im, bool* historyVisited,std::vector<int> queueEdges);
     static void splitSegment_optimised(imageManager & im, bool* historyVisited,std::vector<int> queueEdges);
     static void mergeSegment(int edge, imageManager & im);

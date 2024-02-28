@@ -25,7 +25,7 @@ int main(int argc, char *argv[]) {
     std::vector<double> time_NIW;
 
     const int nb_bench = 1;
-    const int nb_images = 2;
+    const int nb_images = 4;
 
     std::vector<std::string> images_name;
 
@@ -61,6 +61,8 @@ int main(int argc, char *argv[]) {
         double nb_pixel = img_4px.rows * img_4px.cols * 1.0;
         std::cout << "Number of pixel: " << nb_pixel << std::endl;
 
+        /*
+
         //===================== Generate data for DIFT ========================================
         std::cout << "Generate data for DIFT benchmark" << std::endl;
         auto img_gray_pgm = cv::imread(image_path, cv::IMREAD_GRAYSCALE);
@@ -82,7 +84,7 @@ int main(int argc, char *argv[]) {
         }
 
         //=========================== OPENCV IMPLEMENTATION ========================================
-        /*std::cout << "Benchmarking OpenCV implementation" << std::endl;
+        std::cout << "Benchmarking OpenCV implementation" << std::endl;
         for (int i = 0; i < nb_images; ++i) {
             double t_mean = 0;
             for (int j = 0; j < nb_bench; ++j) {
@@ -153,9 +155,10 @@ int main(int argc, char *argv[]) {
                 printf("Add set #%d : %g ns/px\n", i, (t_mean *1e9 / nb_bench)/nb_pixel);
                 printf("Add set #%d : %g ms\n", i, (t_mean *1000. / nb_bench));
             }
+
         }
 
-
+        /*
         //=========================== NIWS IMPLEMENTATION ========================================
         std::cout << "Benchmarking NIWS implementation" << std::endl;
 
@@ -194,7 +197,7 @@ int main(int argc, char *argv[]) {
         time_IW.clear();
         algorithms::vector_to_csv(time_NIW, std::to_string(idx_bench) + "_time_NIW.csv");
         time_NIW.clear();
-
+*/
         idx_bench++;
 
         //plt::named_plot("IWS", time_IW);
@@ -255,6 +258,7 @@ int main(int argc, char *argv[]) {
 
             int cpt = 0, seed, color;
             for (int i = 0; i < marker_image.rows; i++)
+            {
                 for (int j = 0; j < marker_image.cols; j++) {
                     color = (int) marker_image.at<unsigned char>(i, j);
                     if (color != 0) {
@@ -262,6 +266,7 @@ int main(int argc, char *argv[]) {
                     }
                     cpt++;
                 }
+            }
 
             cv::Mat wshed(marker_image.size(), CV_8UC3);
             cpt = 0;
@@ -306,11 +311,11 @@ int main(int argc, char *argv[]) {
 
             //Create an overlay over th WSHED transform
             cv::Mat cpy_over;
-            //imgColor.copyTo(cpy_over);
+            imgColor.copyTo(cpy_over);
 
-            //cpy_over = wshed * 0.5 + imgColor * 0.5;
+            cpy_over = wshed * 0.5 + imgColor * 0.5;
 
-            //imwrite(filename + "history/seg_step" + std::to_string(nb_change) + ".png",wshed);
+            imwrite(image_path + "history_test/seg_step" + std::to_string(img_n) + ".png",wshed);
             imwrite(image_path + "illustration/marker_step" + std::to_string(img_n) + ".jpg", imgColor);
 
             free(color_tab);

@@ -19,10 +19,15 @@ std::mutex finish_2_m;
 
 bool finish_2_b = false;
 
-std::condition_variable start;
-std::mutex start_m;
+std::condition_variable start_1;
+std::mutex start_1_m;
 
-bool start_b = false;
+bool start_1_b = false;
+
+std::condition_variable start_2;
+std::mutex start_2_m;
+
+bool start_2_b = false;
 
 std::atomic<bool> isInCriticalSection(false);
 
@@ -153,7 +158,9 @@ int algorithms::breadthFirstSearchLabel(imageManager& im, int tag, int p)
     return count;
 }
 
-void algorithms::breadthFirstSearchLabel_optimised(imageManager& im, int* p, int* old_tag, bool* re_init, bool* re_init_c, std::condition_variable& finish, std::mutex& finish_m, bool* finish_b)
+void algorithms::breadthFirstSearchLabel_optimised(imageManager& im, int* p, int* old_tag, bool* re_init, bool* re_init_c,
+    std::condition_variable& finish, std::mutex& finish_m, bool* finish_b,
+    std::condition_variable& start, std::mutex& start_m, bool* start_b)
 {
     std::vector<int> queue;
     std::vector<bool> explored(im.getGraph().getNbVertex(), false);
@@ -167,10 +174,15 @@ void algorithms::breadthFirstSearchLabel_optimised(imageManager& im, int* p, int
     while(split == true){
 
         {
-            std::unique_lock<std::mutex> lk(start_m);
-            start.wait(lk, []{return start_b == true;});
-            std::cout << "Thread " << *p << " started" << std::endl;
+            std::unique_lock<std::mutex> lk(finish_m);
+            finish.wait(lk, [finish_b,p]
+            {
+                return *finish_b == false;
+            });
+           // std::cout << "Thread " << *p << " started" << std::endl;
         }
+
+        if(split == false) return;
 
         queue.push_back(*p);
         explored[*p] = true;
@@ -236,15 +248,14 @@ void algorithms::breadthFirstSearchLabel_optimised(imageManager& im, int* p, int
 
             if(*re_init == true)
             {
-                std::cout << "Thread " << *p << " re_init" << std::endl;
+             //   std::cout << "Thread " << *p << " re_init" << std::endl;
                 break;
             }
-            std::cout << "Thread " << *p << " explore" << std::endl;
+            //std::cout << "Thread " << *p << " explore" << std::endl;
         }
 
         if(!isInCriticalSection.exchange(true))
         {
-            start_b = false;
             int* sizeSeg = im.sizePart_;
             int newTag = im.tagCount_;
             im.tagCount_++;
@@ -258,9 +269,9 @@ void algorithms::breadthFirstSearchLabel_optimised(imageManager& im, int* p, int
             {
                 im.segments_[vertex] = newTag;
             }
-            std::cout << "CC size of " << count << " created by " << *p << std::endl;
+           // std::cout << "CC size of " << count << " created by " << *p << std::endl;
             *re_init_c = true;
-            std::cout << "Thread " << *p << " critical section just said to reinit" << std::endl;
+           // std::cout << "Thread " << *p << " critical section just said to reinit" << std::endl;
         }
         //reset datastructure
         queue.clear();
@@ -269,11 +280,11 @@ void algorithms::breadthFirstSearchLabel_optimised(imageManager& im, int* p, int
         count = 1;
 
         {
-            std::lock_guard<std::mutex> lk_finish(finish_1_m);
+            std::lock_guard<std::mutex> lk_finish(finish_m);
             *finish_b = true;
         }
-        finish_1.notify_all();
-        std::cout << "Thread " << *p << " finished" << std::endl;
+        finish.notify_all();
+        //std::cout << "Thread " << *p << " finished" << std::endl;
     }
     
 }
@@ -363,8 +374,12 @@ void algorithms::splitSegment_optimised(imageManager& im, bool* historyVisited,
     int* seg = im.segments_;
     int* sizeSeg = im.sizePart_;
 
-    std::thread t1(breadthFirstSearchLabel_optimised,std::ref(im),&p1,&tag1,&re_init1,&re_init2,std::ref(finish_1),std::ref(finish_1_m),&finish_1_b);
-    std::thread t2(breadthFirstSearchLabel_optimised,std::ref(im),&p2,&tag2,&re_init2,&re_init1,std::ref(finish_2),std::ref(finish_2_m),&finish_2_b);
+    std::thread t1(breadthFirstSearchLabel_optimised,std::ref(im),&p1,&tag1,&re_init1,&re_init2,
+        std::ref(finish_1),std::ref(finish_1_m),&finish_1_b,
+        std::ref(start_1),std::ref(start_1_m),&start_1_b);
+    std::thread t2(breadthFirstSearchLabel_optimised,std::ref(im),&p2,&tag2,&re_init2,&re_init1,
+        std::ref(finish_2),std::ref(finish_2_m),&finish_2_b,
+        std::ref(start_2),std::ref(start_2_m),&start_2_b);
 
     for (int edge : queueEdges)
     {
@@ -386,27 +401,52 @@ void algorithms::splitSegment_optimised(imageManager& im, bool* historyVisited,
         tag1 = seg[p1];
         tag2 = seg[p2];
 
-        std::cout << "Thread 1 : " << p1 << " Thread 2 : " << p2 << std::endl;
+        int old_tag1 = tag1;
+        int old_tag2 = tag2;
 
-        std::cout << "Start both" << std::endl;
-        {
-            std::lock_guard<std::mutex> lk(start_m);
-            start_b = true;
-            start.notify_all();
+        //std::cout << "Thread 1 : " << p1 << " Thread 2 : " << p2 << std::endl;
+
+        //std::cout << "Start 1" << std::endl;
+        if(historyVisited[tag1] == false){
+            std::lock_guard<std::mutex> lk(finish_1_m);
+            finish_1_b = false;
+            finish_1.notify_all();
         }
-        std::cout << "Started both" << std::endl;
 
-        {
+        //std::cout << "Started 1" << std::endl;
+
+        //std::cout << "Start 2" << std::endl;
+        if (historyVisited[tag2] == false){
+            std::lock_guard<std::mutex> lk(finish_2_m);
+            finish_2_b = false;
+            finish_2.notify_all();
+        }
+
+        //std::cout << "Started 2" << std::endl;
+
+        if(historyVisited[tag1] == false){
             std::unique_lock<std::mutex> lk_finish_1(finish_1_m);
             finish_1.wait(lk_finish_1, []{return finish_1_b == true;});
         }
-        std::cout << "Thread 1 finished" << std::endl;
+        //std::cout << "Thread 1 finished" << std::endl;
 
-        {
-            std::unique_lock<std::mutex> lk_finish_2(finish_1_m);
+        if (historyVisited[tag2] == false){
+            std::unique_lock<std::mutex> lk_finish_2(finish_2_m);
             finish_2.wait(lk_finish_2, []{return finish_2_b == true;});
         }
-        std::cout << "Thread 2 finished" << std::endl;
+        //std::cout << "Thead 2 finished" << std::endl;
+
+        int new_tag1 = seg[p1];
+        int new_tag2 = seg[p2];
+
+        if(new_tag1 != old_tag1)
+        {
+            historyVisited[new_tag1] = true;
+        }
+        else if (new_tag2 != old_tag2)
+        {
+            historyVisited[new_tag2] = true;
+        }
 
         finish_1_b = false;
         finish_2_b = false;
@@ -414,8 +454,21 @@ void algorithms::splitSegment_optimised(imageManager& im, bool* historyVisited,
         re_init1 = false;
         re_init2 = false;
 
-        exit(231);
     }
+    split = false;
+
+    {
+        std::lock_guard<std::mutex> lk(finish_1_m);
+        finish_1_b = false;
+        finish_1.notify_all();
+    }
+    {
+        std::lock_guard<std::mutex> lk(finish_2_m);
+        finish_2_b = false;
+        finish_2.notify_all();
+    }
+    t1.join();
+    t2.join();
 
 }
 
