@@ -37,6 +37,7 @@ void imageManager::toGraph() {
 }
 
 void imageManager::init() {
+    auto start = std::chrono::high_resolution_clock::now();
     this->toGraph(); // Convert our image into a graph
     this->graph_.init_sortedEdges(); // Sort the edges of the graph
 
@@ -48,6 +49,11 @@ void imageManager::init() {
 
     this->nbVertex_ = this->graph_.getNbVertex();
     algorithms::kruskal(this->graph_, this->qbet_, this->width_, this->map_graph_mst); // Apply the kruskal algorithm
+
+
+    auto end = std::chrono::high_resolution_clock::now();
+std::chrono::duration<double> diff = end - start;
+    std::cout << "init took " << diff.count() << " seconds" << std::endl;
 
     this->qbet_.clean_memory();
     this->graph_.cleanMemory();

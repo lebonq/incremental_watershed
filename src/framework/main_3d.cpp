@@ -108,7 +108,7 @@ int main(int argc, char* argv[])
             object_time[j][i] = diff.count();  // Store time taken
             std::cout << GREEN << "addMarkers object" << RESET << "     step " << i << " took " << GREEN << diff.count()
                 << " seconds" << std::endl;
-            volume_manager->dualisation_segmentation(markers_object_batched[i], 255);
+
 
             //bencmark addMarkers background
             start = std::chrono::high_resolution_clock::now();
@@ -118,7 +118,18 @@ int main(int argc, char* argv[])
             background_time[j][i] = diff.count();  // Store time taken
             std::cout << RED << "addMarkers background" << RESET << " step " << i << " took " << RED << diff.count() <<
                 " seconds" << std::endl;
-            volume_manager->dualisation_segmentation(markers_background_batched[i], 0);
+
+        }
+        for(int batch = 0; batch < nb_markers; batch++)
+        {
+            volume_manager->dualisation_segmentation(markers_background_batched[batch], 2);
+            volume_manager->dualisation_segmentation(markers_object_batched[batch], 1);
+        }
+
+        auto volume = volume_manager->getSegmentedVolume();
+        for (int i = 0; i < volume.size(); i++)
+        {
+            cv::imwrite("test_volume/slice" + std::to_string(i) + ".png", volume[i]);
         }
 
         delete volume_manager;

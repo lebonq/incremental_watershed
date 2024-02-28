@@ -207,12 +207,23 @@ cv::Mat volumeManager::getSegmentedSlice(int z)
 
     img.at<cv::Vec3b>(0, 0) = cv::Vec3b(0, 0, 0);
 
-    int cpt = 0+(z*this->getWidth()*this->getHeight()), seed;
+    int cpt = 0+(z*this->getWidth()*this->getHeight());
     for (int y = 0; y < this->getHeight(); y++) {
         for (int x = 0; x < this->getWidth(); x++) {
             auto color = this->colorTab_->at(this->segments_->at(cpt));
             //srand(seed);
-            img.at<cv::Vec3b>(y, x) = cv::Vec3b(color, color/2, color/3);
+            if( color == 1)
+            {
+                img.at<cv::Vec3b>(x, y) = cv::Vec3b(0,255,0);
+            }
+            else if( color == 2)
+            {
+                img.at<cv::Vec3b>(x, y) = cv::Vec3b(0,0,0);
+            }
+            else
+            {
+                img.at<cv::Vec3b>(x, y) = cv::Vec3b(255,0,0);
+            }
             cpt++;
         }
     }
@@ -285,6 +296,8 @@ void volumeManager::dualisation_segmentation(std::vector<int> &markers, int valu
     {
         this->colorTab_->at(this->segments_->at(marker)) = value;
     }
+
+    std::cout << "Dualisation done" << std::endl;
 }
 
 bool volumeManager::isInMStEdit(int edge)
