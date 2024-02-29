@@ -52,6 +52,7 @@ for bench in tqdm.tqdm(range(0, 10),"Bench"):
     min_img = sitk.RegionalMinima(feature_img, backgroundValue=0, foregroundValue=1.0, fullyConnected=False,
                                   flatIsMinima=True)
     marker_img = sitk.ConnectedComponent(min_img)
+    marker_img *= 0  # Marker set to 0
 
     marker_1D_obj = np.array([])
     marker_1D_bkg = np.array([])
@@ -62,8 +63,6 @@ for bench in tqdm.tqdm(range(0, 10),"Bench"):
         marker_1D_bkg_l = np.loadtxt(patient + "/" + patient + "_liver_markers/markers_background_" + str(cpt) + ".txt")
         marker_1D_obj = np.concatenate((marker_1D_obj, marker_1D_obj_l))
         marker_1D_bkg = np.concatenate((marker_1D_bkg, marker_1D_bkg_l))
-
-        marker_img *= 0  # Marker set to 0
 
         for marker in marker_1D_obj:
             marker = int(marker)
@@ -76,7 +75,7 @@ for bench in tqdm.tqdm(range(0, 10),"Bench"):
         watershed_image = sitk.MorphologicalWatershedFromMarkers(input_image, marker_img)
         end_obj = time.time_ns()
 
-        #print("Time for watershed object marker: ", end_obj - start_obj)
+        print("Time for watershed object marker: ", end_obj - start_obj)
         time_obj.append(end_obj - start_obj)
 
         for marker in marker_1D_bkg:
@@ -90,7 +89,7 @@ for bench in tqdm.tqdm(range(0, 10),"Bench"):
         watershed_image = sitk.MorphologicalWatershedFromMarkers(input_image, marker_img)
         end_back = time.time_ns()
 
-        #print("Time for watershed background marker: ", end_back - start_back)
+        print("Time for watershed background marker: ", end_back - start_back)
         time_back.append(end_back - start_back)
 
         # Write the output image

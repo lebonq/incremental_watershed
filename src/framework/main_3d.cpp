@@ -47,6 +47,7 @@ int main(int argc, char* argv[])
 
     std::vector<std::vector<double>> object_time(nb_benchmarks, std::vector<double>(nb_markers));
     std::vector<std::vector<double>> background_time(nb_benchmarks, std::vector<double>(nb_markers));
+    std::vector<double> init_time(nb_benchmarks);
 
     std::string path_volume = argv[1];
     std::string path_markers = argv[2];
@@ -87,18 +88,15 @@ int main(int argc, char* argv[])
         // Benchmark createGraph
         start = std::chrono::high_resolution_clock::now();
         volume_manager->createGraph();
-        end = std::chrono::high_resolution_clock::now();
-        diff = end - start;
-        std::cout << "createGraph + sort took " << diff.count() << " seconds" << std::endl;
-
         // Benchmark buildHierarchy
-        start = std::chrono::high_resolution_clock::now();
         volume_manager->buildHierarchy();
         end = std::chrono::high_resolution_clock::now();
         diff = end - start;
-        std::cout << "buildHierarchy took " << diff.count() << " seconds" << std::endl;
+        std::cout << "Initialization took " << diff.count() << " seconds" << std::endl;
 
-        for (int i = 0; i < nb_markers; i++)
+        init_time[j] = diff.count();
+
+        /*for (int i = 0; i < nb_markers; i++)
         {
             //benchmark addMarkers object
             start = std::chrono::high_resolution_clock::now();
@@ -130,7 +128,7 @@ int main(int argc, char* argv[])
         for (int i = 0; i < volume.size(); i++)
         {
             cv::imwrite("test_volume/slice" + std::to_string(i) + ".png", volume[i]);
-        }
+        }*/
 
         delete volume_manager;
     }
@@ -164,4 +162,5 @@ int main(int argc, char* argv[])
     //save it ina file
     algorithms::vector_to_csv(avg_object_time, path_markers + "/avg_object_time.csv");
     algorithms::vector_to_csv(avg_background_time, path_markers + "/avg_background_time.csv");
+    algorithms::vector_to_csv(init_time, path_markers + "/init_time.csv");
 }
