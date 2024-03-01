@@ -21,6 +21,7 @@ public:
     void makeSet(int q) override;
     int makeUnion(int q1, int q2) override;
     QBT& getQBT(){return this->qbt;}
+    void clean_memory();
     ~QEBT();
 };
 

@@ -77,16 +77,16 @@ int algorithms::breadthFirstSearchLabel(imageManager &im, int tag, int p) {
         vDown = v + w;
 
         if (vRight < wh && (v + 1) % w != 0) {//check if adjacent to v exist
-            if (im.mstEdit_[im.indexTemp[2 * v]] == true &&
+            if (im.mstEdit_[im.map_graph_mst[2 * v]] == true &&
                 im.segments_[vRight] != tag) {//If yes we check if the edge is revealnt and present in MST
                 queue.push_back(vRight);
                 im.segments_[vRight] = tag;
                 count++;
-            }
+                }
         }
 
         if (vLeft >= 0 && v % w != 0) {
-            if (im.mstEdit_[im.indexTemp[(2 * v) - 2]] == true && im.segments_[vLeft] != tag) {
+            if (im.mstEdit_[im.map_graph_mst[(2 * v) - 2]] == true && im.segments_[vLeft] != tag) {
                 queue.push_back(vLeft);
                 im.segments_[vLeft] = tag;
                 count++;
@@ -94,7 +94,7 @@ int algorithms::breadthFirstSearchLabel(imageManager &im, int tag, int p) {
         }
 
         if (vDown < wh) {
-            if (im.mstEdit_[im.indexTemp[(2 * v) + 1]] == true && im.segments_[vDown] != tag) {
+            if (im.mstEdit_[im.map_graph_mst[(2 * v) + 1]] == true && im.segments_[vDown] != tag) {
                 queue.push_back(vDown);
                 im.segments_[vDown] = tag;
                 count++;
@@ -102,7 +102,7 @@ int algorithms::breadthFirstSearchLabel(imageManager &im, int tag, int p) {
         }
 
         if (vUp >= 0) {
-            if (im.mstEdit_[im.indexTemp[((2 * v) - (2 * w)) + 1]] == true && im.segments_[vUp] != tag) {
+            if (im.mstEdit_[im.map_graph_mst[((2 * v) - (2 * w)) + 1]] == true && im.segments_[vUp] != tag) {
                 queue.push_back(vUp);
                 im.segments_[vUp] = tag;
                 count++;
@@ -114,7 +114,7 @@ int algorithms::breadthFirstSearchLabel(imageManager &im, int tag, int p) {
 }
 
 void algorithms::splitSegment(imageManager &im, bool *historyVisited,
-                              std::vector<int> queueEdges) {
+                              std::vector<int>& queueEdges) {
     int p1, p2, tag1, tag2, newTag; //Are being erased
     int w = im.getWidth();
     int *seg = im.segments_;

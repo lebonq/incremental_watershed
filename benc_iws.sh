@@ -1,0 +1,5 @@
+/home/lebonq/CLionProjects/incremental_watershed/cmake-build-release/src/framework/incremental_watershed_framework-3d data_3d/patient_2/patient_2_png data_3d/patient_2/patient_2_liver_markers 30 10;
+/home/lebonq/CLionProjects/incremental_watershed/cmake-build-release/src/framework/incremental_watershed_framework-3d data_3d/patient_7/patient_7_png data_3d/patient_7/patient_7_liver_markers 30 10;
+/home/lebonq/CLionProjects/incremental_watershed/cmake-build-release/src/framework/incremental_watershed_framework-3d data_3d/patient_12/patient_12_png data_3d/patient_12/patient_12_liver_markers 30 10;
+/home/lebonq/CLionProjects/incremental_watershed/cmake-build-release/src/framework/incremental_watershed_framework-3d data_3d/patient_19/patient_19_png data_3d/patient_19/patient_19_liver_markers 30 10;
+/home/lebonq/CLionProjects/incremental_watershed/cmake-build-release/src/framework/incremental_watershed_framework-3d data_3d/patient_20/patient_20_png data_3d/patient_20/patient_20_liver_markers 30 10;

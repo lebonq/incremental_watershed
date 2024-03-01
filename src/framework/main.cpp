@@ -197,16 +197,16 @@ int main(int argc, char *argv[]) {
 
         idx_bench++;
 
-        /*plt::named_plot("IWS", time_IW);
+        plt::named_plot("IWS", time_IW);
         plt::named_plot("NIWS", time_NIW);
         plt::named_plot("OpenCV", time_meyer);
         plt::legend();
         plt::title("Average computational time in ms");
-        plt::show();*/
+        plt::show();
 
         //Illustration of every step/interaction
 
-        /*for (int img_n = 0; img_n < nb_images; img_n++) {
+        for (int img_n = 0; img_n < nb_images; img_n++) {
             auto imgGray = cv::imread(image_path, cv::IMREAD_GRAYSCALE);
             auto imgColor = cv::imread(image_path);
             int *color_tab;
@@ -314,7 +314,7 @@ int main(int argc, char *argv[]) {
             imwrite(image_path + "illustration/marker_step" + std::to_string(img_n) + ".jpg", imgColor);
 
             free(color_tab);
-        }*/
+        }
     }
 
     algorithms::vector_to_csv(time_init_IW, "time_init_IW.csv");

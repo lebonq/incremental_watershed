@@ -43,8 +43,14 @@ int QT::makeUnion(int q1, int q2) {
     return q2;
 }
 
-QT::~QT() {
+void QT::cleanMemory()
+{
     delete[] this->parent_;
     delete[] this->rank_;
+}
+
+QT::~QT() {
+    /*delete[] this->parent_;
+    delete[] this->rank_;*/
 
 }

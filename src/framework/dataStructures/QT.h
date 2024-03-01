@@ -17,6 +17,7 @@ public:
     int findCannonical(int q) override;
     void makeSet(int q) override;
     int makeUnion(int q1, int q2) override;
+    void cleanMemory();
     ~QT();
 };
 
