@@ -45,7 +45,7 @@ int main(int argc, char* argv[])
 
     int nb_markers = atoi(argv[3]);
 
-    std::vector<std::vector<double>> time(nb_benchmarks, std::vector<double>(nb_markers*2));
+    std::vector<std::vector<double>> time;
 
     std::vector<double> init_time(nb_benchmarks);
 
@@ -96,16 +96,18 @@ int main(int argc, char* argv[])
 
         init_time[j] = diff.count();
 
+        time.emplace_back();
+
+        std::vector<int> markers_concat;
         for (int i = 0; i < nb_markers * 2; i++)
         {
             int cpt_obj = 0;
             int cpt_bg = 0;
             //Create a vector of markers
-            std::vector<int> markers_concat;
+
 
             for (int step = 0; step <= i; step++)
             {
-
                 if (step % 2 == 0)
                 {
                     int cpt_batch = 0;
@@ -132,10 +134,10 @@ int main(int argc, char* argv[])
 
             //benchmark addMarkers
             start = std::chrono::high_resolution_clock::now();
-            volume_manager->addMarkers(markers_object_batched[cpt_obj]);
+            volume_manager->addMarkers(markers_concat);
             end = std::chrono::high_resolution_clock::now();
             diff = end - start;
-            time[j][i] = diff.count();
+            time[j].push_back(diff.count());
 
             std::cout << GREEN << "Add markers (object/bakcground) " << RESET << "     step " << i << " took " << GREEN << diff
                 .count()

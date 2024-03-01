@@ -261,20 +261,21 @@ std::vector<cv::Mat> volumeManager::getSegmentedVolume()
 void volumeManager::addMarkers(std::vector<int>& markers)
 {
     auto mark_it = markers.begin();
+
     while( mark_it != markers.end())
     {
-        if(this->isMarked_->at(*mark_it) == true)
+        auto value = *mark_it;
+        if(this->isMarked_->at(value) == true)
         {
             mark_it = markers.erase(mark_it);
             //std::cout << "Pixel already marked, it will be remove from the list" << std::endl;
         }
         else
         {
-            this->isMarked_->at(*mark_it) = true;
+            this->isMarked_->at(value) = true;
             mark_it++;
         }
     }
-
     algorithms3D::addMarker(std::ref(*this), markers);
 }
 
