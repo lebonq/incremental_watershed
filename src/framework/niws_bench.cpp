@@ -132,12 +132,12 @@ int main(int argc, char* argv[])
 
             //benchmark addMarkers
             start = std::chrono::high_resolution_clock::now();
-            //volume_manager->addMarkers(markers_object_batched[cpt_obj]);
+            volume_manager->addMarkers(markers_object_batched[cpt_obj]);
             end = std::chrono::high_resolution_clock::now();
             diff = end - start;
             time[j][i] = diff.count();
 
-            std::cout << GREEN << "addMarkers " << RESET << "     step " << i << " took " << GREEN << diff
+            std::cout << GREEN << "Add markers (object/bakcground) " << RESET << "     step " << i << " took " << GREEN << diff
                 .count()
                 << " seconds" << std::endl;
 
