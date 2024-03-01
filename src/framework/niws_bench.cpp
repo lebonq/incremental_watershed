@@ -45,8 +45,8 @@ int main(int argc, char* argv[])
 
     int nb_markers = atoi(argv[3]);
 
-    std::vector<std::vector<double>> object_time(nb_benchmarks, std::vector<double>(nb_markers));
-    std::vector<std::vector<double>> background_time(nb_benchmarks, std::vector<double>(nb_markers));
+    std::vector<std::vector<double>> time(nb_benchmarks, std::vector<double>(nb_markers*2));
+
     std::vector<double> init_time(nb_benchmarks);
 
     std::string path_volume = argv[1];
@@ -74,7 +74,7 @@ int main(int argc, char* argv[])
     //loop for benchmarking
     for (int j = 0; j < nb_benchmarks; j++)
     {
-        std::cout << YELLOW << "Benchmark " << j+1 << " / " << nb_benchmarks << std::endl;
+        std::cout << YELLOW << "Benchmark " << j + 1 << " / " << nb_benchmarks << std::endl;
         //Create the volumeManager
         auto volume_manager = new volumeManager();
 
@@ -96,29 +96,56 @@ int main(int argc, char* argv[])
 
         init_time[j] = diff.count();
 
-        /*for (int i = 0; i < nb_markers; i++)
+        for (int i = 0; i < nb_markers * 2; i++)
         {
-            //benchmark addMarkers object
+            int cpt_obj = 0;
+            int cpt_bg = 0;
+            //Create a vector of markers
+            std::vector<int> markers_concat;
+
+            for (int step = 0; step <= i; step++)
+            {
+
+                if (step % 2 == 0)
+                {
+                    int cpt_batch = 0;
+                    for(int idx_step = step*30*100; idx_step < (step+1)*30*100; idx_step++)
+                    {
+                        auto value = markers_object_batched[cpt_obj][cpt_batch];
+                        markers_concat.push_back(value);
+                        cpt_batch++;
+                    }
+                    cpt_obj++;
+                }
+                else
+                {
+                    int cpt_batch = 0;
+                    for(int idx_step = step*30*100; idx_step < (step+1)*30*100; idx_step++)
+                    {
+                        auto value = markers_background_batched[cpt_bg][cpt_batch];
+                        markers_concat.push_back(value);
+                        cpt_batch++;
+                    }
+                    cpt_bg++;
+                }
+            }
+
+            //benchmark addMarkers
             start = std::chrono::high_resolution_clock::now();
-            volume_manager->addMarkers(markers_object_batched[i]);
+            //volume_manager->addMarkers(markers_object_batched[cpt_obj]);
             end = std::chrono::high_resolution_clock::now();
             diff = end - start;
-            object_time[j][i] = diff.count();  // Store time taken
-            std::cout << GREEN << "addMarkers object" << RESET << "     step " << i << " took " << GREEN << diff.count()
+            time[j][i] = diff.count();
+
+            std::cout << GREEN << "addMarkers " << RESET << "     step " << i << " took " << GREEN << diff
+                .count()
                 << " seconds" << std::endl;
 
-
-            //bencmark addMarkers background
-            start = std::chrono::high_resolution_clock::now();
-            volume_manager->addMarkers(markers_background_batched[i]);
-            end = std::chrono::high_resolution_clock::now();
-            diff = end - start;
-            background_time[j][i] = diff.count();  // Store time taken
-            std::cout << RED << "addMarkers background" << RESET << " step " << i << " took " << RED << diff.count() <<
-                " seconds" << std::endl;
-
+            volume_manager->resetPostprocessStructure();
+            markers_concat.clear();
         }
-        for(int batch = 0; batch < nb_markers; batch++)
+
+        for (int batch = 0; batch < nb_markers; batch++)
         {
             volume_manager->dualisation_segmentation(markers_background_batched[batch], 2);
             volume_manager->dualisation_segmentation(markers_object_batched[batch], 1);
@@ -128,39 +155,27 @@ int main(int argc, char* argv[])
         for (int i = 0; i < volume.size(); i++)
         {
             cv::imwrite("test_volume/slice" + std::to_string(i) + ".png", volume[i]);
-        }*/
+        }
 
         delete volume_manager;
     }
 
     // After the benchmarking loop, calculate average time for each step
-    std::vector<double> avg_object_time(nb_markers);
-    std::vector<double> avg_background_time(nb_markers);
+    std::vector<double> avg_time(nb_markers*2);
 
     for (int i = 0; i < nb_markers; i++)
     {
-        double sum_object_time = 0;
-        double sum_background_time = 0;
+        double sum_time = 0;
 
         for (int j = 0; j < nb_benchmarks; j++)
         {
-            sum_object_time += object_time[j][i];
-            sum_background_time += background_time[j][i];
+            sum_time += time[j][i];
         }
+        avg_time[i] = sum_time / nb_benchmarks;
 
-        avg_object_time[i] = sum_object_time / nb_benchmarks;
-        avg_background_time[i] = sum_background_time / nb_benchmarks;
-    }
-
-    // Print average time for each step
-    for (int i = 0; i < nb_markers; i++)
-    {
-        std::cout << "Average time for object step " << i << ": " << avg_object_time[i] << " seconds" << std::endl;
-        std::cout << "Average time for background step " << i << ": " << avg_background_time[i] << " seconds" << std::endl;
     }
 
     //save it ina file
-    algorithms::vector_to_csv(avg_object_time, path_markers + "/avg_object_time.csv");
-    algorithms::vector_to_csv(avg_background_time, path_markers + "/avg_background_time.csv");
-    algorithms::vector_to_csv(init_time, path_markers + "/init_time.csv");
+    algorithms::vector_to_csv(avg_time, path_markers + "/avg_time_niws.csv");
+    algorithms::vector_to_csv(init_time, path_markers + "/init_time_niws.csv");
 }

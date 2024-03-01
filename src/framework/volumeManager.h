@@ -28,6 +28,7 @@ private:
     std::unique_ptr<graph> graph_;
     std::unique_ptr<QEBT> hierarchy_;
     std::unique_ptr<std::vector<int>>  map_graph_mst_;
+
     std::unique_ptr<std::vector<int>> segments_; //Label for each vertex
     std::unique_ptr<std::vector<int>> marks_; //visitCount in the paper
     std::unique_ptr<std::vector<int>> sizePart_; //Size of each segment
@@ -45,6 +46,7 @@ public:
     void createToyGraph();
     void buildHierarchy();
     void initPostprocessStructure();
+    void resetPostprocessStructure();
     cv::Mat getSegmentedSlice(int z);
     std::vector<cv::Mat> getSegmentedVolume();
 

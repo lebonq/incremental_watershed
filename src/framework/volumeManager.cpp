@@ -191,6 +191,19 @@ void volumeManager::initPostprocessStructure()
     this->colorTab_ = std::make_unique<std::vector<int>>(this->graph_->getNbVertex()*2, 0);
 
 }
+
+void volumeManager::resetPostprocessStructure()
+{
+    this->isMarked_->clear();
+    this->segments_->clear();
+    this->marks_->clear();
+    this->sizePart_->clear();
+    this->ws_->clear();
+    this->mstEdit_->clear();
+    this->colorTab_->clear();
+    tagCount_ = 1;
+    this->initPostprocessStructure();
+}
 int volumeManager::getEdge(int n)
 {
     if (n < this->graph_->getNbVertex()) {
