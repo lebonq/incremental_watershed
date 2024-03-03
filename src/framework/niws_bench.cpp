@@ -165,7 +165,7 @@ int main(int argc, char* argv[])
     // After the benchmarking loop, calculate average time for each step
     std::vector<double> avg_time(nb_markers*2);
 
-    for (int i = 0; i < nb_markers; i++)
+    for (int i = 0; i < nb_markers*2; i++)
     {
         double sum_time = 0;
 

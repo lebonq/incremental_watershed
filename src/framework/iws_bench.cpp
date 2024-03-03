@@ -162,5 +162,5 @@ int main(int argc, char* argv[])
     //save it ina file
     algorithms::vector_to_csv(avg_object_time, path_markers + "/avg_object_time_iws.csv");
     algorithms::vector_to_csv(avg_background_time, path_markers + "/avg_background_time_iws.csv");
-    algorithms::vector_to_csv(init_time, path_markers + "/init_time.csv");
+    algorithms::vector_to_csv(init_time, path_markers + "/init_time_iws.csv");
 }

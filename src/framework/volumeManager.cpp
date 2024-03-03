@@ -310,8 +310,6 @@ void volumeManager::dualisation_segmentation(std::vector<int> &markers, int valu
     {
         this->colorTab_->at(this->segments_->at(marker)) = value;
     }
-
-    std::cout << "Dualisation done" << std::endl;
 }
 
 bool volumeManager::isInMStEdit(int edge)
