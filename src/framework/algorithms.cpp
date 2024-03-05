@@ -158,9 +158,11 @@ int algorithms::breadthFirstSearchLabel(imageManager& im, int tag, int p)
     return count;
 }
 
-void algorithms::breadthFirstSearchLabel_optimised(imageManager& im, int* p, int* old_tag, bool* re_init, bool* re_init_c,
-    std::condition_variable& finish, std::mutex& finish_m, bool* finish_b,
-    std::condition_variable& start, std::mutex& start_m, bool* start_b)
+void algorithms::breadthFirstSearchLabel_optimised(imageManager& im, int* p, int* old_tag, bool* re_init,
+                                                   bool* re_init_c,
+                                                   std::condition_variable& finish, std::mutex& finish_m,
+                                                   bool* finish_b,
+                                                   std::condition_variable& start, std::mutex& start_m, bool* start_b)
 {
     std::vector<int> queue;
     std::vector<bool> explored(im.getGraph().getNbVertex(), false);
@@ -171,18 +173,18 @@ void algorithms::breadthFirstSearchLabel_optimised(imageManager& im, int* p, int
     int const wh = w * h;
     int count = 1;
 
-    while(split == true){
-
+    while (split == true)
+    {
         {
             std::unique_lock<std::mutex> lk(finish_m);
             finish.wait(lk, [finish_b,p]
             {
                 return *finish_b == false;
             });
-           // std::cout << "Thread " << *p << " started" << std::endl;
+            // std::cout << "Thread " << *p << " started" << std::endl;
         }
 
-        if(split == false) return;
+        if (split == false) return;
 
         queue.push_back(*p);
         explored[*p] = true;
@@ -191,7 +193,6 @@ void algorithms::breadthFirstSearchLabel_optimised(imageManager& im, int* p, int
         int v, vRight, vLeft, vUp, vDown;
         while (!queue.empty())
         {
-
             v = queue.back();
             queue.pop_back();
 
@@ -246,22 +247,22 @@ void algorithms::breadthFirstSearchLabel_optimised(imageManager& im, int* p, int
                 }
             }
 
-            if(*re_init == true)
+            if (*re_init == true)
             {
-             //   std::cout << "Thread " << *p << " re_init" << std::endl;
+                //   std::cout << "Thread " << *p << " re_init" << std::endl;
                 break;
             }
             //std::cout << "Thread " << *p << " explore" << std::endl;
         }
 
-        if(!isInCriticalSection.exchange(true))
+        if (!isInCriticalSection.exchange(true))
         {
             int* sizeSeg = im.sizePart_;
             int newTag = im.tagCount_;
             im.tagCount_++;
 
-            sizeSeg[newTag] = count;//breadthFirstSearchLabel(im, newTag, p);
-            sizeSeg[*old_tag] -= count;//sizeSeg[newTag];
+            sizeSeg[newTag] = count; //breadthFirstSearchLabel(im, newTag, p);
+            sizeSeg[*old_tag] -= count; //sizeSeg[newTag];
 
             //Update the CC mapping
 
@@ -269,9 +270,9 @@ void algorithms::breadthFirstSearchLabel_optimised(imageManager& im, int* p, int
             {
                 im.segments_[vertex] = newTag;
             }
-           // std::cout << "CC size of " << count << " created by " << *p << std::endl;
+            // std::cout << "CC size of " << count << " created by " << *p << std::endl;
             *re_init_c = true;
-           // std::cout << "Thread " << *p << " critical section just said to reinit" << std::endl;
+            // std::cout << "Thread " << *p << " critical section just said to reinit" << std::endl;
         }
         //reset datastructure
         queue.clear();
@@ -286,8 +287,87 @@ void algorithms::breadthFirstSearchLabel_optimised(imageManager& im, int* p, int
         finish.notify_all();
         //std::cout << "Thread " << *p << " finished" << std::endl;
     }
-    
 }
+
+int algorithms::breadthFirstSearchLabel_v2(imageManager& im, int* p, int* buffer, int* n)
+{
+    std::vector<int> queue;
+    std::vector explored(im.getGraph().getNbVertex(), false);
+    queue.push_back(*p);
+    explored[*p] = true;
+    buffer[*n] = *p;
+    *n += 1;
+    int count = 1;
+    int w = im.getWidth();
+    int h = im.getHeight();
+    int wh = w * h;
+
+
+    int v, vRight, vLeft, vUp, vDown;
+    while (!queue.empty())
+    {
+        v = queue.back();
+        queue.pop_back();
+
+        vRight = v + 1;
+        vLeft = v - 1;
+        vUp = v - w;
+        vDown = v + w;
+
+        if (vRight < wh && (v + 1) % w != 0)
+        {
+            //check if adjacent to v exist
+            if (im.mstEdit_[im.map_graph_mst[2 * v]] == true &&
+                explored[vRight] != true)
+            {
+                //If yes we check if the edge is revealnt and present in MST
+                queue.push_back(vRight);
+                explored[vRight] = true;
+                buffer[*n] = vRight;
+                *n += 1;
+                count++;
+            }
+        }
+
+        if (vLeft >= 0 && v % w != 0)
+        {
+            if (im.mstEdit_[im.map_graph_mst[(2 * v) - 2]] == true && explored[vLeft] != true)
+            {
+                queue.push_back(vLeft);
+                explored[v] = true;
+                buffer[*n] = vLeft;
+                *n += 1;
+                count++;
+            }
+        }
+
+        if (vDown < wh)
+        {
+            if (im.mstEdit_[im.map_graph_mst[(2 * v) + 1]] == true && explored[vDown] != true)
+            {
+                queue.push_back(vDown);
+                explored[vDown] = true;
+                buffer[*n] = vDown;
+                *n += 1;
+                count++;
+            }
+        }
+
+        if (vUp >= 0)
+        {
+            if (im.mstEdit_[im.map_graph_mst[((2 * v) - (2 * w)) + 1]] == true && explored[vUp] != true)
+            {
+                queue.push_back(vUp);
+                explored[vUp] = true;
+                buffer[*n] = vUp;
+                *n += 1;
+                count++;
+            }
+        }
+    }
+    return count;
+}
+
 
 void algorithms::splitSegment(imageManager& im, bool* historyVisited,
                               std::vector<int> queueEdges)
@@ -374,12 +454,12 @@ void algorithms::splitSegment_optimised(imageManager& im, bool* historyVisited,
     int* seg = im.segments_;
     int* sizeSeg = im.sizePart_;
 
-    std::thread t1(breadthFirstSearchLabel_optimised,std::ref(im),&p1,&tag1,&re_init1,&re_init2,
-        std::ref(finish_1),std::ref(finish_1_m),&finish_1_b,
-        std::ref(start_1),std::ref(start_1_m),&start_1_b);
-    std::thread t2(breadthFirstSearchLabel_optimised,std::ref(im),&p2,&tag2,&re_init2,&re_init1,
-        std::ref(finish_2),std::ref(finish_2_m),&finish_2_b,
-        std::ref(start_2),std::ref(start_2_m),&start_2_b);
+    std::thread t1(breadthFirstSearchLabel_optimised, std::ref(im), &p1, &tag1, &re_init1, &re_init2,
+                   std::ref(finish_1), std::ref(finish_1_m), &finish_1_b,
+                   std::ref(start_1), std::ref(start_1_m), &start_1_b);
+    std::thread t2(breadthFirstSearchLabel_optimised, std::ref(im), &p2, &tag2, &re_init2, &re_init1,
+                   std::ref(finish_2), std::ref(finish_2_m), &finish_2_b,
+                   std::ref(start_2), std::ref(start_2_m), &start_2_b);
 
     for (int edge : queueEdges)
     {
@@ -407,7 +487,8 @@ void algorithms::splitSegment_optimised(imageManager& im, bool* historyVisited,
         //std::cout << "Thread 1 : " << p1 << " Thread 2 : " << p2 << std::endl;
 
         //std::cout << "Start 1" << std::endl;
-        if(historyVisited[tag1] == false){
+        if (historyVisited[tag1] == false)
+        {
             std::lock_guard<std::mutex> lk(finish_1_m);
             finish_1_b = false;
             finish_1.notify_all();
@@ -416,7 +497,8 @@ void algorithms::splitSegment_optimised(imageManager& im, bool* historyVisited,
         //std::cout << "Started 1" << std::endl;
 
         //std::cout << "Start 2" << std::endl;
-        if (historyVisited[tag2] == false){
+        if (historyVisited[tag2] == false)
+        {
             std::lock_guard<std::mutex> lk(finish_2_m);
             finish_2_b = false;
             finish_2.notify_all();
@@ -424,22 +506,24 @@ void algorithms::splitSegment_optimised(imageManager& im, bool* historyVisited,
 
         //std::cout << "Started 2" << std::endl;
 
-        if(historyVisited[tag1] == false){
+        if (historyVisited[tag1] == false)
+        {
             std::unique_lock<std::mutex> lk_finish_1(finish_1_m);
-            finish_1.wait(lk_finish_1, []{return finish_1_b == true;});
+            finish_1.wait(lk_finish_1, [] { return finish_1_b == true; });
         }
         //std::cout << "Thread 1 finished" << std::endl;
 
-        if (historyVisited[tag2] == false){
+        if (historyVisited[tag2] == false)
+        {
             std::unique_lock<std::mutex> lk_finish_2(finish_2_m);
-            finish_2.wait(lk_finish_2, []{return finish_2_b == true;});
+            finish_2.wait(lk_finish_2, [] { return finish_2_b == true; });
         }
         //std::cout << "Thead 2 finished" << std::endl;
 
         int new_tag1 = seg[p1];
         int new_tag2 = seg[p2];
 
-        if(new_tag1 != old_tag1)
+        if (new_tag1 != old_tag1)
         {
             historyVisited[new_tag1] = true;
         }
@@ -453,7 +537,6 @@ void algorithms::splitSegment_optimised(imageManager& im, bool* historyVisited,
 
         re_init1 = false;
         re_init2 = false;
-
     }
     split = false;
 
@@ -469,6 +552,122 @@ void algorithms::splitSegment_optimised(imageManager& im, bool* historyVisited,
     }
     t1.join();
     t2.join();
+}
+
+std::tuple<int, int> algorithms::edge_to_vertices(const int edge, const int w)
+{
+    int p1, p2;
+    if (((edge) & (1 << (0))) == 1)
+    {
+        p1 = edge / 2;
+        p2 = (edge / 2) + w;
+    }
+    else
+    {
+        p1 = (edge + 1) / 2;
+        p2 = ((edge + 1) / 2) + 1;
+    }
+
+    return std::make_tuple(p1, p2);
+}
+
+void algorithms::splitSegment_optimised_v2(imageManager& im, bool* historyVisited,
+                                           std::vector<int> queueEdges)
+{
+
+    int nb_t = 6;
+    //Creating buffers for thread
+    std::vector<std::vector<int>> buffer(nb_t);
+    //Vector has to be initialized with the size of the buffer
+    for (int i = 0; i < nb_t; i++)
+    {
+        buffer[i].resize(im.getGraph().getNbVertex());
+    }
+
+    int* idx_buffer = new int[nb_t]; //nb of value in a buffer
+    memset(idx_buffer, 0, nb_t * sizeof(int));
+
+    std::vector<int> vertices;
+
+    int tag_max = im.tagCount_;
+    std::vector<bool> is_keeped(tag_max, false);
+
+    //Building the vertices array
+    for (auto edge : queueEdges)
+    {
+        int p1, p2;
+        std::tie(p1, p2) = edge_to_vertices(edge, im.getWidth());
+        vertices.push_back(p1);
+        vertices.push_back(p2);
+    }
+
+
+    int idx_vertices = 0;
+    int idx_v_thread = 0;
+    std::vector<int> to_explore(nb_t, -1);
+
+    while (idx_vertices < vertices.size())//we stop once all the vertices have been explored
+    {
+        //Selection of the nb_t vetices we are goign to explore
+        while (idx_vertices < vertices.size() && idx_v_thread < nb_t)
+        {
+            int tag = im.segments_[vertices[idx_vertices]];
+            //Check if the current lable as already bene chose by a CC
+            if (tag < tag_max)
+            {
+                if (is_keeped[tag] == false)
+                {
+                    is_keeped[tag] = true;
+                }
+                else
+                {
+                    //adge vertex in queue
+                    to_explore[idx_v_thread] = vertices[idx_vertices];
+                    idx_v_thread++;
+                }
+            }
+            else
+            {
+                //add vertex in queue
+                to_explore[idx_v_thread] = vertices[idx_vertices];
+                idx_v_thread++;
+            }
+            idx_vertices++;
+        }
+
+        auto tets = buffer[0].data();
+
+        for(int run = 0; run < nb_t; run++)
+        {
+            breadthFirstSearchLabel_v2(im, &to_explore[run], buffer[run].data(), &idx_buffer[run]);
+        }
+
+        //Labeling the different CC
+        for (int t = 0; t < nb_t; t++)
+        {
+            int oldTag = im.segments_[to_explore[t]];
+            if (oldTag < tag_max) //If the CC has already been label we don't need to do anything
+            {
+                int newTag = im.tagCount_;
+                im.tagCount_++;
+                int count = 0;
+                for (int i = 0; i < idx_buffer[t]; i++)
+                {
+                    int vertex = buffer[t][i];
+                    im.segments_[vertex] = newTag;
+                    count++;
+                }
+                im.sizePart_[newTag] = count;
+                im.sizePart_[oldTag] -= count;
+            }
+        }
+
+        memset(idx_buffer, 0, nb_t * sizeof(int)); //Empty the buffer arrays
+        idx_v_thread = 0;
+    }
+
+    //Clean memory
+    delete[] idx_buffer;
 
 }
 
@@ -581,7 +780,7 @@ void algorithms::addMarker(imageManager& im, int* markers, int nbMarkers)
         }
     }
 
-    splitSegment_optimised(im, historyVisited, queueEdges);
+    splitSegment(im, historyVisited, queueEdges);
 
     delete[] historyVisited;
 #ifdef PIXELS_COUNT
