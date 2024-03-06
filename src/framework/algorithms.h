@@ -24,7 +24,8 @@ public:
     static void breadthFirstSearchLabel_optimised(imageManager& im, int* p, int* old_tag, bool* re_init, bool* re_init_c,
         std::condition_variable& finish, std::mutex& finish_m, bool* finish_b,
             std::condition_variable& start, std::mutex& start_m, bool* start_b);
-    static int breadthFirstSearchLabel_v2(imageManager& im, int * p, int* buffer, int * n);
+    static void breadthFirstSearchLabel_v2(imageManager& im, int* p, int* buffer, int* n,std::condition_variable& finish, std::mutex& finish_m, bool* finish_b);
+    static int breadthFirstSearchLabel_v2_seq(imageManager& im, int* p, int* buffer, int* n);
     static void splitSegment(imageManager & im, bool* historyVisited,std::vector<int> queueEdges);
     static void splitSegment_optimised(imageManager & im, bool* historyVisited,std::vector<int> queueEdges);
     static void splitSegment_optimised_v2(imageManager & im, bool* historyVisited,std::vector<int> queueEdges);

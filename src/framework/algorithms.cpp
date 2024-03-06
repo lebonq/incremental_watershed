@@ -12,17 +12,22 @@ bool re_init2 = false;
 std::condition_variable finish_1;
 std::mutex finish_1_m;
 
-bool finish_1_b = false;
+bool finish_1_b = true;
 
 std::condition_variable finish_2;
 std::mutex finish_2_m;
 
-bool finish_2_b = false;
+bool finish_2_b = true;
+
+std::condition_variable start;
+std::mutex start_m;
+
+bool start_b = false;
 
 std::condition_variable start_1;
 std::mutex start_1_m;
 
-bool start_1_b = false;
+bool start_1_b = true;
 
 std::condition_variable start_2;
 std::mutex start_2_m;
@@ -289,7 +294,120 @@ void algorithms::breadthFirstSearchLabel_optimised(imageManager& im, int* p, int
     }
 }
 
-int algorithms::breadthFirstSearchLabel_v2(imageManager& im, int* p, int* buffer, int* n)
+void algorithms::breadthFirstSearchLabel_v2(imageManager& im, int* p, int* buffer, int* n,std::condition_variable& finish, std::mutex& finish_m, bool * finish_b)
+{
+    std::vector<int> queue;
+    std::vector explored(im.getGraph().getNbVertex(), false);
+    queue.push_back(*p);
+    explored[*p] = true;
+    buffer[*n] = *p;
+    *n += 1;
+    int w = im.getWidth();
+    int h = im.getHeight();
+    int wh = w * h;
+
+    int v, vRight, vLeft, vUp, vDown;
+
+    while (split == true)
+    {
+
+        //Lock wait for reset
+        {
+            std::unique_lock<std::mutex> lk(finish_m);
+            finish.wait(lk, [finish_b]
+            {
+                return *finish_b == false;
+            });
+        }
+
+        //Lock wait for start
+
+        {
+            std::unique_lock<std::mutex> lk(start_m);
+            start.wait(lk, []
+            {
+                return start_b == true;
+            });
+        }
+
+        //Check if split is == false
+        if(split == false) return;
+
+        while (!queue.empty())
+        {
+            v = queue.back();
+            queue.pop_back();
+
+            vRight = v + 1;
+            vLeft = v - 1;
+            vUp = v - w;
+            vDown = v + w;
+
+            if (vRight < wh && (v + 1) % w != 0)
+            {
+                //check if adjacent to v exist
+                if (im.mstEdit_[im.map_graph_mst[2 * v]] == true &&
+                    explored[vRight] != true)
+                {
+                    //If yes we check if the edge is revealnt and present in MST
+                    queue.push_back(vRight);
+                    explored[vRight] = true;
+                    buffer[*n] = vRight;
+                    *n += 1;
+                }
+            }
+
+            if (vLeft >= 0 && v % w != 0)
+            {
+                if (im.mstEdit_[im.map_graph_mst[(2 * v) - 2]] == true && explored[vLeft] != true)
+                {
+                    queue.push_back(vLeft);
+                    explored[v] = true;
+                    buffer[*n] = vLeft;
+                    *n += 1;
+                }
+            }
+
+            if (vDown < wh)
+            {
+                if (im.mstEdit_[im.map_graph_mst[(2 * v) + 1]] == true && explored[vDown] != true)
+                {
+                    queue.push_back(vDown);
+                    explored[vDown] = true;
+                    buffer[*n] = vDown;
+                    *n += 1;
+                }
+            }
+
+            if (vUp >= 0)
+            {
+                if (im.mstEdit_[im.map_graph_mst[((2 * v) - (2 * w)) + 1]] == true && explored[vUp] != true)
+                {
+                    queue.push_back(vUp);
+                    explored[vUp] = true;
+                    buffer[*n] = vUp;
+                    *n += 1;
+                }
+            }
+        }
+
+        //Said that the thread finished
+        {
+            std::lock_guard<std::mutex> lk(finish_m);
+            *finish_b = true;
+            finish.notify_all();
+        }
+
+        //Reset data structure
+        queue.clear();
+        explored.clear();
+        std::fill(explored.begin(), explored.end(), false);
+
+    }
+    return;
+}
+
+int algorithms::breadthFirstSearchLabel_v2_seq(imageManager& im, int* p, int* buffer, int* n)
 {
     std::vector<int> queue;
     std::vector explored(im.getGraph().getNbVertex(), false);
@@ -367,6 +485,7 @@ int algorithms::breadthFirstSearchLabel_v2(imageManager& im, int* p, int* buffer
     }
     return count;
 }
+
 
 
 void algorithms::splitSegment(imageManager& im, bool* historyVisited,
@@ -574,8 +693,12 @@ std::tuple<int, int> algorithms::edge_to_vertices(const int edge, const int w)
 void algorithms::splitSegment_optimised_v2(imageManager& im, bool* historyVisited,
                                            std::vector<int> queueEdges)
 {
+    split = true;
+    int nb_t = 2;
 
-    int nb_t = 6;
+    //Creating threads
+    std::vector<std::thread> threads(nb_t);
+
     //Creating buffers for thread
     std::vector<std::vector<int>> buffer(nb_t);
     //Vector has to be initialized with the size of the buffer
@@ -601,14 +724,20 @@ void algorithms::splitSegment_optimised_v2(imageManager& im, bool* historyVisite
         vertices.push_back(p2);
     }
 
-
     int idx_vertices = 0;
     int idx_v_thread = 0;
     std::vector<int> to_explore(nb_t, -1);
 
+    //creation of threads
+
+    //threads[0] = std::thread(breadthFirstSearchLabel_v2, std::ref(im), &to_explore[0], buffer[0].data(), &idx_buffer[0], std::ref(finish_1), std::ref(finish_1_m), &finish_1_b);
+    //threads[1] = std::thread(breadthFirstSearchLabel_v2, std::ref(im), &to_explore[1], buffer[1].data(), &idx_buffer[1], std::ref(finish_2), std::ref(finish_2_m), &finish_2_b);
+
     while (idx_vertices < vertices.size())//we stop once all the vertices have been explored
     {
         //Selection of the nb_t vetices we are goign to explore
+        //std::cout << idx_buffer[0] << " " << idx_buffer[1] << std::endl;
+
         while (idx_vertices < vertices.size() && idx_v_thread < nb_t)
         {
             int tag = im.segments_[vertices[idx_vertices]];
@@ -635,12 +764,50 @@ void algorithms::splitSegment_optimised_v2(imageManager& im, bool* historyVisite
             idx_vertices++;
         }
 
-        auto tets = buffer[0].data();
-
-        for(int run = 0; run < nb_t; run++)
+        //Exploring the CC by unlcking all thread
+        for(int run = 0; run < 2; run++)
         {
-            breadthFirstSearchLabel_v2(im, &to_explore[run], buffer[run].data(), &idx_buffer[run]);
+            //breadthFirstSearchLabel_v2_seq(im, &(to_explore[run]), buffer[run].data(), &idx_buffer[run]);
+            threads[run] = std::thread(breadthFirstSearchLabel_v2_seq, std::ref(im), &to_explore[run], buffer[run].data(), &idx_buffer[run]);
+            /*{
+                std::lock_guard<std::mutex> lk(finish_1_m);
+                finish_1_b = false;
+                finish_1.notify_all();
+            }
+
+            {
+                std::lock_guard<std::mutex> lk(finish_2_m);
+                finish_2_b = false;
+                finish_2.notify_all();
+            }*/
         }
+
+        //Start all thread
+        /*{
+            std::lock_guard<std::mutex> lk(start_m);
+            start_b = true;
+            start.notify_all();
+        }*/
+
+
+        //waiting for thread to finish
+        for(int run = 0; run < 2/*idx_v_thread*/; run++)
+        {
+            threads[run].join();
+            /*{
+                std::unique_lock<std::mutex> lk_finish_1(finish_1_m);
+                finish_1.wait(lk_finish_1, [] { return finish_1_b == true; });
+            }
+
+            {
+                std::unique_lock<std::mutex> lk_finish_2(finish_2_m);
+                finish_2.wait(lk_finish_2, [] { return finish_2_b == true; });
+            }*/
+        }
+
+        //std::cout << idx_buffer[0] << " " << idx_buffer[1] << std::endl;
+        //std::cout << to_explore[0] << " " << to_explore[1] << std::endl;
+        //std::cout << std::endl;
 
         //Labeling the different CC
         for (int t = 0; t < nb_t; t++)
@@ -665,6 +832,33 @@ void algorithms::splitSegment_optimised_v2(imageManager& im, bool* historyVisite
         memset(idx_buffer, 0, nb_t * sizeof(int)); //Empty the buffer arrays
         idx_v_thread = 0;
     }
+
+    split = false;
+
+    /*{
+        std::lock_guard<std::mutex> lk(finish_1_m);
+        finish_1_b = false;
+        finish_1.notify_all();
+    }
+
+    {
+        std::lock_guard<std::mutex> lk(finish_2_m);
+        finish_2_b = false;
+        finish_2.notify_all();
+    }
+
+
+    //Start all thread
+    {
+        std::lock_guard<std::mutex> lk(start_m);
+        start_b = true;
+        start.notify_all();
+    }
+
+    for (int i = 0; i < nb_t; i++)
+    {
+        threads[i].join();
+    }*/
 
     //Clean memory
     delete[] idx_buffer;
@@ -780,7 +974,7 @@ void algorithms::addMarker(imageManager& im, int* markers, int nbMarkers)
         }
     }
 
-    splitSegment(im, historyVisited, queueEdges);
+    splitSegment_optimised_v2(im, historyVisited, queueEdges);
 
     delete[] historyVisited;
 #ifdef PIXELS_COUNT
