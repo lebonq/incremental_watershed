@@ -298,10 +298,6 @@ void algorithms::breadthFirstSearchLabel_v2(imageManager& im, int* p, int* buffe
 {
     std::vector<int> queue;
     std::vector explored(im.getGraph().getNbVertex(), false);
-    queue.push_back(*p);
-    explored[*p] = true;
-    buffer[*n] = *p;
-    *n += 1;
     int w = im.getWidth();
     int h = im.getHeight();
     int wh = w * h;
@@ -329,6 +325,11 @@ void algorithms::breadthFirstSearchLabel_v2(imageManager& im, int* p, int* buffe
                 return start_b == true;
             });
         }
+
+        queue.push_back(*p);
+        explored[*p] = true;
+        buffer[*n] = *p;
+        *n += 1;
 
         //Check if split is == false
         if(split == false) return;
@@ -699,17 +700,6 @@ void algorithms::splitSegment_optimised_v2(imageManager& im, bool* historyVisite
     //Creating threads
     std::vector<std::thread> threads(nb_t);
 
-    //Creating buffers for thread
-    std::vector<std::vector<int>> buffer(nb_t);
-    //Vector has to be initialized with the size of the buffer
-    for (int i = 0; i < nb_t; i++)
-    {
-        buffer[i].resize(im.getGraph().getNbVertex());
-    }
-
-    int* idx_buffer = new int[nb_t]; //nb of value in a buffer
-    memset(idx_buffer, 0, nb_t * sizeof(int));
-
     std::vector<int> vertices;
 
     int tag_max = im.tagCount_;
@@ -728,10 +718,21 @@ void algorithms::splitSegment_optimised_v2(imageManager& im, bool* historyVisite
     int idx_v_thread = 0;
     std::vector<int> to_explore(nb_t, -1);
 
+    //Creating buffers for thread
+    std::vector<std::vector<int>> buffer(nb_t);
+    //Vector has to be initialized with the size of the buffer
+    for (int i = 0; i < nb_t; i++)
+    {
+        buffer[i].resize(im.getGraph().getNbVertex());
+    }
+
+    int* idx_buffer = new int[nb_t]; //nb of value in a buffer
+    memset(idx_buffer, 0, nb_t * sizeof(int));
+
     //creation of threads
 
-    //threads[0] = std::thread(breadthFirstSearchLabel_v2, std::ref(im), &to_explore[0], buffer[0].data(), &idx_buffer[0], std::ref(finish_1), std::ref(finish_1_m), &finish_1_b);
-    //threads[1] = std::thread(breadthFirstSearchLabel_v2, std::ref(im), &to_explore[1], buffer[1].data(), &idx_buffer[1], std::ref(finish_2), std::ref(finish_2_m), &finish_2_b);
+    threads[0] = std::thread(breadthFirstSearchLabel_v2, std::ref(im), to_explore.data()+0, buffer[0].data(), &idx_buffer[0], std::ref(finish_1), std::ref(finish_1_m), &finish_1_b);
+    threads[1] = std::thread(breadthFirstSearchLabel_v2, std::ref(im), to_explore.data()+1, buffer[1].data(), &idx_buffer[1], std::ref(finish_2), std::ref(finish_2_m), &finish_2_b);
 
     while (idx_vertices < vertices.size())//we stop once all the vertices have been explored
     {
@@ -765,11 +766,11 @@ void algorithms::splitSegment_optimised_v2(imageManager& im, bool* historyVisite
         }
 
         //Exploring the CC by unlcking all thread
-        for(int run = 0; run < 2; run++)
+        for(int run = 0; run < 1; run++)
         {
             //breadthFirstSearchLabel_v2_seq(im, &(to_explore[run]), buffer[run].data(), &idx_buffer[run]);
-            threads[run] = std::thread(breadthFirstSearchLabel_v2_seq, std::ref(im), &to_explore[run], buffer[run].data(), &idx_buffer[run]);
-            /*{
+            //threads[run] = std::thread(breadthFirstSearchLabel_v2_seq, std::ref(im), &to_explore[run], buffer[run].data(), &idx_buffer[run]);
+            {
                 std::lock_guard<std::mutex> lk(finish_1_m);
                 finish_1_b = false;
                 finish_1.notify_all();
@@ -779,22 +780,22 @@ void algorithms::splitSegment_optimised_v2(imageManager& im, bool* historyVisite
                 std::lock_guard<std::mutex> lk(finish_2_m);
                 finish_2_b = false;
                 finish_2.notify_all();
-            }*/
+            }
         }
 
         //Start all thread
-        /*{
+        {
             std::lock_guard<std::mutex> lk(start_m);
             start_b = true;
             start.notify_all();
-        }*/
+        }
 
 
         //waiting for thread to finish
-        for(int run = 0; run < 2/*idx_v_thread*/; run++)
+        for(int run = 0; run < 1/*idx_v_thread*/; run++)
         {
-            threads[run].join();
-            /*{
+            //threads[run].join();
+            {
                 std::unique_lock<std::mutex> lk_finish_1(finish_1_m);
                 finish_1.wait(lk_finish_1, [] { return finish_1_b == true; });
             }
@@ -802,7 +803,7 @@ void algorithms::splitSegment_optimised_v2(imageManager& im, bool* historyVisite
             {
                 std::unique_lock<std::mutex> lk_finish_2(finish_2_m);
                 finish_2.wait(lk_finish_2, [] { return finish_2_b == true; });
-            }*/
+            }
         }
 
         //std::cout << idx_buffer[0] << " " << idx_buffer[1] << std::endl;
@@ -835,7 +836,7 @@ void algorithms::splitSegment_optimised_v2(imageManager& im, bool* historyVisite
 
     split = false;
 
-    /*{
+    {
         std::lock_guard<std::mutex> lk(finish_1_m);
         finish_1_b = false;
         finish_1.notify_all();
@@ -858,7 +859,7 @@ void algorithms::splitSegment_optimised_v2(imageManager& im, bool* historyVisite
     for (int i = 0; i < nb_t; i++)
     {
         threads[i].join();
-    }*/
+    }
 
     //Clean memory
     delete[] idx_buffer;
