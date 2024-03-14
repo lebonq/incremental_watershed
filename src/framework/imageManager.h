@@ -51,6 +51,7 @@ public:
     int getWidth(){return this->width_;};
     int getHeight(){return this->height_;};
     ~imageManager();
+    bool isInMst(int edge);
 
     QEBT qbet_;
 };

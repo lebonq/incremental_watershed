@@ -103,6 +103,8 @@ int main(int argc, char *argv[]) {
 
         auto testim = cv::imread(image_path, cv::IMREAD_GRAYSCALE);
 
+        std::cout << "Computing  for " << image << std::endl;
+
         //=========================== IWS IMPLEMENTATION ========================================
         std::cout << "Benchmarking IWS implementation" << std::endl;
 
@@ -157,6 +159,8 @@ int main(int argc, char *argv[]) {
             }
 
         }
+
+
 
         /*
         //=========================== NIWS IMPLEMENTATION ========================================
@@ -320,6 +324,7 @@ int main(int argc, char *argv[]) {
 
             free(color_tab);
         }
+        exit(42);
     }
 
     algorithms::vector_to_csv(time_init_IW, "time_init_IW.csv");

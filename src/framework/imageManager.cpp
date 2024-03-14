@@ -89,3 +89,15 @@ imageManager::~imageManager() {
     delete[] this->mstEdit_;
     delete[] this->map_graph_mst;
 }
+
+bool imageManager::isInMst(int edge) {
+    auto mst_edge = map_graph_mst[edge];
+    if(mst_edge == -1)
+    {
+        return false;
+    }
+    else
+    {
+        return this->mstEdit_[mst_edge];
+    }
+}
