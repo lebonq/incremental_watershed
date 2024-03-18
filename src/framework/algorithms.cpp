@@ -17,6 +17,7 @@ int* counter = new int[4];
 pthread_t* thread; // global variable used to store the threads id
 struct DistanceMap* D; // global variable used to easily pass arguments to threads
 int* vertices = new int[2];
+int* size_cc = new int[2];
 
 imageManager* im_t_ptr;
 
@@ -51,14 +52,41 @@ void* parPartition(void* slice)
     pthread_exit(NULL);
 }
 
+void seqPartition(int slice)
+{
+    int i, ji, p, n, i2;
+    int start;
+    int end;
+
+    p = D->p; // number of threads
+    n = D->indice; // number of data in E
+    i = (slice) + 1;
+
+    if (i <= (n % p))
+    {
+        start = (i - 1) * ((n / p) + 1);
+        end = start + (n / p);
+        D->TailleEi[i - 1] = (n / p) + 1;
+    }
+    else
+    {
+        start = (n % p) * ((n / p) + 1) + (i - 1 - (n % p)) * (n / p);
+        end = start + (n / p) - 1;
+        D->TailleEi[i - 1] = n / p; // to know the size of each Ei
+    }
+
+    for (ji = start; ji <= end; ji++)
+        D->Ei[i - 1][ji - start] = D->E[ji];
+
+    return;
+}
+
 /*-----------------------------------------------Union Function ----------------------------------------------------*/
 
 void* copyForUnion(void* slice)
 {
     int i, j;
     i = (long)slice;
-
-    auto d_te = *D;
 
     for (j = 0; j < (D->TailleSi[i]); j++)
     {
@@ -111,7 +139,6 @@ void* parLevelSetTraversal(void* slice)
     int wh = w * h;
 
 
-
     /* fprintf(stderr,"Taille de E[%d] = %d\n", i, D->TailleEi[i]); */
     /* fprintf(stderr,"Elements de E[%d]\n", i); */
     /* for(x = 0; x < D->TailleEi[i]; x++) fprintf(stderr, "%d-eme element %d, ", x, D->Ei[i][x]); */
@@ -145,9 +172,9 @@ void* parLevelSetTraversal(void* slice)
 
         if (vLeft >= 0 && v % w != 0)
         {
-            if (im_t_ptr->isInMst((2 * v) - 2) == true )
+            if (im_t_ptr->isInMst((2 * v) - 2) == true)
             {
-               if (im_t_ptr->segments_[vLeft] != tag)
+                if (im_t_ptr->segments_[vLeft] != tag)
                 {
                     im_t_ptr->segments_[vLeft] = tag;
                     D->Si[i][j] = vLeft;
@@ -181,7 +208,6 @@ void* parLevelSetTraversal(void* slice)
                 }
             }
         }
-
     }
     D->TailleSi[i] = j; // number of element in each Si
 
@@ -189,18 +215,19 @@ void* parLevelSetTraversal(void* slice)
 }
 
 /*--------------------------------------Initialization---------------------------------------------------------------*/
-void* parInit(void *param)
+void* parInit(void* param)
 /* Parallel part of the initialization of the parallel distance map algorithm, ie creation of the 0-level set of the diastance map */
 {
     int proc = (long)param;
 
 
-    if(proc <= 1)//For the first 2 thread
+    if (proc <= 1) //For the first 2 thread
     {
-        if(vertices[proc] != -1){
-        D->Si[proc][0] = vertices[proc];
-        //pthread_mutex_lock(&D->Traversed[vertices[proc]]);
-        D->TailleSi[proc] = 1; // number of element in each Si
+        if (vertices[proc] != -1)
+        {
+            D->Si[proc][0] = vertices[proc];
+            //pthread_mutex_lock(&D->Traversed[vertices[proc]]);
+            D->TailleSi[proc] = 1; // number of element in each Si
         }
     }
     else
@@ -240,8 +267,6 @@ void allocate_distancemap(int p)
 
     int i;
 
-    D->Traversed = (pthread_mutex_t*)malloc(g.getNbVertex() * sizeof(pthread_mutex_t));
-
     D->E = (int*)malloc(g.getNbVertex() * sizeof(int));
     memset(D->E, 0, g.getNbVertex() * sizeof(int));
 
@@ -262,22 +287,7 @@ void allocate_distancemap(int p)
     D->start = (int*)malloc(p * sizeof(int));
     memset(D->start, 0, p * sizeof(int));
 
-    for(i = 0; i < g.getNbVertex(); i++)
-    {
-        pthread_mutex_init(&D->Traversed[i], NULL);
-    }
-}
-
-void memset_distance_map(int p)
-{
-    auto& g = im_t_ptr->getGraph();
-
-    int i;
-
-    for(i = 0; i < g.getNbVertex(); i++)
-    {
-        pthread_mutex_init(&D->Traversed[i], NULL);
-    }
+    thread = (pthread_t*)malloc(p * sizeof(pthread_t)); //  threads array
 }
 
 /*----------------------------------------------------------------------------------------------------------------------*/
@@ -292,16 +302,17 @@ void clean_distancemap()
     }
 
     // Free the memory allocated for the arrays in the DistanceMap structure
-    free(D->Traversed);
+    //free(D->Traversed);
     free(D->E);
     free(D->Si);
     free(D->Ei);
     free(D->TailleSi);
     free(D->TailleEi);
     free(D->start);
+    free(thread);
 
     // Set all the pointers to NULL to avoid dangling pointers
-    D->Traversed = NULL;
+    //D->Traversed = NULL;
     D->E = NULL;
     D->Si = NULL;
     D->Ei = NULL;
@@ -314,8 +325,6 @@ void clean_distancemap()
 void Distance_Maps(struct DistanceMap* D, int p)
 {
     int i, j, nb_level, r, som, d;
-
-    thread = (pthread_t*)malloc(p * sizeof(pthread_t)); //  threads array
 
     // Run the code you want to benchmark
     dMapInit(p);
@@ -365,7 +374,38 @@ void Distance_Maps(struct DistanceMap* D, int p)
     }
 
     //fprintf(stderr, "Carte de Distance calculee\n");
-    free(thread);
+}
+
+void parLabelisation(struct DistanceMap* D, int p)
+{
+    int i, j, nb_level, r, som, d;
+
+
+    // Partition Function
+    for (i = 0; i < p; i++)
+    {
+        seqPartition(i);
+    }
+
+    /* fprintf(stderr, "Niveau %d: partition ok\n", nb_level); */
+
+    // Creation of level-set
+    for (i = 0; i < p; i++)
+    {
+        // for each processor i
+        if (pthread_create(&thread[i], NULL, parLevelSetTraversal, (void*)(long)i) != 0)
+        {
+            perror("Can't create thread");
+            free(thread);
+            exit(-1);
+        }
+    }
+    for (i = 0; i < p; i++)
+        pthread_join(thread[i], NULL); // threads join
+
+    // Union of the sets traversed by the threads to form th next level set stored in D->E
+    setUnion();
+
 }
 
 void algorithms::kruskal(graph& G, Q& Q, int w, int* temp)
@@ -739,7 +779,6 @@ void algorithms::splitSegment(imageManager& im, bool* historyVisited,
             nb_pixels_visited += sizeSeg[newTag];
 #endif
         }
-
     }
 }
 
@@ -999,49 +1038,175 @@ void algorithms::splitSegment_v3(imageManager& im, bool* historyVisited, std::ve
 {
     int num_thrd; // number of threads
     im_t_ptr = &im;
-
     int cpt = 0;
     D = (DistanceMap*)malloc(sizeof(struct DistanceMap)); // Distance map structure
-    num_thrd = 3;
+    num_thrd = 4;
     D->p = num_thrd;
     allocate_distancemap(num_thrd);
-    for (auto edge :  queueEdges)
+
+    for (auto edge : queueEdges)
     {
         int p1, p2;
         std::tie(p1, p2) = edge_to_vertices(edge, im.getWidth());
 
-        if(historyVisited[im.segments_[p1]] == false)
+        D->TailleSi[0] = 0;
+
+        if (historyVisited[im.segments_[p1]] == false)
         {
             im.segments_[p1] = im.tagCount_;
             im.tagCount_++;
             historyVisited[im.segments_[p1]] = true;
             vertices[0] = p1;
+            D->Si[0][0] = vertices[0];
+            D->TailleSi[0] += 1;
         }
         else
         {
             vertices[0] = -1;
         }
 
-        if(historyVisited[im.segments_[p2]] == false)
+        if (historyVisited[im.segments_[p2]] == false)
         {
             im.segments_[p2] = im.tagCount_;
             im.tagCount_++;
             historyVisited[im.segments_[p2]] = true;
             vertices[1] = p2;
+            D->Si[0][1] = vertices[1];
+            D->TailleSi[0] += 1; // number of element in each Si
         }
         else
         {
             vertices[1] = -1;
         }
 
+        //============== Set Union ==========
+        int cmp = 0;
+        D->start[0] = cmp;
+        cmp = cmp + D->TailleSi[0];
 
-        if(vertices[0] != -1 || vertices[1] != -1)
-            Distance_Maps(D, num_thrd);
-        cpt ++;
+        for (int j = 0; j < (D->TailleSi[0]); j++)
+        {
+            auto value = D->Si[0][j];
+            D->E[D->start[0] + j] = value;
+        }
+
+        D->indice = cmp; // new after union |n|
+
+        //Main loop for exploring
+        while (D->indice != 0)
+        {
+            if (D->indice > 300) //If propagation is aboce 50 vertex we // the process
+            {
+                parLabelisation(D, num_thrd);
+                cpt++;
+            }
+            else //else we don't
+            {
+                int i, j, x, y, vertex;
+
+                j = 0;
+                i = 0;
+
+
+                //Exploration séquentiel
+
+                int w = im_t_ptr->getWidth();
+                int h = im_t_ptr->getHeight();
+                int wh = w * h;
+
+                j = 0;
+
+                for (x = 0; x < D->indice; x++)
+                {
+                    // for each x in Ei
+                    int v = D->E[x];
+                    int tag = im_t_ptr->segments_[v];
+
+                    int vRight = v + 1;
+                    int vLeft = v - 1;
+                    int vUp = v - w;
+                    int vDown = v + w;
+
+                    if (vRight < wh && (v + 1) % w != 0)
+                    {
+                        //check if adjacent to v exist
+                        if (im_t_ptr->isInMst(2 * v) == true)
+                        {
+                            if (im_t_ptr->segments_[vRight] != tag)
+                            {
+                                im_t_ptr->segments_[vRight] = tag;
+                                D->Si[i][j] = vRight;
+                                j++;
+                            }
+                        }
+                    }
+
+                    if (vLeft >= 0 && v % w != 0)
+                    {
+                        if (im_t_ptr->isInMst((2 * v) - 2) == true)
+                        {
+                            if (im_t_ptr->segments_[vLeft] != tag)
+                            {
+                                im_t_ptr->segments_[vLeft] = tag;
+                                D->Si[i][j] = vLeft;
+                                j++;
+                            }
+                        }
+                    }
+
+                    if (vDown < wh)
+                    {
+                        if (im_t_ptr->isInMst((2 * v) + 1) == true)
+                        {
+                            if (im_t_ptr->segments_[vDown] != tag)
+                            {
+                                im_t_ptr->segments_[vDown] = tag;
+                                D->Si[i][j] = vDown;
+                                j++;
+                            }
+                        }
+                    }
+
+                    if (vUp >= 0)
+                    {
+                        if (im_t_ptr->isInMst(((2 * v) - (2 * w)) + 1) == true)
+                        {
+                            if (im_t_ptr->segments_[vUp] != tag)
+                            {
+                                im_t_ptr->segments_[vUp] = tag;
+                                D->Si[i][j] = vUp;
+                                j++;
+                            }
+                        }
+                    }
+                }
+                D->TailleSi[i] = j; // number of element in each Si
+
+
+                //================++ Set Union ===================
+                cmp = 0;
+                D->start[i] = cmp;
+                cmp = cmp + D->TailleSi[i];
+
+                for (j = 0; j < (D->TailleSi[i]); j++)
+                {
+                    auto value = D->Si[i][j];
+                    D->E[D->start[i] + j] = value;
+                }
+
+                D->indice = cmp; // new after union |n|
+            }
+        }
+
+
         //if(cpt == 562) exit(42);
         //memset_distance_map(num_thrd);
         //std::cout << "Edge " << cpt << " / " << queueEdges.size() << std::endl;
+        //if (vertices[0] != -1 || vertices[1] != -1)
+        //Distance_Maps(D, num_thrd);
     }
+    std::cout << "Par explo : " << cpt << std::endl;
+
     clean_distancemap();
     free(D);
 }
