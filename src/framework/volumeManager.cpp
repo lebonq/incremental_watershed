@@ -189,6 +189,7 @@ void volumeManager::initPostprocessStructure()
     this->ws_ = std::make_unique<std::vector<bool>>(this->hierarchy_->getQBT().getSize(),false);
     this->mstEdit_ = std::make_unique<std::vector<bool>>(this->graph_->getMst().size(), true);
     this->colorTab_ = std::make_unique<std::vector<int>>(this->graph_->getNbVertex()*2, 0);
+    this->CCL_times_ = std::make_unique<std::vector<double>>();
 
 }
 
@@ -310,6 +311,12 @@ void volumeManager::dualisation_segmentation(std::vector<int> &markers, int valu
     {
         this->colorTab_->at(this->segments_->at(marker)) = value;
     }
+}
+
+void volumeManager::write_CCL_times(const std::string& filename, int benchId)
+{
+
+    algorithms::vector_to_csv(*this->CCL_times_, filename+ "/CCL_" +std::to_string(benchId)+".csv");
 }
 
 bool volumeManager::isInMStEdit(int edge)

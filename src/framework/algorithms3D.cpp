@@ -342,5 +342,18 @@ void algorithms3D::addMarker(volumeManager& vol, std::vector<int>& markers)
         }
     }
 
+
+    // Get the start time
+    auto start = std::chrono::high_resolution_clock::now();
+
+    // Run the code you want to benchmark
     splitSegment(vol, historyVisited, queueEdges);
+
+    // Get the end time
+    auto end = std::chrono::high_resolution_clock::now();
+
+    // Calculate the difference
+    auto duration = end - start;
+
+    vol.add_CCL_time(duration.count());
 }

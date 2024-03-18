@@ -107,7 +107,6 @@ int main(int argc, char* argv[])
             std::cout << GREEN << "addMarkers object" << RESET << "     step " << i << " took " << GREEN << diff.count()
                 << " seconds" << std::endl;
 
-
             //bencmark addMarkers background
             start = std::chrono::high_resolution_clock::now();
             volume_manager->addMarkers(markers_background_batched[i]);
@@ -130,6 +129,7 @@ int main(int argc, char* argv[])
             cv::imwrite("test_volume/slice" + std::to_string(i) + ".png", volume[i]);
         }
 
+        volume_manager->write_CCL_times(path_markers, j);
         delete volume_manager;
     }
 

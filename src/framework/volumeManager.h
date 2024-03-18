@@ -14,6 +14,7 @@
 #include "opencv2/imgcodecs.hpp"
 #include "dataStructures/graph.h"
 #include "algorithms3D.h"
+#include "algorithms.h"
 #include "dataStructures/QEBT.h"
 #include "libs/natural_sort.h"
 
@@ -28,6 +29,8 @@ private:
     std::unique_ptr<graph> graph_;
     std::unique_ptr<QEBT> hierarchy_;
     std::unique_ptr<std::vector<int>>  map_graph_mst_;
+
+    std::unique_ptr<std::vector<double>> CCL_times_;
 
     std::unique_ptr<std::vector<int>> segments_; //Label for each vertex
     std::unique_ptr<std::vector<int>> marks_; //visitCount in the paper
@@ -61,6 +64,10 @@ public:
     void removeMarkers(std::vector<int>& markers, int nbMarkers);
     bool isInMStEdit(int edge);
     void dualisation_segmentation(std::vector<int> &markers, int value);
+
+    //Those function works only with the IWS method
+    void add_CCL_time(double time) { this->CCL_times_->push_back(time); }
+    void write_CCL_times(const std::string& filename,int benchId);
 
     std::vector<int>& getMapGraphMst() const { return *this->map_graph_mst_; }
     std::vector<int>& getSegments() const { return *this->segments_; }
