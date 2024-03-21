@@ -35,8 +35,8 @@ public:
     int tagCount_ = 1;
     std::vector<int> tag_;
 
-    int* map_graph_mst; //Mapping array wich allow us to make correspond an edge of the graph to an edge of the MST
-    //As the ID of the mst and the grapha re different
+   int* map_graph_mst; //Mapping array wich allow us to make correspond an edge of the graph to an edge of the MST
+                        //As the ID of the mst and the grapha re different
 
     //For MP
     partition partitionMP_;
@@ -51,6 +51,7 @@ public:
     int getWidth(){return this->width_;};
     int getHeight(){return this->height_;};
     ~imageManager();
+    bool isInMst(int edge);
 
     QEBT qbet_;
 };

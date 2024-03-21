@@ -24,8 +24,8 @@ int main(int argc, char *argv[]) {
     std::vector<double> time_init_IW;
     std::vector<double> time_NIW;
 
-    const int nb_bench = 10;
-    const int nb_images = 25;
+    const int nb_bench = 1;
+    const int nb_images = 4;
 
     std::vector<std::string> images_name;
 
@@ -60,6 +60,8 @@ int main(int argc, char *argv[]) {
         cv::Mat img_4px = cv::imread(image_path, cv::IMREAD_COLOR);
         double nb_pixel = img_4px.rows * img_4px.cols * 1.0;
         std::cout << "Number of pixel: " << nb_pixel << std::endl;
+
+        /*
 
         //===================== Generate data for DIFT ========================================
         std::cout << "Generate data for DIFT benchmark" << std::endl;
@@ -97,9 +99,11 @@ int main(int argc, char *argv[]) {
             printf("Set #%d : %g ns/px\n", i, (t_mean * 1e9 / nb_bench)/nb_pixel);
             printf("Set #%d : %g ms\n", i, (t_mean * 1000. / nb_bench));
             time_meyer.push_back((t_mean *1e9 / nb_bench)/nb_pixel);
-        }
+        }*/
 
         auto testim = cv::imread(image_path, cv::IMREAD_GRAYSCALE);
+
+        std::cout << "Computing  for " << image << std::endl;
 
         //=========================== IWS IMPLEMENTATION ========================================
         std::cout << "Benchmarking IWS implementation" << std::endl;
@@ -153,9 +157,12 @@ int main(int argc, char *argv[]) {
                 printf("Add set #%d : %g ns/px\n", i, (t_mean *1e9 / nb_bench)/nb_pixel);
                 printf("Add set #%d : %g ms\n", i, (t_mean *1000. / nb_bench));
             }
+
         }
 
 
+
+        /*
         //=========================== NIWS IMPLEMENTATION ========================================
         std::cout << "Benchmarking NIWS implementation" << std::endl;
 
@@ -194,15 +201,15 @@ int main(int argc, char *argv[]) {
         time_IW.clear();
         algorithms::vector_to_csv(time_NIW, std::to_string(idx_bench) + "_time_NIW.csv");
         time_NIW.clear();
-
+*/
         idx_bench++;
 
-        plt::named_plot("IWS", time_IW);
-        plt::named_plot("NIWS", time_NIW);
-        plt::named_plot("OpenCV", time_meyer);
-        plt::legend();
-        plt::title("Average computational time in ms");
-        plt::show();
+        //plt::named_plot("IWS", time_IW);
+        //plt::named_plot("NIWS", time_NIW);
+        //plt::named_plot("OpenCV", time_meyer);
+        //plt::legend();
+        //plt::title("Average computational time in ms");
+        //plt::show();
 
         //Illustration of every step/interaction
 
@@ -255,6 +262,7 @@ int main(int argc, char *argv[]) {
 
             int cpt = 0, seed, color;
             for (int i = 0; i < marker_image.rows; i++)
+            {
                 for (int j = 0; j < marker_image.cols; j++) {
                     color = (int) marker_image.at<unsigned char>(i, j);
                     if (color != 0) {
@@ -262,6 +270,7 @@ int main(int argc, char *argv[]) {
                     }
                     cpt++;
                 }
+            }
 
             cv::Mat wshed(marker_image.size(), CV_8UC3);
             cpt = 0;
@@ -286,7 +295,7 @@ int main(int argc, char *argv[]) {
             std::vector<std::vector<cv::Point>> contours;
             cv::findContours(binary, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
             for (auto contour: contours) {
-                cv::drawContours(imgColor, contours, -1, cv::Scalar(0, 128, 128, 255), 8);
+                cv::drawContours(imgColor, contours, -1, cv::Scalar(0, 0, 0, 0), 8);
             }
 
 
@@ -306,15 +315,16 @@ int main(int argc, char *argv[]) {
 
             //Create an overlay over th WSHED transform
             cv::Mat cpy_over;
-            //imgColor.copyTo(cpy_over);
+            imgColor.copyTo(cpy_over);
 
-            //cpy_over = wshed * 0.5 + imgColor * 0.5;
+            cpy_over = wshed * 0.5 + imgColor * 0.5;
 
-            //imwrite(filename + "history/seg_step" + std::to_string(nb_change) + ".png",wshed);
+            imwrite(image_path + "history_test/seg_step" + std::to_string(img_n) + ".png",wshed);
             imwrite(image_path + "illustration/marker_step" + std::to_string(img_n) + ".jpg", imgColor);
 
             free(color_tab);
         }
+        exit(42);
     }
 
     algorithms::vector_to_csv(time_init_IW, "time_init_IW.csv");
