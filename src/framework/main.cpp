@@ -25,7 +25,7 @@ int main(int argc, char *argv[]) {
     std::vector<double> time_NIW;
 
     const int nb_bench = 1;
-    const int nb_images = 4;
+    const int nb_images = 28;
 
     std::vector<std::string> images_name;
 

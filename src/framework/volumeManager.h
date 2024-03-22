@@ -28,18 +28,10 @@ private:
 
     std::unique_ptr<graph> graph_;
     std::unique_ptr<QEBT> hierarchy_;
-    std::unique_ptr<std::vector<int>>  map_graph_mst_;
 
     std::unique_ptr<std::vector<double>> CCL_times_;
 
-    std::unique_ptr<std::vector<int>> segments_; //Label for each vertex
-    std::unique_ptr<std::vector<int>> marks_; //visitCount in the paper
-    std::unique_ptr<std::vector<int>> sizePart_; //Size of each segment
-    std::unique_ptr<std::vector<bool>> ws_; //Is the node a watershed
-    std::unique_ptr<std::vector<bool>> mstEdit_; //Is the edge in the MST
-    std::unique_ptr<std::vector<bool>> isMarked_; //avoid to add/remove marker at the same pixel twice
-    std::unique_ptr<std::vector<int>> colorTab_; //Color for each segment
-    int tagCount_ = 1;
+
 
 public:
     volumeManager() = default;
@@ -52,6 +44,18 @@ public:
     void resetPostprocessStructure();
     cv::Mat getSegmentedSlice(int z);
     std::vector<cv::Mat> getSegmentedVolume();
+    std::vector<double> time_wo_alloc_;
+
+    std::vector<int> segments_; //Label for each vertex
+    std::unique_ptr<std::vector<int>> marks_; //visitCount in the paper
+    std::unique_ptr<std::vector<int>> sizePart_; //Size of each segment
+    std::unique_ptr<std::vector<bool>> ws_; //Is the node a watershed
+    std::vector<bool> mstEdit_; //Is the edge in the MST
+    std::unique_ptr<std::vector<bool>> isMarked_; //avoid to add/remove marker at the same pixel twice
+    std::unique_ptr<std::vector<int>> colorTab_; //Color for each segment
+    std::vector<int>  map_graph_mst_;
+
+    int tagCount_ = 1;
 
     int getWidth() const { return this->width_; };
     int getHeight() const { return this->height_; };
@@ -68,18 +72,14 @@ public:
     //Those function works only with the IWS method
     void add_CCL_time(double time) { this->CCL_times_->push_back(time); }
     void write_CCL_times(const std::string& filename,int benchId);
+    void write_par_times(const std::string& filename, int benchId);
 
-    std::vector<int>& getMapGraphMst() const { return *this->map_graph_mst_; }
-    std::vector<int>& getSegments() const { return *this->segments_; }
-    void modifySegments(int index, int value) { this->segments_->at(index) = value; }
     std::vector<int>& getMarks() { return *marks_.get(); }
     void modifyMarks(int index, int value) { this->marks_->at(index) = value; }
     std::vector<int>& getSizePart() { return *this->sizePart_; }
     void setSizePart(int index, int value) { this->sizePart_->at(index) = value; }
     std::vector<bool>& getWs() { return *this->ws_; }
     void modifyWs(int index, bool value) { this->ws_->at(index) = value; }
-    std::vector<bool>& getMstEdit() { return *this->mstEdit_; }
-    void modifyMstEdit(int index, bool value) { this->mstEdit_->at(index) = value; }
 
     QEBT& getHierarchy() { return *this->hierarchy_; }
     graph& getGraph() { return *this->graph_; }

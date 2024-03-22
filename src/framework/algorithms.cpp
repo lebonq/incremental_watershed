@@ -14,6 +14,8 @@ int nb_pixels_visited = 0;
 
 int* counter = new int[4];
 
+long time_update_h;
+
 long* t_time_explo = new long[50];
 
 pthread_t* thread; // global variable used to store the threads id
@@ -116,7 +118,6 @@ void copyForUnionSeq(int slice)
 
     //auto end = std::chrono::high_resolution_clock::now();
     //t_time_explo[i] += std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
-
 }
 
 /************************************************************/
@@ -255,16 +256,15 @@ void* parLevelSetTraversal(void* slice)
 void parLevelSetTraversal_v2(int slice, std::binary_semaphore& finish, std::binary_semaphore& start)
 
 {
-    while(split == true)
+    while (split == true)
     {
-
         start.acquire();
 
         //Check if split is == false
         if (split == false) return;
 
+        auto start_t = std::chrono::high_resolution_clock::now();
 
-        auto start = std::chrono::high_resolution_clock::now();
         int i, j, x, y, vertex;
 
         j = 0;
@@ -284,6 +284,152 @@ void parLevelSetTraversal_v2(int slice, std::binary_semaphore& finish, std::bina
         {
             // for each x in Ei
             int v = D->Ei[i][x];
+            int tag = im_t_ptr->segments_[v];
+            /* fprintf(stderr,"Exploration des successeurs de %d\n", vertex); */
+
+            int vRight = v + 1;
+            int vLeft = v - 1;
+            int vUp = v - w;
+            int vDown = v + w;
+
+            if (vRight < wh && (v + 1) % w != 0)
+            {
+                //check if adjacent to v exist
+
+                auto mst_edge = im_t_ptr->map_graph_mst[2 * v];
+                if (mst_edge != -1)
+                {
+                    if (im_t_ptr->mstEdit_[mst_edge] && im_t_ptr->segments_[vRight] != tag)
+                    {
+                        im_t_ptr->segments_[vRight] = tag;
+                        D->Sipp[i][j] = vRight;
+                        j++;
+                    }
+                }
+            }
+
+            if (vLeft >= 0 && v % w != 0)
+            {
+                auto mst_edge = im_t_ptr->map_graph_mst[(2 * v) - 2];
+                if (mst_edge != -1)
+                {
+                    if (im_t_ptr->mstEdit_[mst_edge] && im_t_ptr->segments_[vLeft] != tag)
+                    {
+                        im_t_ptr->segments_[vLeft] = tag;
+                        D->Sipp[i][j] = vLeft;
+                        j++;
+                    }
+                }
+            }
+
+            if (vDown < wh)
+            {
+                auto mst_edge = im_t_ptr->map_graph_mst[(2 * v) + 1];
+                if (mst_edge != -1)
+                {
+                    if (im_t_ptr->mstEdit_[mst_edge] && im_t_ptr->segments_[vDown] != tag)
+                    {
+                        im_t_ptr->segments_[vDown] = tag;
+                        D->Sipp[i][j] = vDown;
+                        j++;
+                    }
+                }
+            }
+
+            if (vUp >= 0)
+            {
+                auto mst_edge = im_t_ptr->map_graph_mst[((2 * v) - (2 * w)) + 1];
+                if (mst_edge != -1)
+                {
+                    if (im_t_ptr->mstEdit_[mst_edge] && im_t_ptr->segments_[vUp] != tag)
+                    {
+                        im_t_ptr->segments_[vUp] = tag;
+                        D->Sipp[i][j] = vUp;
+                        j++;
+                    }
+                }
+            }
+        }
+        D->TailleSipp[i] = j; // number of element in each Si
+
+        j = 0;
+        for (x = 0; x < D->TailleSipp[i]; x++)
+        {
+            // for each x in Ei
+            int v = D->Sipp[i][x];
+            int tag = im_t_ptr->segments_[v];
+            /* fprintf(stderr,"Exploration des successeurs de %d\n", vertex); */
+
+            int vRight = v + 1;
+            int vLeft = v - 1;
+            int vUp = v - w;
+            int vDown = v + w;
+
+            if (vRight < wh && (v + 1) % w != 0)
+            {
+                //check if adjacent to v exist
+
+                auto mst_edge = im_t_ptr->map_graph_mst[2 * v];
+                if (mst_edge != -1)
+                {
+                    if (im_t_ptr->mstEdit_[mst_edge] && im_t_ptr->segments_[vRight] != tag)
+                    {
+                        im_t_ptr->segments_[vRight] = tag;
+                        D->Sip[i][j] = vRight;
+                        j++;
+                    }
+                }
+            }
+
+            if (vLeft >= 0 && v % w != 0)
+            {
+                auto mst_edge = im_t_ptr->map_graph_mst[(2 * v) - 2];
+                if (mst_edge != -1)
+                {
+                    if (im_t_ptr->mstEdit_[mst_edge] && im_t_ptr->segments_[vLeft] != tag)
+                    {
+                        im_t_ptr->segments_[vLeft] = tag;
+                        D->Sip[i][j] = vLeft;
+                        j++;
+                    }
+                }
+            }
+
+            if (vDown < wh)
+            {
+                auto mst_edge = im_t_ptr->map_graph_mst[(2 * v) + 1];
+                if (mst_edge != -1)
+                {
+                    if (im_t_ptr->mstEdit_[mst_edge] && im_t_ptr->segments_[vDown] != tag)
+                    {
+                        im_t_ptr->segments_[vDown] = tag;
+                        D->Sip[i][j] = vDown;
+                        j++;
+                    }
+                }
+            }
+
+            if (vUp >= 0)
+            {
+                auto mst_edge = im_t_ptr->map_graph_mst[((2 * v) - (2 * w)) + 1];
+                if (mst_edge != -1)
+                {
+                    if (im_t_ptr->mstEdit_[mst_edge] && im_t_ptr->segments_[vUp] != tag)
+                    {
+                        im_t_ptr->segments_[vUp] = tag;
+                        D->Sip[i][j] = vUp;
+                        j++;
+                    }
+                }
+            }
+        }
+        D->TailleSip[i] = j; // number of element in each Si
+
+        j = 0;
+        for (x = 0; x < D->TailleSip[i]; x++)
+        {
+            // for each x in Ei
+            int v = D->Sip[i][x];
             int tag = im_t_ptr->segments_[v];
             /* fprintf(stderr,"Exploration des successeurs de %d\n", vertex); */
 
@@ -351,8 +497,11 @@ void parLevelSetTraversal_v2(int slice, std::binary_semaphore& finish, std::bina
             }
         }
         D->TailleSi[i] = j; // number of element in each Si
+
+
+
         auto end = std::chrono::high_resolution_clock::now();
-        t_time_explo[i] += std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+        t_time_explo[i] += std::chrono::duration_cast<std::chrono::nanoseconds>(end - start_t).count();
         finish.release();
     }
 }
@@ -414,6 +563,8 @@ void allocate_distancemap(int p)
     memset(D->E, 0, g.getNbVertex() * sizeof(int));
 
     D->Si = (int**)malloc(p * sizeof(int*));
+    D->Sip = (int**)malloc(p * sizeof(int*));
+    D->Sipp = (int**)malloc(p * sizeof(int*));
     D->Ei = (int**)malloc(p * sizeof(int*));
 
     for (i = 0; i < p; i++)
@@ -421,9 +572,13 @@ void allocate_distancemap(int p)
         D->Ei[i] = (int*)malloc(g.getNbVertex() * sizeof(int));
         memset(D->Ei[i], 0, g.getNbVertex() * sizeof(int));
         D->Si[i] = (int*)malloc(g.getNbVertex() * sizeof(int));
+        D->Sip[i] = (int*)malloc(g.getNbVertex() * sizeof(int));
+        D->Sipp[i] = (int*)malloc(g.getNbVertex() * sizeof(int));
     }
 
     D->TailleSi = (int*)malloc(p * sizeof(int));
+    D->TailleSip = (int*)malloc(p * sizeof(int));
+    D->TailleSipp = (int*)malloc(p * sizeof(int));
 
     D->TailleEi = (int*)malloc(p * sizeof(int));
 
@@ -442,14 +597,20 @@ void clean_distancemap()
     {
         free(D->Ei[i]);
         free(D->Si[i]);
+        free(D->Sip[i]);
+        free(D->Sipp[i]);
     }
 
     // Free the memory allocated for the arrays in the DistanceMap structure
     //free(D->Traversed);
     free(D->E);
     free(D->Si);
+    free(D->Sip);
+    free(D->Sipp);
     free(D->Ei);
     free(D->TailleSi);
+    free(D->TailleSip);
+    free(D->TailleSipp);
     free(D->TailleEi);
     free(D->start);
     free(thread);
@@ -458,6 +619,8 @@ void clean_distancemap()
     //D->Traversed = NULL;
     D->E = NULL;
     D->Si = NULL;
+    D->Sip = NULL;
+    D->Sipp = NULL;
     D->Ei = NULL;
     D->TailleSi = NULL;
     D->TailleEi = NULL;
@@ -537,8 +700,6 @@ void parLabelisation(struct DistanceMap* D, int p)
     }
     for (i = 0; i < p; i++)
         pthread_join(thread[i], NULL); // threads join
-
-
 }
 
 void algorithms::kruskal(graph& G, Q& Q, int w, int* temp)
@@ -596,7 +757,8 @@ void algorithms::kruskal(graph& G, Q& Q, int w, int* temp)
     }*/
 }
 
-int algorithms::breadthFirstSearchLabel(imageManager &im, int tag, int p) {
+int algorithms::breadthFirstSearchLabel(imageManager& im, int tag, int p)
+{
     std::vector<int> queue;
     queue.push_back(p);
     int count = 1;
@@ -606,7 +768,8 @@ int algorithms::breadthFirstSearchLabel(imageManager &im, int tag, int p) {
 
 
     int v, vRight, vLeft, vUp, vDown;
-    while (!queue.empty()) {
+    while (!queue.empty())
+    {
         v = queue.back();
         queue.pop_back();
         im.segments_[v] = tag;
@@ -852,9 +1015,9 @@ int algorithms::breadthFirstSearchLabel_v2_seq(imageManager& im, int* p, int* bu
 }
 
 
-void algorithms::splitSegment(imageManager &im, bool *historyVisited,
-                              std::vector<int>& queueEdges) {
-
+void algorithms::splitSegment(imageManager& im, bool* historyVisited,
+                              std::vector<int>& queueEdges)
+{
     int p1, p2, tag1, tag2, newTag; //Are being erased
     int w = im.getWidth();
     int* seg = im.segments_;
@@ -946,7 +1109,7 @@ std::tuple<int, int> algorithms::edge_to_vertices(const int edge, const int w)
 }
 
 void algorithms::splitSegment_optimised_v2(imageManager& im, bool* historyVisited,
-                                           std::vector<int> queueEdges)
+                                           std::vector<int>& queueEdges)
 {
     memset(counter, 0, 4 * sizeof(int));
     split = true;
@@ -1180,12 +1343,13 @@ void algorithms::splitSegment_optimised_v2(imageManager& im, bool* historyVisite
     delete[] idx_buffer;
 }
 
-void algorithms::splitSegment_v3(imageManager& im, bool* historyVisited, std::vector<int> queueEdges)
+void algorithms::splitSegment_v3(imageManager& im, bool* historyVisited, std::vector<int>& queueEdges)
 {
     split = true;
 
+    auto start_alloc = std::chrono::high_resolution_clock::now();
     int num_thrd; // number of threads
-    int thres = 450; // threshold for parallel exploration
+    int thres = 15; // threshold for parallel exploration
     im_t_ptr = &im;
     int par_explo = 0;
     int seq_explo = 0;
@@ -1223,8 +1387,19 @@ void algorithms::splitSegment_v3(imageManager& im, bool* historyVisited, std::ve
     threads[7] = std::thread(parLevelSetTraversal_v2, 7, std::ref(finish_8), std::ref(start_8));
     threads[8] = std::thread(parLevelSetTraversal_v2, 8, std::ref(finish_9), std::ref(start_9));
     threads[9] = std::thread(parLevelSetTraversal_v2, 9, std::ref(finish_10), std::ref(start_10));
+    /*threads[10] = std::thread(parLevelSetTraversal_v2, 10, std::ref(finish_11), std::ref(start_11));
+    threads[11] = std::thread(parLevelSetTraversal_v2, 11, std::ref(finish_12), std::ref(start_12));
+    threads[12] = std::thread(parLevelSetTraversal_v2, 12, std::ref(finish_13), std::ref(start_13));
+    /*threads[13] = std::thread(parLevelSetTraversal_v2, 13, std::ref(finish_14), std::ref(start_14));*/
+
+
+
+    auto end_alloc = std::chrono::high_resolution_clock::now();
+    auto diff_alloc = std::chrono::duration_cast<std::chrono::nanoseconds>(end_alloc - start_alloc).count();
 
     auto start = std::chrono::high_resolution_clock::now();
+
+    long test = 0;
 
     for (auto edge : queueEdges)
     {
@@ -1269,45 +1444,64 @@ void algorithms::splitSegment_v3(imageManager& im, bool* historyVisited, std::ve
         }
 
 
+
         //Main loop for exploring
         while (D->indice != 0)
         {
             if (D->indice >= thres) //If propagation is above 50 vertex we // the process
             {
-                // Partition Function
-                for (int i = 0; i < num_thrd; i++)
+
+                while( D->indice >= thres)
                 {
-                    seqPartition(i);
+                    // Partition Function
+                    for (int i = 0; i < num_thrd; i++)
+                    {
+                        seqPartition(i);
+                    }
+
+                    auto start_test = std::chrono::high_resolution_clock::now();
+
+                    // Start of the threads
+                    start_1.release();
+                    start_2.release();
+                    start_3.release();
+                    start_4.release();
+                    start_5.release();
+                    start_6.release();
+                    start_7.release();
+                    start_8.release();
+                    start_9.release();
+                    start_10.release();
+                    /*start_11.release();
+                    start_12.release();
+                    start_13.release();*/
+
+
+
+                    // Waiting for the threads to finish
+                    finish_1.acquire();
+                    finish_2.acquire();
+                    finish_3.acquire();
+                    finish_4.acquire();
+                    finish_5.acquire();
+                    finish_6.acquire();
+                    finish_7.acquire();
+                    finish_8.acquire();
+                    finish_9.acquire();
+                    finish_10.acquire();
+                    /*finish_11.acquire();
+                    finish_12.acquire();
+                    finish_13.acquire();*/
+                    auto end_t = std::chrono::high_resolution_clock::now();
+                    auto diff_t = std::chrono::duration_cast<std::chrono::nanoseconds>(end_t - start_test).count();
+                    //parLabelisation(D, num_thrd);
+                    // Union of the sets traversed by the threads to form th next level set stored in D->E
+
+                    setUnion();
+
+                    test += diff_t;
+                    par_explo++;
                 }
-
-                // Start of the threads
-                start_1.release();
-                start_2.release();
-                start_3.release();
-                start_4.release();
-                start_5.release();
-                start_6.release();
-                start_7.release();
-                start_8.release();
-                start_9.release();
-                start_10.release();
-
-                // Waiting for the threads to finish
-                finish_1.acquire();
-                finish_2.acquire();
-                finish_3.acquire();
-                finish_4.acquire();
-                finish_5.acquire();
-                finish_6.acquire();
-                finish_7.acquire();
-                finish_8.acquire();
-                finish_9.acquire();
-                finish_10.acquire();
-
-                //parLabelisation(D, num_thrd);
-                // Union of the sets traversed by the threads to form th next level set stored in D->E
-                setUnion();
-                par_explo++;
             }
             else //else we don't
             {
@@ -1418,6 +1612,8 @@ void algorithms::splitSegment_v3(imageManager& im, bool* historyVisited, std::ve
 
     auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start);
 
+
+
     auto all_explo = seq_time;
 
     long max = LONG_MIN;
@@ -1441,7 +1637,10 @@ void algorithms::splitSegment_v3(imageManager& im, bool* historyVisited, std::ve
     std::cout << "Time for eveything except exploration : " << (duration.count() - all_explo) / 1000000 << " ms" <<
         std::endl;
 
-    std::cout << "Total time : " << duration.count() / 1000000 << " ms" << std::endl;
+    std::cout << "Total time w/o alloc : " << (duration.count() + time_update_h) / 1000000 << " ms" << std::endl;
+
+    std::cout << "Total time with alloc : " << (duration.count() + time_update_h + diff_alloc) / 1000000 << " ms" <<
+        std::endl;
 
     std::cout << "Number of step of labelisation in par : " << par_explo << std::endl;
 
@@ -1449,6 +1648,11 @@ void algorithms::splitSegment_v3(imageManager& im, bool* historyVisited, std::ve
 
     std::cout << "Threshold for par : " << thres << std::endl;
 
+    std::cout << "Time when thread are doing other than exploring is : " << (test-max) / 1000000 << " ms" << std::endl;
+
+
+
+    //start_alloc = std::chrono::high_resolution_clock::now();
     clean_distancemap();
     free(D);
 
@@ -1464,11 +1668,21 @@ void algorithms::splitSegment_v3(imageManager& im, bool* historyVisited, std::ve
     start_8.release();
     start_9.release();
     start_10.release();
+    /*start_11.release();
+    start_12.release();
+    start_13.release();*/
 
-    for(int tr = 0; tr < num_thrd; tr++)
+
+    for (int tr = 0; tr < num_thrd; tr++)
     {
         threads[tr].join();
     }
+
+    //end_alloc = std::chrono::high_resolution_clock::now();
+
+    //diff_alloc += std::chrono::duration_cast<std::chrono::nanoseconds>(end_alloc - start_alloc).count();
+
+
 }
 
 /**
@@ -1554,6 +1768,7 @@ void algorithms::addMarker(imageManager& im, int* markers, int nbMarkers)
 #ifdef PIXELS_COUNT
     nb_pixels_visited = 0;
 #endif
+    auto start = std::chrono::high_resolution_clock::now();
     int marker, up = 0;
     QBT& qbt = im.getHierarchy().getQBT();
     int* parent = qbt.getParents();
@@ -1579,6 +1794,10 @@ void algorithms::addMarker(imageManager& im, int* markers, int nbMarkers)
             up = parent[up];
         }
     }
+    auto end = std::chrono::high_resolution_clock::now();
+    time_update_h = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+    std::cout << "Time taken by hierarchy updating: " << std::chrono::duration_cast<
+        std::chrono::nanoseconds>(end - start).count() / 1000000 << " ms" << std::endl;
 
     splitSegment_v3(im, historyVisited, queueEdges);
 
@@ -1799,12 +2018,14 @@ void algorithms::get_DIFT_seed_from_image(const std::string& file_path, const in
     outputFile.close();
 }
 
-void algorithms::vector_to_csv(std::vector<double> &vector, std::string file_path) {
+void algorithms::vector_to_csv(std::vector<double>& vector, std::string file_path)
+{
     // Open an output filestream and create a CSV file
     std::ofstream outputFile(file_path);
 
     // Write each element of the vector to the CSV file, separated by a comma
-    for (size_t i = 0; i < vector.size(); i++) {
+    for (size_t i = 0; i < vector.size(); i++)
+    {
         // Check if the current element is the last one
         if (i == vector.size() - 1)
             // If it is, write the element without a comma after it

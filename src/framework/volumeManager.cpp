@@ -170,9 +170,9 @@ void volumeManager::createToyGraph()
 
 void volumeManager::buildHierarchy()
 {
-    this->map_graph_mst_ = std::make_unique<std::vector<int>>(this->graph_->getNbEdge(),-1);
+    this->map_graph_mst_ = std::vector<int>(this->graph_->getNbEdge(),-1);
 
-    algorithms3D::kruskal(*this->graph_, *this->hierarchy_, this->width_, this->height_, this->map_graph_mst_->data());
+    algorithms3D::kruskal(*this->graph_, *this->hierarchy_, this->width_, this->height_, this->map_graph_mst_.data());
 
     this->initPostprocessStructure();
     this->hierarchy_->clean_memory(); //delete uselesss data structure after the hierarchy is built
@@ -182,28 +182,30 @@ void volumeManager::buildHierarchy()
 void volumeManager::initPostprocessStructure()
 {
     this->isMarked_ = std::make_unique<std::vector<bool>>(this->graph_->getNbVertex(),false);
-    this->segments_ = std::make_unique<std::vector<int>>(this->graph_->getNbVertex(),0);
+    this->segments_ = std::vector<int>(this->graph_->getNbVertex(),0);
     this->marks_ = std::make_unique<std::vector<int>>(this->hierarchy_->getQBT().getSize(),0);
     this->sizePart_ = std::make_unique<std::vector<int>>(this->graph_->getNbVertex(),0);
     this->sizePart_->at(0) = this->graph_->getNbVertex();
     this->ws_ = std::make_unique<std::vector<bool>>(this->hierarchy_->getQBT().getSize(),false);
-    this->mstEdit_ = std::make_unique<std::vector<bool>>(this->graph_->getMst().size(), true);
+    this->mstEdit_ = std::vector<bool>(this->graph_->getMst().size(), true);
     this->colorTab_ = std::make_unique<std::vector<int>>(this->graph_->getNbVertex()*2, 0);
     this->CCL_times_ = std::make_unique<std::vector<double>>();
+    algorithms3D::init_dmap(this);
 
 }
 
 void volumeManager::resetPostprocessStructure()
 {
     this->isMarked_->clear();
-    this->segments_->clear();
+    this->segments_.clear();
     this->marks_->clear();
     this->sizePart_->clear();
     this->ws_->clear();
-    this->mstEdit_->clear();
+    this->mstEdit_.clear();
     this->colorTab_->clear();
     tagCount_ = 1;
     this->initPostprocessStructure();
+    algorithms3D::deinit_dmap();
 }
 int volumeManager::getEdge(int n)
 {
@@ -224,7 +226,7 @@ cv::Mat volumeManager::getSegmentedSlice(int z)
     int cpt = 0+(z*this->getWidth()*this->getHeight());
     for (int y = 0; y < this->getHeight(); y++) {
         for (int x = 0; x < this->getWidth(); x++) {
-            auto color = this->colorTab_->at(this->segments_->at(cpt));
+            auto color = this->colorTab_->at(this->segments_[cpt]);
             //srand(seed);
             if( color == 1)
             {
@@ -309,7 +311,7 @@ void volumeManager::dualisation_segmentation(std::vector<int> &markers, int valu
 {
     for(auto marker : markers)
     {
-        this->colorTab_->at(this->segments_->at(marker)) = value;
+        this->colorTab_->at(this->segments_[marker]) = value;
     }
 }
 
@@ -319,13 +321,18 @@ void volumeManager::write_CCL_times(const std::string& filename, int benchId)
     algorithms::vector_to_csv(*this->CCL_times_, filename+ "/CCL_" +std::to_string(benchId)+".csv");
 }
 
+void volumeManager::write_par_times(const std::string& filename, int benchId)
+{
+    algorithms::vector_to_csv(this->time_wo_alloc_, filename+ "/par_explo_" +std::to_string(benchId)+".csv");
+}
+
 bool volumeManager::isInMStEdit(int edge)
 {
     if(edge < 0)
     {
         return false;
     }
-    return this->mstEdit_->at(edge);
+    return this->mstEdit_[edge];
 }
 
 
