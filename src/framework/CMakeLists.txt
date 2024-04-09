@@ -23,12 +23,6 @@ file(
         *.h
 )
 
-FetchContent_Declare(matplotlib-cpp
-        GIT_REPOSITORY https://github.com/lava/matplotlib-cpp.git
-        GIT_TAG master) # need master for benchmark::benchmark
-
-FetchContent_MakeAvailable(matplotlib-cpp)
-
 option(TBB_TEST OFF)
 
 # Where to find CMake modules and OpenCV
@@ -54,7 +48,7 @@ set(OpenCV_LIBS opencv_core opencv_imgproc opencv_highgui opencv_imgcodecs)
 
 # linking
 target_link_libraries(${PROJECT_NAME}-interface ${OpenCV_LIBS} OpenMP::OpenMP_CXX)
-target_link_libraries(${PROJECT_NAME} matplotlib_cpp ${OpenCV_LIBS} OpenMP::OpenMP_CXX ${DCMTK_LIBRARIES})
-target_link_libraries(${PROJECT_NAME}-3d-iws matplotlib_cpp ${OpenCV_LIBS} OpenMP::OpenMP_CXX ${DCMTK_LIBRARIES})
-target_link_libraries(${PROJECT_NAME}-3d-iws-front matplotlib_cpp ${OpenCV_LIBS} OpenMP::OpenMP_CXX ${DCMTK_LIBRARIES})
-target_link_libraries(${PROJECT_NAME}-3d-niws matplotlib_cpp ${OpenCV_LIBS} OpenMP::OpenMP_CXX ${DCMTK_LIBRARIES})
+target_link_libraries(${PROJECT_NAME}  ${OpenCV_LIBS} OpenMP::OpenMP_CXX ${DCMTK_LIBRARIES})
+target_link_libraries(${PROJECT_NAME}-3d-iws  ${OpenCV_LIBS} OpenMP::OpenMP_CXX ${DCMTK_LIBRARIES})
+target_link_libraries(${PROJECT_NAME}-3d-iws-front  ${OpenCV_LIBS} OpenMP::OpenMP_CXX ${DCMTK_LIBRARIES})
+target_link_libraries(${PROJECT_NAME}-3d-niws  ${OpenCV_LIBS} OpenMP::OpenMP_CXX ${DCMTK_LIBRARIES})

@@ -8,12 +8,10 @@
 #include <opencv2/core/utility.hpp>
 #include "opencv2/imgproc.hpp"
 #include "opencv2/imgcodecs.hpp"
-#include "../matplotlibcpp.h"
 #include <fstream>
 #include <filesystem>
 #include <opencv2/core/hal/interface.h>
 
-namespace plt = matplotlibcpp;
 namespace fs = std::filesystem;
 
 int main(int argc, char *argv[]) {
@@ -204,12 +202,6 @@ int main(int argc, char *argv[]) {
 */
         idx_bench++;
 
-        //plt::named_plot("IWS", time_IW);
-        //plt::named_plot("NIWS", time_NIW);
-        //plt::named_plot("OpenCV", time_meyer);
-        //plt::legend();
-        //plt::title("Average computational time in ms");
-        //plt::show();
 
         //Illustration of every step/interaction
 
