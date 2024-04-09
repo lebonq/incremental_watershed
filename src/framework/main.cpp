@@ -25,7 +25,7 @@ int main(int argc, char *argv[]) {
     std::vector<double> time_NIW;
 
     const int nb_bench = 1;
-    const int nb_images = 28;
+    const int nb_images = 58;
 
     std::vector<std::string> images_name;
 
@@ -287,16 +287,40 @@ int main(int argc, char *argv[]) {
             }
 
             cv::Mat cont(wshed.size(), CV_8UC4);
-            cont = cv::Scalar(255, 255, 255, 0);
 
             cv::Mat binary;
             cv::cvtColor(wshed, binary, cv::COLOR_BGR2GRAY);
-            cv::threshold(binary, binary, 128, 255, cv::THRESH_BINARY);
-            std::vector<std::vector<cv::Point>> contours;
-            cv::findContours(binary, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
-            for (auto contour: contours) {
-                cv::drawContours(imgColor, contours, -1, cv::Scalar(0, 0, 0, 0), 8);
-            }
+            cv::Mat grad_x,grad_y;
+            cv::Mat abs_grad_x, abs_grad_y;
+            cv::Sobel(wshed, grad_x, CV_16S, 1, 0, 3, 1, 0, cv::BORDER_DEFAULT);
+            cv::Sobel(wshed, grad_y, CV_16S, 0, 1, 3, 1, 0, cv::BORDER_DEFAULT);
+
+            // Compute the absolute value of the gradients
+            cv::convertScaleAbs(grad_x, abs_grad_x);
+            cv::convertScaleAbs(grad_y, abs_grad_y);
+
+            // Combine the gradients
+            cv::Mat grad;
+            cv::addWeighted(abs_grad_x, 0.5, abs_grad_y, 0.5, 0, grad);
+
+            cv::threshold(grad, grad, 40, 255, cv::THRESH_BINARY);
+
+            cv::Mat mask;
+            cv::inRange(grad, cv::Scalar(0, 255, 255), cv::Scalar(0, 255, 255), mask);
+
+            int dilationSize = 2;
+            cv::Mat element = cv::getStructuringElement(cv::MORPH_ELLIPSE,
+                                                        cv::Size(2 * dilationSize + 1, 2 * dilationSize + 1),
+                                                        cv::Point(dilationSize, dilationSize));
+
+            // Perform dilation on the mask
+            cv::dilate(mask, mask, element);
+
+            // Create a new image with the same size as the original one, filled with black color
+            cv::Mat dilatedYellow(grad.size(), CV_8U, cv::Scalar(0, 0, 0));
+
+            // Set the dilated pixels to yellow
+            dilatedYellow.setTo(cv::Scalar(0, 255, 255), mask);
 
 
             cv::Mat imgRGBA(marker_image.size(), CV_8UC4);
@@ -313,9 +337,20 @@ int main(int argc, char *argv[]) {
                 }
             }
 
+            grad.copyTo(imgColor, mask);
+
             //Create an overlay over th WSHED transform
             cv::Mat cpy_over;
             imgColor.copyTo(cpy_over);
+
+            //change all pixel at 0 0 0 to 255 255 255
+            for (int i = 0; i < wshed.rows; i++) {
+                for (int j = 0; j < wshed.cols; j++) {
+                    if (imgColor.at<cv::Vec3b>(i, j) == cv::Vec3b(0, 0, 0)) {
+                        imgColor.at<cv::Vec3b>(i, j) = cv::Vec3b(0, 255, 255);
+                    }
+                }
+            }
 
             cpy_over = wshed * 0.5 + imgColor * 0.5;
 
@@ -324,7 +359,6 @@ int main(int argc, char *argv[]) {
 
             free(color_tab);
         }
-        exit(42);
     }
 
     algorithms::vector_to_csv(time_init_IW, "time_init_IW.csv");

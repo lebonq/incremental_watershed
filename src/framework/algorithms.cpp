@@ -2039,3 +2039,24 @@ void algorithms::vector_to_csv(std::vector<double>& vector, std::string file_pat
     outputFile.close();
 }
 
+void algorithms::vector_to_csv(std::vector<long>& vector, std::string file_path)
+{
+    // Open an output filestream and create a CSV file
+    std::ofstream outputFile(file_path);
+
+    // Write each element of the vector to the CSV file, separated by a comma
+    for (size_t i = 0; i < vector.size(); i++)
+    {
+        // Check if the current element is the last one
+        if (i == vector.size() - 1)
+            // If it is, write the element without a comma after it
+                outputFile << vector[i];
+        else
+            // If it's not the last element, write the element followed by a comma
+                outputFile << vector[i] << ",";
+    }
+
+    // Close the file
+    outputFile.close();
+}
+

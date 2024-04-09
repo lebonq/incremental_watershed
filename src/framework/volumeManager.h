@@ -29,11 +29,13 @@ private:
     std::unique_ptr<graph> graph_;
     std::unique_ptr<QEBT> hierarchy_;
 
-    std::unique_ptr<std::vector<double>> CCL_times_;
+
 
 
 
 public:
+    int threshold_;
+
     volumeManager() = default;
     cv::Mat loadDicomFile(const std::string& filename);
     void loadVolume(const std::string& folder_name);
@@ -44,7 +46,13 @@ public:
     void resetPostprocessStructure();
     cv::Mat getSegmentedSlice(int z);
     std::vector<cv::Mat> getSegmentedVolume();
+
     std::vector<double> time_wo_alloc_;
+
+    std::vector<double> time_total_;
+    std::vector<double> time_thread_sync_;
+    std::vector<double> time_seq_;
+    std::vector<long> CCL_times_;
 
     std::vector<int> segments_; //Label for each vertex
     std::unique_ptr<std::vector<int>> marks_; //visitCount in the paper
@@ -70,9 +78,11 @@ public:
     void dualisation_segmentation(std::vector<int> &markers, int value);
 
     //Those function works only with the IWS method
-    void add_CCL_time(double time) { this->CCL_times_->push_back(time); }
-    void write_CCL_times(const std::string& filename,int benchId);
+    void write_CCL_times(const std::string& filename, int benchId, std::string name);
     void write_par_times(const std::string& filename, int benchId);
+    void write_seq_times(const std::string& filename, int benchId);
+    void write_max_thread_times(const std::string& filename, int benchId);
+    void write_thread_sync_times(const std::string& filename, int benchId);
 
     std::vector<int>& getMarks() { return *marks_.get(); }
     void modifyMarks(int index, int value) { this->marks_->at(index) = value; }

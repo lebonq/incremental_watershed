@@ -181,6 +181,7 @@ void volumeManager::buildHierarchy()
 
 void volumeManager::initPostprocessStructure()
 {
+    tagCount_ = 1;
     this->isMarked_ = std::make_unique<std::vector<bool>>(this->graph_->getNbVertex(),false);
     this->segments_ = std::vector<int>(this->graph_->getNbVertex(),0);
     this->marks_ = std::make_unique<std::vector<int>>(this->hierarchy_->getQBT().getSize(),0);
@@ -189,7 +190,6 @@ void volumeManager::initPostprocessStructure()
     this->ws_ = std::make_unique<std::vector<bool>>(this->hierarchy_->getQBT().getSize(),false);
     this->mstEdit_ = std::vector<bool>(this->graph_->getMst().size(), true);
     this->colorTab_ = std::make_unique<std::vector<int>>(this->graph_->getNbVertex()*2, 0);
-    this->CCL_times_ = std::make_unique<std::vector<double>>();
     algorithms3D::init_dmap(this);
 
 }
@@ -203,9 +203,10 @@ void volumeManager::resetPostprocessStructure()
     this->ws_->clear();
     this->mstEdit_.clear();
     this->colorTab_->clear();
-    tagCount_ = 1;
+
     this->initPostprocessStructure();
     algorithms3D::deinit_dmap();
+        algorithms3D::init_dmap(this);
 }
 int volumeManager::getEdge(int n)
 {
@@ -315,15 +316,30 @@ void volumeManager::dualisation_segmentation(std::vector<int> &markers, int valu
     }
 }
 
-void volumeManager::write_CCL_times(const std::string& filename, int benchId)
+void volumeManager::write_CCL_times(const std::string& filename, int benchId, std::string name)
 {
 
-    algorithms::vector_to_csv(*this->CCL_times_, filename+ "/CCL_" +std::to_string(benchId)+".csv");
+    algorithms::vector_to_csv(this->CCL_times_, filename+ "/CCL_" +std::to_string(benchId)+ "_" + name +".csv");
 }
 
 void volumeManager::write_par_times(const std::string& filename, int benchId)
 {
     algorithms::vector_to_csv(this->time_wo_alloc_, filename+ "/par_explo_" +std::to_string(benchId)+".csv");
+}
+
+void volumeManager::write_seq_times(const std::string& filename, int benchId)
+{
+    algorithms::vector_to_csv(this->time_seq_, filename+ "/seq_explo_" +std::to_string(benchId)+".csv");
+}
+
+void volumeManager::write_max_thread_times(const std::string& filename, int benchId)
+{
+    algorithms::vector_to_csv(this->time_total_, filename+ "/max_thread_" +std::to_string(benchId)+".csv");
+}
+
+void volumeManager::write_thread_sync_times(const std::string& filename, int benchId)
+{
+    algorithms::vector_to_csv(this->time_thread_sync_, filename+ "/thread_sync_" +std::to_string(benchId)+".csv");
 }
 
 bool volumeManager::isInMStEdit(int edge)
@@ -338,5 +354,5 @@ bool volumeManager::isInMStEdit(int edge)
 
 volumeManager::~volumeManager()
 {
-
+    algorithms3D::deinit_dmap();
 }

@@ -100,7 +100,7 @@ void seqPartition3D(int slice)
 
 void* copyForUnion3D(void* slice)
 {
-    auto start = std::chrono::high_resolution_clock::now();
+    //auto start = std::chrono::high_resolution_clock::now();
     int i, j;
     i = (long)slice;
 
@@ -110,8 +110,8 @@ void* copyForUnion3D(void* slice)
         D3D->E[D3D->start[i] + j] = value;
     }
 
-    auto end = std::chrono::high_resolution_clock::now();
-    t_time_explo3D[i] += std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+    //auto end = std::chrono::high_resolution_clock::now();
+    //t_time_explo3D[i] += std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
 
     pthread_exit(NULL);
 }
@@ -172,7 +172,7 @@ void setUnion3D()
 /*-------------------------------------------------creation level-sets---------------------------------------------------*/
 void* parLevelSetTraversal3D(void* slice)
 {
-    auto start = std::chrono::high_resolution_clock::now();
+    //auto start = std::chrono::high_resolution_clock::now();
     int i, j, x, y, vertex;
 
     j = 0;
@@ -259,8 +259,8 @@ void* parLevelSetTraversal3D(void* slice)
         }
     }
     D3D->TailleSi[i] = j; // number of element in each Si
-    auto end = std::chrono::high_resolution_clock::now();
-    t_time_explo3D[i] += std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+    //auto end = std::chrono::high_resolution_clock::now();
+    //t_time_explo3D[i] += std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
 
     pthread_exit(NULL);
 }
@@ -275,7 +275,7 @@ void parLevelSetTraversal_v2_3D(int slice, std::binary_semaphore& finish, std::b
         //Check if split3D is == false
         if (split3D == false) return;
 
-        auto start_t = std::chrono::high_resolution_clock::now();
+        //auto start_t = std::chrono::high_resolution_clock::now();
 
         int i, j, x, y, vertex;
 
@@ -300,7 +300,7 @@ void parLevelSetTraversal_v2_3D(int slice, std::binary_semaphore& finish, std::b
                    int tag = vol_t_ptr->segments_[v];
 
                     std::tuple<int, int, int> v_3D = algorithms3D::from1Dto3D(v, w, h, d);
-                    vol_t_ptr->segments_[v] = tag;
+                    //vol_t_ptr->segments_[v] = tag;
 
                     int vRight_1D = v + 1;
                     int vLeft_1D = v - 1;
@@ -628,10 +628,8 @@ void parLevelSetTraversal_v2_3D(int slice, std::binary_semaphore& finish, std::b
         }
         D3D->TailleSi[i] = j; // number of element in each Si
 
-
-
-        auto end = std::chrono::high_resolution_clock::now();
-        t_time_explo3D[i] += std::chrono::duration_cast<std::chrono::nanoseconds>(end - start_t).count();
+        //auto end = std::chrono::high_resolution_clock::now();
+        //t_time_explo3D[i] += std::chrono::duration_cast<std::chrono::nanoseconds>(end - start_t).count();
         finish.release();
     }
 }
@@ -1104,8 +1102,8 @@ void algorithms3D::splitSegment_v3(volumeManager& vol, std::vector<bool>& histor
 {
     split3D = true;
 
-    auto start_alloc = std::chrono::high_resolution_clock::now();
-    int thres = 4000; // threshold for parallel exploration
+    //auto start_alloc = std::chrono::high_resolution_clock::now();
+    int thres = vol.threshold_; // threshold for parallel exploration
     int par_explo = 0;
     int seq_explo = 0;
     //D3D = (DistanceMap*)malloc(sizeof(struct DistanceMap)); // Distance map structure
@@ -1165,10 +1163,10 @@ void algorithms3D::splitSegment_v3(volumeManager& vol, std::vector<bool>& histor
 
 
 
-    auto end_alloc = std::chrono::high_resolution_clock::now();
-    auto diff_alloc = std::chrono::duration_cast<std::chrono::nanoseconds>(end_alloc - start_alloc).count();
+    //auto end_alloc = std::chrono::high_resolution_clock::now();
+    //auto diff_alloc = std::chrono::duration_cast<std::chrono::nanoseconds>(end_alloc - start_alloc).count();
 
-    auto start = std::chrono::high_resolution_clock::now();
+    //auto start = std::chrono::high_resolution_clock::now();
 
     long test = 0;
 
@@ -1219,18 +1217,17 @@ void algorithms3D::splitSegment_v3(volumeManager& vol, std::vector<bool>& histor
         //Main loop for exploring
         while (D3D->indice != 0)
         {
-            if (D3D->indice >= thres) //If propagation is above 50 vertex we // the process
+            if (D3D->indice > thres) //If propagation is above 50 vertex we // the process
             {
 
-                while( D3D->indice >= thres)
-                {
+                //while( D3D->indice < thres)
+                //{
+                    //auto start_test = std::chrono::high_resolution_clock::now();
                     // Partition Function
                     for (int i = 0; i < nb_threads3D; i++)
                     {
                         seqPartition3D(i);
                     }
-
-                    auto start_test = std::chrono::high_resolution_clock::now();
 
                     // Start of the threads
                     start_1.release();
@@ -1262,20 +1259,22 @@ void algorithms3D::splitSegment_v3(volumeManager& vol, std::vector<bool>& histor
                     /*finish_11.acquire();
                     finish_12.acquire();
                     finish_13.acquire();*/
-                    auto end_t = std::chrono::high_resolution_clock::now();
-                    auto diff_t = std::chrono::duration_cast<std::chrono::nanoseconds>(end_t - start_test).count();
+
                     //parLabelisation(D, num_thrd);
                     // Union of the sets traversed by the threads to form th next level set stored in D3D->E
 
                     setUnion3D();
 
-                    test += diff_t;
+                    //auto end_t = std::chrono::high_resolution_clock::now();
+                    //auto diff_t = std::chrono::duration_cast<std::chrono::nanoseconds>(end_t - start_test).count();
+
+                    //test += diff_t;
                     par_explo++;
-                }
+                //}
             }
             else //else we don't
             {
-                auto start_seq = std::chrono::high_resolution_clock::now();
+                //auto start_seq = std::chrono::high_resolution_clock::now();
                 //std::cout << "Sequential exploration" << std::endl;
                 int i, x, y, vertex;
 
@@ -1408,9 +1407,9 @@ void algorithms3D::splitSegment_v3(volumeManager& vol, std::vector<bool>& histor
 
                 memcpy(D3D->E, D3D->Si[i], D3D->TailleSi[i] * sizeof(int));
                 seq_explo++;
-                auto end_seq = std::chrono::high_resolution_clock::now();
-                auto duration_seq = std::chrono::duration_cast<std::chrono::nanoseconds>(end_seq - start_seq);
-                seq_time += duration_seq.count();
+                //auto end_seq = std::chrono::high_resolution_clock::now();
+                //auto duration_seq = std::chrono::duration_cast<std::chrono::nanoseconds>(end_seq - start_seq);
+                //seq_time += duration_seq.count();
             }
         }
 
@@ -1421,13 +1420,13 @@ void algorithms3D::splitSegment_v3(volumeManager& vol, std::vector<bool>& histor
         //Distance_Maps(D, num_thrd);
     }
 
-    auto end = std::chrono::high_resolution_clock::now();
+    //auto end = std::chrono::high_resolution_clock::now();
 
-    auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start);
+    //auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start);
 
 
 
-    auto all_explo = seq_time;
+    /*auto all_explo = seq_time;
 
     long max = LONG_MIN;
 
@@ -1465,12 +1464,13 @@ void algorithms3D::splitSegment_v3(volumeManager& vol, std::vector<bool>& histor
 
     std::cout << "Time when thread are doing other than exploring is : " << (test-max) / 1000000 << " ms" << std::endl;
 
-    //start_alloc = std::chrono::high_resolution_clock::now();
-    //clean_distancemap3D();
-    //free(D3D);
+    std::cout << "Time thread + sync time : " << (test) / 1000000 << " ms" << std::endl;
+
+    vol.time_thread_sync_.emplace_back(test/1000000);
+    vol.time_seq_.emplace_back(seq_time/1000000);
+    vol.time_total_.emplace_back((duration.count() + time_update_h3D + diff_alloc)/1000000);*/
 
     split3D = false;
-
 
     start_1.release();
     start_2.release();
@@ -1569,7 +1569,7 @@ void algorithms3D::removeMarker(volumeManager& vol, std::vector<int>& markers, i
 
 void algorithms3D::addMarker(volumeManager& vol, std::vector<int>& markers)
 {
-    auto start_h = std::chrono::high_resolution_clock::now();
+    //auto start_h = std::chrono::high_resolution_clock::now();
     int up = 0;
     QBT& qbt = vol.getHierarchy().getQBT();
     int* parent = qbt.getParents();
@@ -1594,21 +1594,21 @@ void algorithms3D::addMarker(volumeManager& vol, std::vector<int>& markers)
             up = parent[up];
         }
     }
-    auto end_h = std::chrono::high_resolution_clock::now();
-    time_update_h3D = std::chrono::duration_cast<std::chrono::nanoseconds>(end_h - start_h).count();
+    //auto end_h = std::chrono::high_resolution_clock::now();
+    //time_update_h3D = std::chrono::duration_cast<std::chrono::nanoseconds>(end_h - start_h).count();
 
 
     // Get the start time
     auto start = std::chrono::high_resolution_clock::now();
 
     // Run the code you want to benchmark
-    splitSegment_v3(vol, historyVisited, queueEdges);
+    splitSegment(vol, historyVisited, queueEdges);
 
     // Get the end time
     auto end = std::chrono::high_resolution_clock::now();
 
     // Calculate the difference
-    auto duration = end - start;
+    auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start);
 
-    vol.add_CCL_time(duration.count());
+    vol.CCL_times_.emplace_back(duration.count());
 }

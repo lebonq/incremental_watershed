@@ -43,6 +43,8 @@ int main(int argc, char* argv[])
 {
     int nb_benchmarks = atoi(argv[4]);
 
+    std::string namepatient = argv[5];
+
     int nb_markers = atoi(argv[3]);
 
     std::vector<std::vector<double>> object_time(nb_benchmarks, std::vector<double>(nb_markers));
@@ -106,6 +108,7 @@ int main(int argc, char* argv[])
             object_time[j][i] = diff.count();  // Store time taken
             std::cout << GREEN << "addMarkers object" << RESET << "     step " << i << " took " << GREEN << diff.count()
                 << " seconds" << std::endl;
+            std::cout << GREEN << "labeling took 0." << volume_manager->CCL_times_.at(i*2)/1000000 << " seconds" << std::endl;
 
             //bencmark addMarkers background
             start = std::chrono::high_resolution_clock::now();
@@ -115,6 +118,7 @@ int main(int argc, char* argv[])
             background_time[j][i] = diff.count();  // Store time taken
             std::cout << RED << "addMarkers background" << RESET << " step " << i << " took " << RED << diff.count() <<
                 " seconds" << std::endl;
+            std::cout << RED << "labeling took 0." << volume_manager->CCL_times_.at(i*2+1)/1000000 << " seconds" << std::endl;
 
         }
         for(int batch = 0; batch < nb_markers; batch++)
@@ -123,14 +127,14 @@ int main(int argc, char* argv[])
             volume_manager->dualisation_segmentation(markers_object_batched[batch], 1);
         }
 
-        auto volume = volume_manager->getSegmentedVolume();
+        /*auto volume = volume_manager->getSegmentedVolume();
         for (int i = 0; i < volume.size(); i++)
         {
             cv::imwrite("test_volume/slice" + std::to_string(i) + ".png", volume[i]);
-        }
+        }*/
 
-        volume_manager->write_CCL_times(path_markers, j);
-        volume_manager->write_par_times(path_markers, j);
+        volume_manager->write_CCL_times(path_markers, j, namepatient);
+        //volume_manager->write_par_times(path_markers, j);
         delete volume_manager;
     }
 
@@ -161,8 +165,8 @@ int main(int argc, char* argv[])
     }
 
     //save it ina file
-    algorithms::vector_to_csv(avg_object_time, path_markers + "/avg_object_time_iws.csv");
-    algorithms::vector_to_csv(avg_background_time, path_markers + "/avg_background_time_iws.csv");
-    algorithms::vector_to_csv(init_time, path_markers + "/init_time_iws.csv");
+    algorithms::vector_to_csv(avg_object_time, path_markers + "/avg_object_time_iws_" + namepatient  +".csv");
+    algorithms::vector_to_csv(avg_background_time, path_markers + "/avg_background_time_iws_" + namepatient  +".csv");
+    algorithms::vector_to_csv(init_time, path_markers + "/init_time_iws_" + namepatient  +".csv");
 
 }
