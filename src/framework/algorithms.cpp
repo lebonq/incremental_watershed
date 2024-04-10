@@ -84,42 +84,6 @@ void seqPartition(int slice)
         D->Ei[i - 1][ji - start] = D->E[ji];
 }
 
-/*-----------------------------------------------Union Function ----------------------------------------------------*/
-
-void* copyForUnion(void* slice)
-{
-    auto start = std::chrono::high_resolution_clock::now();
-    int i, j;
-    i = (long)slice;
-
-    for (j = 0; j < (D->TailleSi[i]); j++)
-    {
-        auto value = D->Si[i][j];
-        D->E[D->start[i] + j] = value;
-    }
-
-    auto end = std::chrono::high_resolution_clock::now();
-    t_time_explo[i] += std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
-
-    pthread_exit(NULL);
-}
-
-void copyForUnionSeq(int slice)
-{
-    //auto start = std::chrono::high_resolution_clock::now();
-    int i;
-    i = slice;
-
-    for (int j = 0; j < D->TailleSi[i]; j++)
-    {
-        auto value = D->Si[i][j];
-        D->E[D->start[i] + j] = value;
-    }
-
-    //auto end = std::chrono::high_resolution_clock::now();
-    //t_time_explo[i] += std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
-}
-
 /************************************************************/
 void setUnion()
 {
@@ -137,23 +101,13 @@ void setUnion()
 
     for (i = 0; i < p; i++)
     {
-        /*if (pthread_create(&thread[i], NULL, copyForUnion, (void*)(long)i) != 0)
-        {
-            perror("Can't create thread");
-            free(thread);
-            exit(-1);
-        }*/
-        //copyForUnionSeq(i);
-
         for (j = 0; j < D->TailleSi[i]; j++)
         {
+            //Union between E and Si[i]
             auto value = D->Si[i][j];
             D->E[D->start[i] + j] = value;
         }
     }
-    /*for (i = 0; i < p; i++)
-        pthread_join(thread[i], NULL);*/
-
     D->indice = cmp; // new after union |n|
 }
 
@@ -280,11 +234,6 @@ void parLevelSetTraversal_depth(int slice, std::binary_semaphore& finish, std::b
         int h = im_t_ptr->getHeight();
         int wh = w * h;
 
-
-        /* fprintf(stderr,"Taille de E[%d] = %d\n", i, D->TailleEi[i]); */
-        /* fprintf(stderr,"Elements de E[%d]\n", i); */
-        /* for(x = 0; x < D->TailleEi[i]; x++) fprintf(stderr, "%d-eme element %d, ", x, D->Ei[i][x]); */
-        /* fprintf(stderr,".\n"); */
 
         for (x = 0; x < D->TailleEi[i]; x++)
         {
@@ -536,29 +485,6 @@ void* parInit(void* param)
     pthread_exit(NULL);
 }
 
-void dMapInit(int p)
-/* Initialize the structure used during parallel distance map
-   computation */
-{
-    int i;
-
-    for (i = 0; i < p; i++)
-    {
-        if (pthread_create(&thread[i], NULL, parInit, (void*)(long)i) != 0)
-        {
-            perror("Can't create thread");
-            free(thread);
-            exit(-1);
-        }
-    }
-    for (i = 0; i < p; i++)
-        pthread_join(thread[i], NULL); // threads join
-
-    //print TailleSi
-
-    setUnion();
-}
-
 void allocate_distancemap(int p)
 {
     auto& g = im_t_ptr->getGraph();
@@ -633,59 +559,7 @@ void clean_distancemap()
     D->start = NULL;
 }
 
-/***************************************** Parallel Distance Map **********************************************/
-void Distance_Maps(struct DistanceMap* D, int p)
-{
-    int i, j, nb_level, r, som, d;
 
-    // Run the code you want to benchmark
-    dMapInit(p);
-
-    /* fprintf(stderr, "Allocation des structures necessaires a la carte de distance ok\n"); */
-
-    while (D->indice != 0)
-    {
-        /* fprintf(stderr, "D�but du traitement de niveau %d\n", nb_level); */
-        // Partition Function
-        for (i = 0; i < p; i++)
-        {
-            if (pthread_create(&thread[i], NULL, parPartition, (void*)(long)i) != 0)
-            {
-                perror("Can't create thread");
-                free(thread);
-                exit(-1);
-            }
-        }
-        for (i = 0; i < p; i++)
-            pthread_join(thread[i], NULL); // threads join
-
-        /* fprintf(stderr, "Niveau %d: partition ok\n", nb_level); */
-
-        // Creation of level-set
-        for (i = 0; i < p; i++)
-        {
-            // for each processor i
-            if (pthread_create(&thread[i], NULL, parLevelSetTraversal, (void*)(long)i) != 0)
-            {
-                perror("Can't create thread");
-                free(thread);
-                exit(-1);
-            }
-        }
-        for (i = 0; i < p; i++)
-            pthread_join(thread[i], NULL); // threads join
-
-        // Union of the sets traversed by the threads to form th next level set stored in D->E
-        setUnion();
-
-        /*for (i = 0; i < p; i++)
-        {
-            fprintf(stderr,"Taille de Si[%d] = %d\n", i, D->TailleSi[i]);
-        }*/
-    }
-
-    //fprintf(stderr, "Carte de Distance calculee\n");
-}
 
 void parLabelisation(struct DistanceMap* D, int p)
 {
