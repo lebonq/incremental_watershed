@@ -87,11 +87,15 @@ int main(int argc, char* argv[])
         std::chrono::duration<double> diff = end - start;
         std::cout << MAGENTA << "loadVolume took " << diff.count() << " seconds" << std::endl;
 
+        volume_manager->threshold_ = 4000;
+        std::cout << "Threshold set to " << volume_manager->threshold_ << std::endl;
+
         // Benchmark createGraph
         start = std::chrono::high_resolution_clock::now();
         volume_manager->createGraph();
         // Benchmark buildHierarchy
         volume_manager->buildHierarchy();
+
         end = std::chrono::high_resolution_clock::now();
         diff = end - start;
         std::cout << "Initialization took " << diff.count() << " seconds" << std::endl;

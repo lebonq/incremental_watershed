@@ -35,7 +35,7 @@ public:
     static void breadthFirstSearchLabel_v2(imageManager& im, int* p, int* buffer, int* n,std::binary_semaphore& finish, std::binary_semaphore& start, int id);
     static int breadthFirstSearchLabel_v2_seq(imageManager& im, int* p, int* buffer, int* n);
     static void splitSegment_optimised_v2(imageManager & im, bool* historyVisited,std::vector<int>& queueEdges);
-    static void splitSegment_v3(imageManager& im, bool* historyVisited, std::vector<int>& queueEdges);
+    static void splitSegment_par(imageManager& im, bool* historyVisited, std::vector<int>& queueEdges);
     static std::tuple<int,int> edge_to_vertices(const int edge,const int w);
     static void mergeSegment(int edge, imageManager & im);
     static void removeMarker(imageManager & im,int* markers,int nbMarkers);

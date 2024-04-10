@@ -67,6 +67,10 @@ void* parPartition3D(void* slice)
     pthread_exit(NULL);
 }
 
+/**
+ * Partition but for sequential use
+ * @param slice
+ */
 void seqPartition3D(int slice)
 {
     int i, ji, p, n, i2;
@@ -96,41 +100,7 @@ void seqPartition3D(int slice)
         D3D->Ei[i - 1][ji - start] = D3D->E[ji];
 }
 
-/*-----------------------------------------------Union Function ----------------------------------------------------*/
 
-void* copyForUnion3D(void* slice)
-{
-    //auto start = std::chrono::high_resolution_clock::now();
-    int i, j;
-    i = (long)slice;
-
-    for (j = 0; j < (D3D->TailleSi[i]); j++)
-    {
-        auto value = D3D->Si[i][j];
-        D3D->E[D3D->start[i] + j] = value;
-    }
-
-    //auto end = std::chrono::high_resolution_clock::now();
-    //t_time_explo3D[i] += std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
-
-    pthread_exit(NULL);
-}
-
-void copyForUnionSeq3D(int slice)
-{
-    //auto start = std::chrono::high_resolution_clock::now();
-    int i;
-    i = slice;
-
-    for (int j = 0; j < D3D->TailleSi[i]; j++)
-    {
-        auto value = D3D->Si[i][j];
-        D3D->E[D3D->start[i] + j] = value;
-    }
-
-    //auto end = std::chrono::high_resolution_clock::now();
-    //t_time_explo[i] += std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
-}
 
 /************************************************************/
 void setUnion3D()
@@ -146,30 +116,21 @@ void setUnion3D()
         cmp = cmp + D3D->TailleSi[i];
     }
 
-
     for (i = 0; i < p; i++)
     {
-        /*if (pthread_create(&thread[i], NULL, copyForUnion, (void*)(long)i) != 0)
-        {
-            perror("Can't create thread");
-            free(thread);
-            exit(-1);
-        }*/
-        //copyForUnionSeq(i);
-
+        //Union of E and Si[i]
         for (j = 0; j < D3D->TailleSi[i]; j++)
         {
             auto value = D3D->Si[i][j];
             D3D->E[D3D->start[i] + j] = value;
         }
     }
-    /*for (i = 0; i < p; i++)
-        pthread_join(thread[i], NULL);*/
-
     D3D->indice = cmp; // new after union |n|
 }
 
-/*-------------------------------------------------creation level-sets---------------------------------------------------*/
+/**
+* In this function 1 steps are done before synchronizing the threads
+*/
 void* parLevelSetTraversal3D(void* slice)
 {
     //auto start = std::chrono::high_resolution_clock::now();
@@ -265,7 +226,13 @@ void* parLevelSetTraversal3D(void* slice)
     pthread_exit(NULL);
 }
 
-void parLevelSetTraversal_v2_3D(int slice, std::binary_semaphore& finish, std::binary_semaphore& start)
+/**
+ * In this function 3 steps are done before synchronizing the threads
+ * @param slice
+ * @param finish
+ * @param start
+ */
+void parLevelSetTraversal_depth_3D(int slice, std::binary_semaphore& finish, std::binary_semaphore& start)
 
 {
     while (split3D == true)
@@ -755,65 +722,10 @@ void clean_distancemap3D()
     D3D->start = NULL;
 }
 
-/***************************************** Parallel Distance Map **********************************************/
-void Distance_Maps3D(struct DistanceMap* D, int p)
-{
-    int i, j, nb_level, r, som, d;
-
-    // Run the code you want to benchmark
-    dMapInit3D(p);
-
-    /* fprintf(stderr, "Allocation des structures necessaires a la carte de distance ok\n"); */
-
-    while (D3D->indice != 0)
-    {
-        /* fprintf(stderr, "D�but du traitement de niveau %d\n", nb_level); */
-        // Partition Function
-        for (i = 0; i < p; i++)
-        {
-            if (pthread_create(&thread3D[i], NULL, parPartition3D, (void*)(long)i) != 0)
-            {
-                perror("Can't create thread");
-                free(thread3D);
-                exit(-1);
-            }
-        }
-        for (i = 0; i < p; i++)
-            pthread_join(thread3D[i], NULL); // threads join
-
-        /* fprintf(stderr, "Niveau %d: partition ok\n", nb_level); */
-
-        // Creation of level-set
-        for (i = 0; i < p; i++)
-        {
-            // for each processor i
-            if (pthread_create(&thread3D[i], NULL, parLevelSetTraversal3D, (void*)(long)i) != 0)
-            {
-                perror("Can't create thread");
-                free(thread3D);
-                exit(-1);
-            }
-        }
-        for (i = 0; i < p; i++)
-            pthread_join(thread3D[i], NULL); // threads join
-
-        // Union of the sets traversed by the threads to form th next level set stored in D3D->E
-        setUnion3D();
-
-        /*for (i = 0; i < p; i++)
-        {
-            fprintf(stderr,"Taille de Si[%d] = %d\n", i, D3D->TailleSi[i]);
-        }*/
-    }
-
-    //fprintf(stderr, "Carte de Distance calculee\n");
-}
 
 void parLabelisation3D(struct DistanceMap* D, int p)
 {
     int i, j, nb_level, r, som, d;
-
-    /* fprintf(stderr, "Niveau %d: partition ok\n", nb_level); */
 
     // Creation of level-set
     for (i = 0; i < p; i++)
@@ -1098,7 +1010,7 @@ void algorithms3D::deinit_dmap()
 
 
 
-void algorithms3D::splitSegment_v3(volumeManager& vol, std::vector<bool>& historyVisited, std::vector<int>& queueEdges)
+void algorithms3D::splitSegment_par(volumeManager& vol, std::vector<bool>& historyVisited, std::vector<int>& queueEdges)
 {
     split3D = true;
 
@@ -1106,8 +1018,6 @@ void algorithms3D::splitSegment_v3(volumeManager& vol, std::vector<bool>& histor
     int thres = vol.threshold_; // threshold for parallel exploration
     int par_explo = 0;
     int seq_explo = 0;
-    //D3D = (DistanceMap*)malloc(sizeof(struct DistanceMap)); // Distance map structure
-    //num_thrd = 10;
     std::vector<std::thread> threads(nb_threads3D);
 
     memset(t_time_explo3D, 0, 50 * sizeof(long));
@@ -1141,20 +1051,20 @@ void algorithms3D::splitSegment_v3(volumeManager& vol, std::vector<bool>& histor
     }*/
 
 
-    threads[0] = std::thread(parLevelSetTraversal_v2_3D, 0, std::ref(finish_1), std::ref(start_1));
-    threads[1] = std::thread(parLevelSetTraversal_v2_3D, 1, std::ref(finish_2), std::ref(start_2));
-    threads[2] = std::thread(parLevelSetTraversal_v2_3D, 2, std::ref(finish_3), std::ref(start_3));
-    threads[3] = std::thread(parLevelSetTraversal_v2_3D, 3, std::ref(finish_4), std::ref(start_4));
-    threads[4] = std::thread(parLevelSetTraversal_v2_3D, 4, std::ref(finish_5), std::ref(start_5));
-    threads[5] = std::thread(parLevelSetTraversal_v2_3D, 5, std::ref(finish_6), std::ref(start_6));
-    threads[6] = std::thread(parLevelSetTraversal_v2_3D, 6, std::ref(finish_7), std::ref(start_7));
-    threads[7] = std::thread(parLevelSetTraversal_v2_3D, 7, std::ref(finish_8), std::ref(start_8));
-    threads[8] = std::thread(parLevelSetTraversal_v2_3D, 8, std::ref(finish_9), std::ref(start_9));
-    threads[9] = std::thread(parLevelSetTraversal_v2_3D, 9, std::ref(finish_10), std::ref(start_10));
-    /*threads[10] = std::thread(parLevelSetTraversal_v2, 10, std::ref(finish_11), std::ref(start_11));
-    threads[11] = std::thread(parLevelSetTraversal_v2, 11, std::ref(finish_12), std::ref(start_12));
-    threads[12] = std::thread(parLevelSetTraversal_v2, 12, std::ref(finish_13), std::ref(start_13));
-    /*threads[13] = std::thread(parLevelSetTraversal_v2, 13, std::ref(finish_14), std::ref(start_14));*/
+    threads[0] = std::thread(parLevelSetTraversal_depth_3D, 0, std::ref(finish_1), std::ref(start_1));
+    threads[1] = std::thread(parLevelSetTraversal_depth_3D, 1, std::ref(finish_2), std::ref(start_2));
+    threads[2] = std::thread(parLevelSetTraversal_depth_3D, 2, std::ref(finish_3), std::ref(start_3));
+    threads[3] = std::thread(parLevelSetTraversal_depth_3D, 3, std::ref(finish_4), std::ref(start_4));
+    threads[4] = std::thread(parLevelSetTraversal_depth_3D, 4, std::ref(finish_5), std::ref(start_5));
+    threads[5] = std::thread(parLevelSetTraversal_depth_3D, 5, std::ref(finish_6), std::ref(start_6));
+    threads[6] = std::thread(parLevelSetTraversal_depth_3D, 6, std::ref(finish_7), std::ref(start_7));
+    threads[7] = std::thread(parLevelSetTraversal_depth_3D, 7, std::ref(finish_8), std::ref(start_8));
+    threads[8] = std::thread(parLevelSetTraversal_depth_3D, 8, std::ref(finish_9), std::ref(start_9));
+    threads[9] = std::thread(parLevelSetTraversal_depth_3D, 9, std::ref(finish_10), std::ref(start_10));
+    /*threads[10] = std::thread(parLevelSetTraversal_depth_3D, 10, std::ref(finish_11), std::ref(start_11));
+    threads[11] = std::thread(parLevelSetTraversal_depth_3D, 11, std::ref(finish_12), std::ref(start_12));
+    threads[12] = std::thread(parLevelSetTraversal_depth_3D, 12, std::ref(finish_13), std::ref(start_13));
+    /*threads[13] = std::thread(parLevelSetTraversal_depth_3D, 13, std::ref(finish_14), std::ref(start_14));*/
 
     /*for(int t = 0; t < nb_threads3D; t++)
     {
@@ -1213,15 +1123,11 @@ void algorithms3D::splitSegment_v3(volumeManager& vol, std::vector<bool>& histor
         }
 
 
-
         //Main loop for exploring
         while (D3D->indice != 0)
         {
             if (D3D->indice > thres) //If propagation is above 50 vertex we // the process
             {
-
-                //while( D3D->indice < thres)
-                //{
                     //auto start_test = std::chrono::high_resolution_clock::now();
                     // Partition Function
                     for (int i = 0; i < nb_threads3D; i++)
@@ -1240,10 +1146,6 @@ void algorithms3D::splitSegment_v3(volumeManager& vol, std::vector<bool>& histor
                     start_8.release();
                     start_9.release();
                     start_10.release();
-                    /*start_11.release();
-                    start_12.release();
-                    start_13.release();*/
-
 
                     // Waiting for the threads to finish
                     finish_1.acquire();
@@ -1256,11 +1158,7 @@ void algorithms3D::splitSegment_v3(volumeManager& vol, std::vector<bool>& histor
                     finish_8.acquire();
                     finish_9.acquire();
                     finish_10.acquire();
-                    /*finish_11.acquire();
-                    finish_12.acquire();
-                    finish_13.acquire();*/
 
-                    //parLabelisation(D, num_thrd);
                     // Union of the sets traversed by the threads to form th next level set stored in D3D->E
 
                     setUnion3D();
@@ -1270,7 +1168,6 @@ void algorithms3D::splitSegment_v3(volumeManager& vol, std::vector<bool>& histor
 
                     //test += diff_t;
                     par_explo++;
-                //}
             }
             else //else we don't
             {
@@ -1413,18 +1310,11 @@ void algorithms3D::splitSegment_v3(volumeManager& vol, std::vector<bool>& histor
             }
         }
 
-        //if(cpt == 562) exit(42);
-        //memset_distance_map(num_thrd);
-        //std::cout << "Edge " << cpt << " / " << queueEdges.size() << std::endl;
-        //if (vertices[0] != -1 || vertices[1] != -1)
-        //Distance_Maps(D, num_thrd);
     }
 
     //auto end = std::chrono::high_resolution_clock::now();
 
     //auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start);
-
-
 
     /*auto all_explo = seq_time;
 
@@ -1482,18 +1372,11 @@ void algorithms3D::splitSegment_v3(volumeManager& vol, std::vector<bool>& histor
     start_8.release();
     start_9.release();
     start_10.release();
-    /*start_11.release();
-    start_12.release();
-    start_13.release();*/
 
     for (int tr = 0; tr < nb_threads3D; tr++)
     {
         threads[tr].join();
     }
-
-    //end_alloc = std::chrono::high_resolution_clock::now();
-
-    //diff_alloc += std::chrono::duration_cast<std::chrono::nanoseconds>(end_alloc - start_alloc).count();
 
 }
 
@@ -1569,14 +1452,12 @@ void algorithms3D::removeMarker(volumeManager& vol, std::vector<int>& markers, i
 
 void algorithms3D::addMarker(volumeManager& vol, std::vector<int>& markers)
 {
-    //auto start_h = std::chrono::high_resolution_clock::now();
     int up = 0;
     QBT& qbt = vol.getHierarchy().getQBT();
     int* parent = qbt.getParents();
     std::vector<bool> historyVisited(vol.getGraph().getNbVertex());
 
     std::vector<int> queueEdges;
-
 
     for (auto marker : markers)
     {
@@ -1594,15 +1475,12 @@ void algorithms3D::addMarker(volumeManager& vol, std::vector<int>& markers)
             up = parent[up];
         }
     }
-    //auto end_h = std::chrono::high_resolution_clock::now();
-    //time_update_h3D = std::chrono::duration_cast<std::chrono::nanoseconds>(end_h - start_h).count();
-
 
     // Get the start time
     auto start = std::chrono::high_resolution_clock::now();
 
     // Run the code you want to benchmark
-    splitSegment_v3(vol, historyVisited, queueEdges);
+    splitSegment_par(vol, historyVisited, queueEdges);
 
     // Get the end time
     auto end = std::chrono::high_resolution_clock::now();

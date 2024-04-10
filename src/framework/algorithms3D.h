@@ -26,7 +26,7 @@ public:
     static std::tuple<int, int> edge_to_vertices(int edge, int w, int h);
     static void init_dmap(volumeManager* vol);
     static void deinit_dmap();
-    static void splitSegment_v3(volumeManager& vol, std::vector<bool>& historyVisited, std::vector<int>& queueEdges);
+    static void splitSegment_par(volumeManager& vol, std::vector<bool>& historyVisited, std::vector<int>& queueEdges);
     static void mergeSegment(int edge, volumeManager& vol);
     static void removeMarker(volumeManager& vol, std::vector<int>& markers, int nbMarkers);
     static void addMarker(volumeManager& vol, std::vector<int>& markers);

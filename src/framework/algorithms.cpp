@@ -253,7 +253,13 @@ void* parLevelSetTraversal(void* slice)
     pthread_exit(NULL);
 }
 
-void parLevelSetTraversal_v2(int slice, std::binary_semaphore& finish, std::binary_semaphore& start)
+/**
+ * In this function 2 steps are done before synchronizing the threads
+ * @param slice 
+ * @param finish 
+ * @param start 
+ */
+void parLevelSetTraversal_depth(int slice, std::binary_semaphore& finish, std::binary_semaphore& start)
 
 {
     while (split == true)
@@ -840,181 +846,6 @@ int algorithms::breadthFirstSearchLabel(imageManager& im, int tag, int p)
     return count;
 }
 
-void algorithms::breadthFirstSearchLabel_v2(imageManager& im, int* p, int* buffer, int* n,
-                                            std::binary_semaphore& finish, std::binary_semaphore& start, int id)
-{
-    std::vector<int> queue;
-    std::vector explored(im.getGraph().getNbVertex(), false);
-    int w = im.getWidth();
-    int h = im.getHeight();
-    int wh = w * h;
-
-    int v, vRight, vLeft, vUp, vDown;
-
-    while (split == true)
-    {
-        start.acquire();
-
-        //Check if split is == false
-        if (split == false) return;
-
-        queue.push_back(*p);
-        counter[id] += 1;
-        explored[*p] = true;
-        buffer[*n] = *p;
-        *n += 1;
-
-        while (!queue.empty())
-        {
-            v = queue.back();
-            queue.pop_back();
-
-            vRight = v + 1;
-            vLeft = v - 1;
-            vUp = v - w;
-            vDown = v + w;
-
-            if (vRight < wh && (v + 1) % w != 0)
-            {
-                //check if adjacent to v exist
-                if (im.mstEdit_[im.map_graph_mst[2 * v]] == true &&
-                    explored[vRight] != true)
-                {
-                    //If yes we check if the edge is revealnt and present in MST
-                    queue.push_back(vRight);
-                    counter[id] += 1;
-                    explored[vRight] = true;
-                    buffer[*n] = vRight;
-                    *n += 1;
-                }
-            }
-
-            if (vLeft >= 0 && v % w != 0)
-            {
-                if (im.mstEdit_[im.map_graph_mst[(2 * v) - 2]] == true && explored[vLeft] != true)
-                {
-                    queue.push_back(vLeft);
-                    counter[id] += 1;
-                    explored[v] = true;
-                    buffer[*n] = vLeft;
-                    *n += 1;
-                }
-            }
-
-            if (vDown < wh)
-            {
-                if (im.mstEdit_[im.map_graph_mst[(2 * v) + 1]] == true && explored[vDown] != true)
-                {
-                    queue.push_back(vDown);
-                    counter[id] += 1;
-                    explored[vDown] = true;
-                    buffer[*n] = vDown;
-                    *n += 1;
-                }
-            }
-
-            if (vUp >= 0)
-            {
-                if (im.mstEdit_[im.map_graph_mst[((2 * v) - (2 * w)) + 1]] == true && explored[vUp] != true)
-                {
-                    queue.push_back(vUp);
-                    counter[id] += 1;
-                    explored[vUp] = true;
-                    buffer[*n] = vUp;
-                    *n += 1;
-                }
-            }
-        }
-
-        finish.release();
-
-        //Reset data structure
-        //queue.clear();
-        //std::fill(explored.begin(), explored.end(), false);
-    }
-    return;
-}
-
-int algorithms::breadthFirstSearchLabel_v2_seq(imageManager& im, int* p, int* buffer, int* n)
-{
-    std::vector<int> queue;
-    std::vector explored(im.getGraph().getNbVertex(), false);
-    queue.push_back(*p);
-    explored[*p] = true;
-    buffer[*n] = *p;
-    *n += 1;
-    int count = 1;
-    int w = im.getWidth();
-    int h = im.getHeight();
-    int wh = w * h;
-
-
-    int v, vRight, vLeft, vUp, vDown;
-    while (!queue.empty())
-    {
-        v = queue.back();
-        queue.pop_back();
-
-        vRight = v + 1;
-        vLeft = v - 1;
-        vUp = v - w;
-        vDown = v + w;
-
-        if (vRight < wh && (v + 1) % w != 0)
-        {
-            //check if adjacent to v exist
-            if (im.mstEdit_[im.map_graph_mst[2 * v]] == true &&
-                explored[vRight] != true)
-            {
-                //If yes we check if the edge is revealnt and present in MST
-                queue.push_back(vRight);
-                explored[vRight] = true;
-                buffer[*n] = vRight;
-                *n += 1;
-                count++;
-            }
-        }
-
-        if (vLeft >= 0 && v % w != 0)
-        {
-            if (im.mstEdit_[im.map_graph_mst[(2 * v) - 2]] == true && explored[vLeft] != true)
-            {
-                queue.push_back(vLeft);
-                explored[v] = true;
-                buffer[*n] = vLeft;
-                *n += 1;
-                count++;
-            }
-        }
-
-        if (vDown < wh)
-        {
-            if (im.mstEdit_[im.map_graph_mst[(2 * v) + 1]] == true && explored[vDown] != true)
-            {
-                queue.push_back(vDown);
-                explored[vDown] = true;
-                buffer[*n] = vDown;
-                *n += 1;
-                count++;
-            }
-        }
-
-        if (vUp >= 0)
-        {
-            if (im.mstEdit_[im.map_graph_mst[((2 * v) - (2 * w)) + 1]] == true && explored[vUp] != true)
-            {
-                queue.push_back(vUp);
-                explored[vUp] = true;
-                buffer[*n] = vUp;
-                *n += 1;
-                count++;
-            }
-        }
-    }
-    return count;
-}
-
-
 void algorithms::splitSegment(imageManager& im, bool* historyVisited,
                               std::vector<int>& queueEdges)
 {
@@ -1108,242 +939,7 @@ std::tuple<int, int> algorithms::edge_to_vertices(const int edge, const int w)
     return std::make_tuple(p1, p2);
 }
 
-void algorithms::splitSegment_optimised_v2(imageManager& im, bool* historyVisited,
-                                           std::vector<int>& queueEdges)
-{
-    memset(counter, 0, 4 * sizeof(int));
-    split = true;
-    int nb_t = 4;
-
-    //Creating threads
-    std::vector<std::thread> threads(nb_t);
-
-    std::vector<int> vertices;
-
-    int tag_max = im.tagCount_;
-    std::vector<bool> is_keeped(tag_max, false);
-
-    //Building the vertices array
-    for (auto edge : queueEdges)
-    {
-        int p1, p2;
-        std::tie(p1, p2) = edge_to_vertices(edge, im.getWidth());
-        vertices.push_back(p1);
-        vertices.push_back(p2);
-    }
-
-    std::random_device rd;
-    std::mt19937 g(rd());
-
-    // Shuffle the vector
-    std::shuffle(vertices.begin(), vertices.end(), g);
-
-
-    int idx_vertices = 0;
-    int idx_v_thread = 0;
-    std::vector<int> to_explore(nb_t, -1);
-
-    //Creating buffers for thread
-    std::vector<std::vector<int>> buffer(nb_t);
-    //Vector has to be initialized with the size of the buffer
-    for (int i = 0; i < nb_t; i++)
-    {
-        buffer[i].resize(im.getGraph().getNbVertex());
-    }
-
-    int* idx_buffer = new int[nb_t]; //nb of value in a buffer
-    memset(idx_buffer, 0, nb_t * sizeof(int));
-
-    //auto start = std::chrono::high_resolution_clock::now();
-
-    //std::vector<std::binary_semaphore> finish_s(nb_thread,std::binary_semaphore(0));
-    //std::vector<std::binary_semaphore> start_s(nb_thread,std::binary_semaphore(0));
-
-    std::binary_semaphore finish_1{0}, start_1{0};
-    std::binary_semaphore finish_2{0}, start_2{0};
-    std::binary_semaphore finish_3{0}, start_3{0};
-    std::binary_semaphore finish_4{0}, start_4{0};
-    // std::binary_semaphore finish_5{0}, start_5{0};
-    // std::binary_semaphore finish_6{0}, start_6{0};
-    // std::binary_semaphore finish_7{0}, start_7{0};
-    // std::binary_semaphore finish_8{0}, start_8{0};
-    // std::binary_semaphore finish_9{0}, start_9{0};
-    // std::binary_semaphore finish_10{0}, start_10{0};
-    // std::binary_semaphore finish_11{0}, start_11{0};
-    // std::binary_semaphore finish_12{0}, start_12{0};
-    // std::binary_semaphore finish_13{0}, start_13{0};
-
-
-    //creation of threads
-
-    threads[0] = std::thread(breadthFirstSearchLabel_v2, std::ref(im), to_explore.data() + 0, buffer[0].data(),
-                             &idx_buffer[0], std::ref(finish_1), std::ref(start_1), 0);
-    threads[1] = std::thread(breadthFirstSearchLabel_v2, std::ref(im), to_explore.data() + 1, buffer[1].data(),
-                             &idx_buffer[1], std::ref(finish_2), std::ref(start_2), 1);
-    threads[2] = std::thread(breadthFirstSearchLabel_v2, std::ref(im), to_explore.data() + 2, buffer[2].data(),
-                             &idx_buffer[2], std::ref(finish_3), std::ref(start_3), 2);
-    threads[3] = std::thread(breadthFirstSearchLabel_v2, std::ref(im), to_explore.data() + 3, buffer[3].data(),
-                             &idx_buffer[3], std::ref(finish_4), std::ref(start_4), 3);
-    // threads[4] = std::thread(breadthFirstSearchLabel_v2, std::ref(im), to_explore.data()+4, buffer[4].data(), &idx_buffer[4], std::ref(finish_5), std::ref(start_5));
-    // threads[5] = std::thread(breadthFirstSearchLabel_v2, std::ref(im), to_explore.data()+5, buffer[5].data(), &idx_buffer[5], std::ref(finish_6), std::ref(start_6));
-    // threads[6] = std::thread(breadthFirstSearchLabel_v2, std::ref(im), to_explore.data()+6, buffer[6].data(), &idx_buffer[6], std::ref(finish_7), std::ref(start_7));
-    // threads[7] = std::thread(breadthFirstSearchLabel_v2, std::ref(im), to_explore.data()+7, buffer[7].data(), &idx_buffer[7], std::ref(finish_8), std::ref(start_8));
-    // threads[8] = std::thread(breadthFirstSearchLabel_v2, std::ref(im), to_explore.data()+8, buffer[8].data(), &idx_buffer[8], std::ref(finish_9), std::ref(start_9));
-    // threads[9] = std::thread(breadthFirstSearchLabel_v2, std::ref(im), to_explore.data()+9, buffer[9].data(), &idx_buffer[9], std::ref(finish_10), std::ref(start_10));
-    // threads[10] = std::thread(breadthFirstSearchLabel_v2, std::ref(im), to_explore.data()+10, buffer[10].data(), &idx_buffer[10], std::ref(finish_11), std::ref(start_11));
-    // threads[11] = std::thread(breadthFirstSearchLabel_v2, std::ref(im), to_explore.data()+11, buffer[11].data(), &idx_buffer[11], std::ref(finish_12), std::ref(start_12));
-    // threads[12] = std::thread(breadthFirstSearchLabel_v2, std::ref(im), to_explore.data()+12, buffer[12].data(), &idx_buffer[12], std::ref(finish_13), std::ref(start_13));
-
-    // Get the end time
-    // auto end = std::chrono::high_resolution_clock::now();
-
-    // Calculate the difference
-    //auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-
-    //std::cout << "Time taken by thread creation: "
-    //        << duration.count() << " microseconds" << std::endl;
-
-    int* nb_explo = new int[4];
-    memset(nb_explo, 0, 4 * sizeof(int));
-
-    while (idx_vertices < vertices.size()) //we stop once all the vertices have been explored
-    {
-        //Selection of the nb_t vetices we are goign to explore
-        //std::cout << idx_buffer[0] << " " << idx_buffer[1] << std::endl;
-
-        while (idx_vertices < vertices.size() && idx_v_thread < nb_t)
-        {
-            int tag = im.segments_[vertices[idx_vertices]];
-            //Check if the current lable as already bene chose by a CC
-            if (tag < tag_max)
-            {
-                if (is_keeped[tag] == false)
-                {
-                    is_keeped[tag] = true;
-                }
-                else
-                {
-                    //adge vertex in queue
-                    to_explore[idx_v_thread] = vertices[idx_vertices];
-                    idx_v_thread++;
-                }
-            }
-            else
-            {
-                //add vertex in queue
-                //to_explore[idx_v_thread] = vertices[idx_vertices];
-                //idx_v_thread++;
-            }
-            idx_vertices++;
-        }
-
-        //Exploring the CC by unlcking all thread
-        /*for(int run = 0; run < idx_v_thread; run++)
-        {
-            breadthFirstSearchLabel_v2_seq(im, &(to_explore[run]), buffer[run].data(), &idx_buffer[run]);
-            //threads[run] = std::thread(breadthFirstSearchLabel_v2_seq, std::ref(im), &to_explore[run], buffer[run].data(), &idx_buffer[run]);
-        }*/
-        start_1.release();
-        nb_explo[0]++;
-        if (idx_v_thread >= 2)
-        {
-            start_2.release();
-            nb_explo[1]++;
-        }
-        if (idx_v_thread >= 3)
-        {
-            start_3.release();
-            nb_explo[2]++;
-        }
-        if (idx_v_thread == 4)
-        {
-            start_4.release();
-            nb_explo[3]++;
-        }
-        // start_5.release();
-        // start_6.release();
-        // start_7.release();
-        // start_8.release();
-        // start_9.release();
-        // start_10.release();
-        // start_11.release();
-        // start_12.release();
-        // start_13.release();
-
-
-        finish_1.acquire();
-        if (idx_v_thread >= 2) finish_2.acquire();
-        if (idx_v_thread >= 3)finish_3.acquire();
-        if (idx_v_thread == 4)finish_4.acquire();
-        // finish_5.acquire();
-        // finish_6.acquire();
-        // finish_7.acquire();
-        // finish_8.acquire();
-        // finish_9.acquire();
-        // finish_10.acquire();
-        // finish_11.acquire();
-        // finish_12.acquire();
-        // finish_13.acquire();
-
-
-        //waiting for thread to finish
-        /*for(int run = 0; run < idx_v_thread; run++)
-        {
-
-            //threads[run].join();
-        }*/
-
-        //Labeling the different CC
-        for (int t = 0; t < nb_t; t++)
-        {
-            int oldTag = im.segments_[to_explore[t]];
-            if (oldTag < tag_max) //If the CC has already been label we don't need to do anything
-            {
-                int newTag = im.tagCount_;
-                im.tagCount_++;
-                for (int i = 0; i < idx_buffer[t]; i++)
-                {
-                    int vertex = buffer[t][i];
-                    im.segments_[vertex] = newTag;
-                }
-                im.sizePart_[newTag] = idx_buffer[t];
-                im.sizePart_[oldTag] -= idx_buffer[t];
-            }
-        }
-
-        memset(idx_buffer, 0, nb_t * sizeof(int)); //Empty the buffer arrays
-        idx_v_thread = 0;
-    }
-
-    split = false;
-
-    start_1.release();
-    start_2.release();
-    start_3.release();
-    start_4.release();
-
-
-    for (int i = 0; i < nb_t; i++)
-    {
-        threads[i].join();
-    }
-
-    //print the counter of each thread
-    for (int i = 0; i < nb_t; i++)
-    {
-        std::cout << "Thread " << i << " : " << counter[i] << " pixels" << std::endl;
-    }
-
-    for (int i = 0; i < nb_t; i++)
-    {
-        std::cout << "Thread " << i << " : " << nb_explo[i] << " exploration" << std::endl;
-    }
-
-    //Clean memory
-    delete[] idx_buffer;
-}
-
-void algorithms::splitSegment_v3(imageManager& im, bool* historyVisited, std::vector<int>& queueEdges)
+void algorithms::splitSegment_par(imageManager& im, bool* historyVisited, std::vector<int>& queueEdges)
 {
     split = true;
 
@@ -1377,20 +973,20 @@ void algorithms::splitSegment_v3(imageManager& im, bool* historyVisited, std::ve
     std::binary_semaphore finish_13{0}, start_13{0};
     std::binary_semaphore finish_14{0}, start_14{0};
 
-    threads[0] = std::thread(parLevelSetTraversal_v2, 0, std::ref(finish_1), std::ref(start_1));
-    threads[1] = std::thread(parLevelSetTraversal_v2, 1, std::ref(finish_2), std::ref(start_2));
-    threads[2] = std::thread(parLevelSetTraversal_v2, 2, std::ref(finish_3), std::ref(start_3));
-    threads[3] = std::thread(parLevelSetTraversal_v2, 3, std::ref(finish_4), std::ref(start_4));
-    threads[4] = std::thread(parLevelSetTraversal_v2, 4, std::ref(finish_5), std::ref(start_5));
-    threads[5] = std::thread(parLevelSetTraversal_v2, 5, std::ref(finish_6), std::ref(start_6));
-    threads[6] = std::thread(parLevelSetTraversal_v2, 6, std::ref(finish_7), std::ref(start_7));
-    threads[7] = std::thread(parLevelSetTraversal_v2, 7, std::ref(finish_8), std::ref(start_8));
-    threads[8] = std::thread(parLevelSetTraversal_v2, 8, std::ref(finish_9), std::ref(start_9));
-    threads[9] = std::thread(parLevelSetTraversal_v2, 9, std::ref(finish_10), std::ref(start_10));
-    /*threads[10] = std::thread(parLevelSetTraversal_v2, 10, std::ref(finish_11), std::ref(start_11));
-    threads[11] = std::thread(parLevelSetTraversal_v2, 11, std::ref(finish_12), std::ref(start_12));
-    threads[12] = std::thread(parLevelSetTraversal_v2, 12, std::ref(finish_13), std::ref(start_13));
-    /*threads[13] = std::thread(parLevelSetTraversal_v2, 13, std::ref(finish_14), std::ref(start_14));*/
+    threads[0] = std::thread(parLevelSetTraversal_depth, 0, std::ref(finish_1), std::ref(start_1));
+    threads[1] = std::thread(parLevelSetTraversal_depth, 1, std::ref(finish_2), std::ref(start_2));
+    threads[2] = std::thread(parLevelSetTraversal_depth, 2, std::ref(finish_3), std::ref(start_3));
+    threads[3] = std::thread(parLevelSetTraversal_depth, 3, std::ref(finish_4), std::ref(start_4));
+    threads[4] = std::thread(parLevelSetTraversal_depth, 4, std::ref(finish_5), std::ref(start_5));
+    threads[5] = std::thread(parLevelSetTraversal_depth, 5, std::ref(finish_6), std::ref(start_6));
+    threads[6] = std::thread(parLevelSetTraversal_depth, 6, std::ref(finish_7), std::ref(start_7));
+    threads[7] = std::thread(parLevelSetTraversal_depth, 7, std::ref(finish_8), std::ref(start_8));
+    threads[8] = std::thread(parLevelSetTraversal_depth, 8, std::ref(finish_9), std::ref(start_9));
+    threads[9] = std::thread(parLevelSetTraversal_depth, 9, std::ref(finish_10), std::ref(start_10));
+    /*threads[10] = std::thread(parLevelSetTraversal_depth, 10, std::ref(finish_11), std::ref(start_11));
+    threads[11] = std::thread(parLevelSetTraversal_depth, 11, std::ref(finish_12), std::ref(start_12));
+    threads[12] = std::thread(parLevelSetTraversal_depth, 12, std::ref(finish_13), std::ref(start_13));
+    /*threads[13] = std::thread(parLevelSetTraversal_depth, 13, std::ref(finish_14), std::ref(start_14));*/
 
 
 
@@ -1494,9 +1090,8 @@ void algorithms::splitSegment_v3(imageManager& im, bool* historyVisited, std::ve
                     finish_13.acquire();*/
                     auto end_t = std::chrono::high_resolution_clock::now();
                     auto diff_t = std::chrono::duration_cast<std::chrono::nanoseconds>(end_t - start_test).count();
-                    //parLabelisation(D, num_thrd);
-                    // Union of the sets traversed by the threads to form th next level set stored in D->E
 
+                    // Union of the sets traversed by the threads to form th next level set stored in D->E
                     setUnion();
 
                     test += diff_t;
@@ -1601,18 +1196,11 @@ void algorithms::splitSegment_v3(imageManager& im, bool* historyVisited, std::ve
             }
         }
 
-        //if(cpt == 562) exit(42);
-        //memset_distance_map(num_thrd);
-        //std::cout << "Edge " << cpt << " / " << queueEdges.size() << std::endl;
-        //if (vertices[0] != -1 || vertices[1] != -1)
-        //Distance_Maps(D, num_thrd);
     }
 
     auto end = std::chrono::high_resolution_clock::now();
 
     auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start);
-
-
 
     auto all_explo = seq_time;
 
@@ -1681,8 +1269,6 @@ void algorithms::splitSegment_v3(imageManager& im, bool* historyVisited, std::ve
     //end_alloc = std::chrono::high_resolution_clock::now();
 
     //diff_alloc += std::chrono::duration_cast<std::chrono::nanoseconds>(end_alloc - start_alloc).count();
-
-
 }
 
 /**
@@ -1799,7 +1385,7 @@ void algorithms::addMarker(imageManager& im, int* markers, int nbMarkers)
     std::cout << "Time taken by hierarchy updating: " << std::chrono::duration_cast<
         std::chrono::nanoseconds>(end - start).count() / 1000000 << " ms" << std::endl;
 
-    splitSegment_v3(im, historyVisited, queueEdges);
+    splitSegment_par(im, historyVisited, queueEdges);
 
     delete[] historyVisited;
 #ifdef PIXELS_COUNT
@@ -2059,4 +1645,3 @@ void algorithms::vector_to_csv(std::vector<long>& vector, std::string file_path)
     // Close the file
     outputFile.close();
 }
-

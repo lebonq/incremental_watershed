@@ -98,6 +98,9 @@ int main(int argc, char* argv[])
 
         time.emplace_back();
 
+        volume_manager->threshold_ = 4000;
+        std::cout << "Threshold set to " << volume_manager->threshold_ << std::endl;
+
         std::vector<int> markers_concat;
         for (int i = 0; i < nb_markers * 2; i++)
         {
