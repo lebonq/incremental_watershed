@@ -16,7 +16,6 @@ long time_update_h3D;
 
 long* t_time_explo3D = new long[50];
 
-pthread_t* thread3D; // global variable used to store the threads id
 struct DistanceMap* D3D; // global variable used to easily pass arguments to threads
 int* vertices3D = new int[2];
 int* size_cc3D = new int[2];
@@ -602,51 +601,7 @@ void parLevelSetTraversal_depth_3D(int slice, std::binary_semaphore& finish, std
 }
 
 /*--------------------------------------Initialization---------------------------------------------------------------*/
-void* parInit3D(void* param)
-/* Parallel part of the initialization of the parallel distance map algorithm, ie creation of the 0-level set of the diastance map */
-{
-    int proc = (long)param;
 
-
-    if (proc <= 1) //For the first 2 thread
-    {
-        if (vertices3D[proc] != -1)
-        {
-            D3D->Si[proc][0] = vertices3D[proc];
-            //pthread_mutex_lock(&D3D->Traversed[vertices[proc]]);
-            D3D->TailleSi[proc] = 1; // number of element in each Si
-        }
-    }
-    else
-    {
-        D3D->TailleSi[proc] = 0;
-    }
-
-    pthread_exit(NULL);
-}
-
-void dMapInit3D(int p)
-/* Initialize the structure used during parallel distance map
-   computation */
-{
-    int i;
-
-    for (i = 0; i < p; i++)
-    {
-        if (pthread_create(&thread3D[i], NULL, parInit3D, (void*)(long)i) != 0)
-        {
-            perror("Can't create thread");
-            free(thread3D);
-            exit(-1);
-        }
-    }
-    for (i = 0; i < p; i++)
-        pthread_join(thread3D[i], NULL); // threads join
-
-    //print TailleSi
-
-    setUnion3D();
-}
 
 void allocate_distancemap3D(int p)
 {
@@ -680,7 +635,7 @@ void allocate_distancemap3D(int p)
     D3D->start = (int*)malloc(p * sizeof(int));
     memset(D3D->start, 0, p * sizeof(int));
 
-    thread3D = (pthread_t*)malloc(p * sizeof(pthread_t)); //  threads array
+
 }
 
 /*----------------------------------------------------------------------------------------------------------------------*/
@@ -708,7 +663,7 @@ void clean_distancemap3D()
     free(D3D->TailleSipp);
     free(D3D->TailleEi);
     free(D3D->start);
-    free(thread3D);
+
 
     // Set all the pointers to NULL to avoid dangling pointers
     //D3D->Traversed = NULL;
@@ -720,26 +675,6 @@ void clean_distancemap3D()
     D3D->TailleSi = NULL;
     D3D->TailleEi = NULL;
     D3D->start = NULL;
-}
-
-
-void parLabelisation3D(struct DistanceMap* D, int p)
-{
-    int i, j, nb_level, r, som, d;
-
-    // Creation of level-set
-    for (i = 0; i < p; i++)
-    {
-        // for each processor i
-        if (pthread_create(&thread3D[i], NULL, parLevelSetTraversal3D, (void*)(long)i) != 0)
-        {
-            perror("Can't create thread");
-            free(thread3D);
-            exit(-1);
-        }
-    }
-    for (i = 0; i < p; i++)
-        pthread_join(thread3D[i], NULL); // threads join
 }
 
 

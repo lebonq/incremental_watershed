@@ -52,7 +52,7 @@ typedef struct DistanceMap{
 int *E;
 int **Si;
 int **Sip;
- int ** Sipp;
+int **Sipp;
 int **Ei;
 
 // for the size of each Si 
@@ -61,11 +61,7 @@ int *TailleSip;
 int *TailleSipp;
 
  // for the size of each Ei 
-int *TailleEi;  
-
-// Booleen array
-//sem_t *Traversed;
-pthread_mutex_t *Traversed;
+int *TailleEi;
 
 // Number of vertices in each subset E 
 

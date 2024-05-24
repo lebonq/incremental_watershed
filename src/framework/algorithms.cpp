@@ -18,7 +18,6 @@ long time_update_h;
 
 long* t_time_explo = new long[50];
 
-pthread_t* thread; // global variable used to store the threads id
 struct DistanceMap* D; // global variable used to easily pass arguments to threads
 int* vertices = new int[2];
 int* size_cc = new int[2];
@@ -26,35 +25,6 @@ int* size_cc = new int[2];
 imageManager* im_t_ptr;
 
 /*-----------------------------------------------Partition Function----------------------------------------*/
-void* parPartition(void* slice)
-{
-    int i, ji, p, n, i2;
-    int start;
-    int end;
-
-    p = D->p; // number of threads
-    n = D->indice; // number of data in E
-    i = ((long)slice) + 1;
-
-    if (i <= (n % p))
-    {
-        start = (i - 1) * ((n / p) + 1);
-        end = start + (n / p);
-        D->TailleEi[i - 1] = (n / p) + 1;
-    }
-    else
-    {
-        start = (n % p) * ((n / p) + 1) + (i - 1 - (n % p)) * (n / p);
-        end = start + (n / p) - 1;
-        D->TailleEi[i - 1] = n / p; // to know the size of each Ei
-    }
-
-    for (ji = start; ji <= end; ji++)
-        D->Ei[i - 1][ji - start] = D->E[ji];
-
-    pthread_exit(NULL);
-}
-
 void seqPartition(int slice)
 {
     int i, ji, p, n, i2;
@@ -112,100 +82,6 @@ void setUnion()
 }
 
 /*-------------------------------------------------creation level-sets---------------------------------------------------*/
-void* parLevelSetTraversal(void* slice)
-{
-    auto start = std::chrono::high_resolution_clock::now();
-    int i, j, x, y, vertex;
-
-    j = 0;
-    i = (long)slice;
-
-    int w = im_t_ptr->getWidth();
-    int h = im_t_ptr->getHeight();
-    int wh = w * h;
-
-
-    /* fprintf(stderr,"Taille de E[%d] = %d\n", i, D->TailleEi[i]); */
-    /* fprintf(stderr,"Elements de E[%d]\n", i); */
-    /* for(x = 0; x < D->TailleEi[i]; x++) fprintf(stderr, "%d-eme element %d, ", x, D->Ei[i][x]); */
-    /* fprintf(stderr,".\n"); */
-
-    for (x = 0; x < D->TailleEi[i]; x++)
-    {
-        // for each x in Ei
-        int v = D->Ei[i][x];
-        int tag = im_t_ptr->segments_[v];
-        /* fprintf(stderr,"Exploration des successeurs de %d\n", vertex); */
-
-        int vRight = v + 1;
-        int vLeft = v - 1;
-        int vUp = v - w;
-        int vDown = v + w;
-
-        if (vRight < wh && (v + 1) % w != 0)
-        {
-            //check if adjacent to v exist
-
-            auto mst_edge = im_t_ptr->map_graph_mst[2 * v];
-            if (mst_edge != -1)
-            {
-                if (im_t_ptr->mstEdit_[mst_edge] && im_t_ptr->segments_[vRight] != tag)
-                {
-                    im_t_ptr->segments_[vRight] = tag;
-                    D->Si[i][j] = vRight;
-                    j++;
-                }
-            }
-        }
-
-        if (vLeft >= 0 && v % w != 0)
-        {
-            auto mst_edge = im_t_ptr->map_graph_mst[(2 * v) - 2];
-            if (mst_edge != -1)
-            {
-                if (im_t_ptr->mstEdit_[mst_edge] && im_t_ptr->segments_[vLeft] != tag)
-                {
-                    im_t_ptr->segments_[vLeft] = tag;
-                    D->Si[i][j] = vLeft;
-                    j++;
-                }
-            }
-        }
-
-        if (vDown < wh)
-        {
-            auto mst_edge = im_t_ptr->map_graph_mst[(2 * v) + 1];
-            if (mst_edge != -1)
-            {
-                if (im_t_ptr->mstEdit_[mst_edge] && im_t_ptr->segments_[vDown] != tag)
-                {
-                    im_t_ptr->segments_[vDown] = tag;
-                    D->Si[i][j] = vDown;
-                    j++;
-                }
-            }
-        }
-
-        if (vUp >= 0)
-        {
-            auto mst_edge = im_t_ptr->map_graph_mst[((2 * v) - (2 * w)) + 1];
-            if (mst_edge != -1)
-            {
-                if (im_t_ptr->mstEdit_[mst_edge] && im_t_ptr->segments_[vUp] != tag)
-                {
-                    im_t_ptr->segments_[vUp] = tag;
-                    D->Si[i][j] = vUp;
-                    j++;
-                }
-            }
-        }
-    }
-    D->TailleSi[i] = j; // number of element in each Si
-    auto end = std::chrono::high_resolution_clock::now();
-    t_time_explo[i] += std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
-
-    pthread_exit(NULL);
-}
 
 /**
  * In this function 2 steps are done before synchronizing the threads
@@ -462,28 +338,7 @@ void parLevelSetTraversal_depth(int slice, std::binary_semaphore& finish, std::b
 }
 
 /*--------------------------------------Initialization---------------------------------------------------------------*/
-void* parInit(void* param)
-/* Parallel part of the initialization of the parallel distance map algorithm, ie creation of the 0-level set of the diastance map */
-{
-    int proc = (long)param;
 
-
-    if (proc <= 1) //For the first 2 thread
-    {
-        if (vertices[proc] != -1)
-        {
-            D->Si[proc][0] = vertices[proc];
-            //pthread_mutex_lock(&D->Traversed[vertices[proc]]);
-            D->TailleSi[proc] = 1; // number of element in each Si
-        }
-    }
-    else
-    {
-        D->TailleSi[proc] = 0;
-    }
-
-    pthread_exit(NULL);
-}
 
 void allocate_distancemap(int p)
 {
@@ -517,7 +372,6 @@ void allocate_distancemap(int p)
     D->start = (int*)malloc(p * sizeof(int));
     memset(D->start, 0, p * sizeof(int));
 
-    thread = (pthread_t*)malloc(p * sizeof(pthread_t)); //  threads array
 }
 
 /*----------------------------------------------------------------------------------------------------------------------*/
@@ -545,7 +399,6 @@ void clean_distancemap()
     free(D->TailleSipp);
     free(D->TailleEi);
     free(D->start);
-    free(thread);
 
     // Set all the pointers to NULL to avoid dangling pointers
     //D->Traversed = NULL;
@@ -559,28 +412,6 @@ void clean_distancemap()
     D->start = NULL;
 }
 
-
-
-void parLabelisation(struct DistanceMap* D, int p)
-{
-    int i, j, nb_level, r, som, d;
-
-    /* fprintf(stderr, "Niveau %d: partition ok\n", nb_level); */
-
-    // Creation of level-set
-    for (i = 0; i < p; i++)
-    {
-        // for each processor i
-        if (pthread_create(&thread[i], NULL, parLevelSetTraversal, (void*)(long)i) != 0)
-        {
-            perror("Can't create thread");
-            free(thread);
-            exit(-1);
-        }
-    }
-    for (i = 0; i < p; i++)
-        pthread_join(thread[i], NULL); // threads join
-}
 
 void algorithms::kruskal(graph& G, Q& Q, int w, int* temp)
 {
