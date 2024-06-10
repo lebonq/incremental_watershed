@@ -1439,3 +1439,5 @@ void algorithms3D::addMarker(volumeManager& vol, std::vector<int>& markers)
 
     vol.CCL_times_.emplace_back(duration.count());
 }
+
+//data_3d/patient_2/patient_2_png data_3d/patient_2/patient_2_liver_markers 30 2 patient2 250 14
