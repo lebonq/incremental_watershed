@@ -123,8 +123,8 @@ int main(int argc, char* argv[])
             std::cout << GREEN << "addMarkers object" << RESET << "     step " << i << " took " << GREEN << diff.count()
                 << " seconds" << std::endl;
             std::cout << GREEN << "labeling took 0." << volume_manager->CCL_times_.at(i*2)/1000000 << " seconds" << std::endl;
-		volume_manager->write_size_front(path_markers,j,namepatient);
-		exit(42);
+		//volume_manager->write_size_front(path_markers,j,namepatient);
+		//exit(42);
             //bencmark addMarkers background
             start = std::chrono::high_resolution_clock::now();
             volume_manager->addMarkers(markers_background_batched[i]);

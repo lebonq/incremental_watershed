@@ -4,8 +4,7 @@
 
 #pragma once
 
-#include "dcmtk/dcmdata/dctk.h"
-#include "dcmtk/dcmimgle/dcmimage.h"
+
 #include <vector>
 #include <filesystem>
 #include <opencv2/highgui/highgui.hpp>
