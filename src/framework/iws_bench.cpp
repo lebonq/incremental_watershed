@@ -41,6 +41,14 @@ std::vector<int> load_marker_from_txt(std::string& file_path)
 
 int main(int argc, char* argv[])
 {
+    if (argc != 8)
+    {
+        std::cout << "Usage: " << argv[0] << " <path_to_volume> <path_to_markers> <nb_markers> <nb_benchmarks> <name_patient> <threshold> <nb_threads>" << std::endl;
+        return 1;
+    }
+
+    int num_threads = atoi(argv[7]);
+    int threshold_param = atoi(argv[6]);
     int nb_benchmarks = atoi(argv[4]);
 
     std::string namepatient = argv[5];
@@ -80,15 +88,17 @@ int main(int argc, char* argv[])
         //Create the volumeManager
         auto volume_manager = new volumeManager();
 
+        volume_manager->threshold_ = threshold_param;
+        std::cout << "Threshold set to " << volume_manager->threshold_ << std::endl;
+        volume_manager->nb_threads_ = num_threads;
+        std::cout << "Number of threads set to " << volume_manager->nb_threads_ << std::endl;
+
         // Benchmark loadVolume
         auto start = std::chrono::high_resolution_clock::now();
         volume_manager->loadVolume(path_volume);
         auto end = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double> diff = end - start;
         std::cout << MAGENTA << "loadVolume took " << diff.count() << " seconds" << std::endl;
-
-        volume_manager->threshold_ = 4000;
-        std::cout << "Threshold set to " << volume_manager->threshold_ << std::endl;
 
         // Benchmark createGraph
         start = std::chrono::high_resolution_clock::now();
@@ -113,7 +123,8 @@ int main(int argc, char* argv[])
             std::cout << GREEN << "addMarkers object" << RESET << "     step " << i << " took " << GREEN << diff.count()
                 << " seconds" << std::endl;
             std::cout << GREEN << "labeling took 0." << volume_manager->CCL_times_.at(i*2)/1000000 << " seconds" << std::endl;
-
+		volume_manager->write_size_front(path_markers,j,namepatient);
+		exit(42);
             //bencmark addMarkers background
             start = std::chrono::high_resolution_clock::now();
             volume_manager->addMarkers(markers_background_batched[i]);
@@ -137,7 +148,12 @@ int main(int argc, char* argv[])
             cv::imwrite("test_volume/slice" + std::to_string(i) + ".png", volume[i]);
         }*/
 
+
         volume_manager->write_CCL_times(path_markers, j, namepatient);
+        volume_manager->write_real_thread_times(path_markers, j, namepatient);
+        volume_manager->write_par_times(path_markers, j, namepatient);
+        volume_manager->write_seq_times(path_markers, j, namepatient);
+        //volume_manager->write_size_front(path_markers, j, namepatient);
         //volume_manager->write_par_times(path_markers, j);
         delete volume_manager;
     }
@@ -168,9 +184,9 @@ int main(int argc, char* argv[])
         std::cout << "Average time for background step " << i << ": " << avg_background_time[i] << " seconds" << std::endl;
     }
 
-    //save it ina file
-    algorithms::vector_to_csv(avg_object_time, path_markers + "/avg_object_time_iws_" + namepatient  +".csv");
-    algorithms::vector_to_csv(avg_background_time, path_markers + "/avg_background_time_iws_" + namepatient  +".csv");
+    //save it ina file patient_sizefrint_nb_threads
+    algorithms::vector_to_csv(avg_object_time, path_markers + "/avg_object_time_iws_" + namepatient + "_" + argv[6] + "_" + argv[7] +".csv");
+    algorithms::vector_to_csv(avg_background_time, path_markers + "/avg_background_time_iws_" + namepatient  + "_" + argv[6] + "_" + argv[7] +".csv");
     algorithms::vector_to_csv(init_time, path_markers + "/init_time_iws_" + namepatient  +".csv");
 
 }

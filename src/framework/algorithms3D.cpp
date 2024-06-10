@@ -8,13 +8,9 @@ int nb_threads3D = 10;
 
 bool split3D = false;
 
-int nb_pixels_visited3D = 0;
+int marker_id = 0;
 
-int* counter3D = new int[4];
-
-long time_update_h3D;
-
-long* t_time_explo3D = new long[50];
+long long* time_in_thread_par_;
 
 struct DistanceMap* D3D; // global variable used to easily pass arguments to threads
 int* vertices3D = new int[2];
@@ -234,14 +230,17 @@ void* parLevelSetTraversal3D(void* slice)
 void parLevelSetTraversal_depth_3D(int slice, std::binary_semaphore& finish, std::binary_semaphore& start)
 
 {
+    int step = 0;
+    std::vector<std::tuple<int, int, int, long long>> results; // Store step, pixels visited, taille front, and time
+
     while (split3D == true)
     {
         start.acquire();
 
         //Check if split3D is == false
-        if (split3D == false) return;
+        if (split3D == false) break;
 
-        //auto start_t = std::chrono::high_resolution_clock::now();
+        auto start_t = std::chrono::high_resolution_clock::now();
 
         int i, j, x, y, vertex;
 
@@ -254,10 +253,6 @@ void parLevelSetTraversal_depth_3D(int slice, std::binary_semaphore& finish, std
         int wh = w * h;
 
 
-        /* fprintf(stderr,"Taille de E[%d] = %d\n", i, D3D->TailleEi[i]); */
-        /* fprintf(stderr,"Elements de E[%d]\n", i); */
-        /* for(x = 0; x < D3D->TailleEi[i]; x++) fprintf(stderr, "%d-eme element %d, ", x, D3D->Ei[i][x]); */
-        /* fprintf(stderr,".\n"); */
 
         for (x = 0; x < D3D->TailleEi[i]; x++)
         {
@@ -368,6 +363,8 @@ void parLevelSetTraversal_depth_3D(int slice, std::binary_semaphore& finish, std
                         }
                     }
         }
+        int pixel_explored = D3D->TailleEi[i];
+        int taillefront = D3D->TailleEi[i];
         D3D->TailleSipp[i] = j; // number of element in each Si
 
         j = 0;
@@ -480,6 +477,7 @@ void parLevelSetTraversal_depth_3D(int slice, std::binary_semaphore& finish, std
                         }
                     }
         }
+        pixel_explored += D3D->TailleSipp[i];
         D3D->TailleSip[i] = j; // number of element in each Si
 
         j = 0;
@@ -592,11 +590,30 @@ void parLevelSetTraversal_depth_3D(int slice, std::binary_semaphore& finish, std
                         }
                     }
         }
+        pixel_explored += D3D->TailleSip[i];
         D3D->TailleSi[i] = j; // number of element in each Si
 
-        //auto end = std::chrono::high_resolution_clock::now();
+        auto end = std::chrono::high_resolution_clock::now();
         //t_time_explo3D[i] += std::chrono::duration_cast<std::chrono::nanoseconds>(end - start_t).count();
         finish.release();
+
+        auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start_t).count();
+        time_in_thread_par_[i] += duration;
+        results.emplace_back(step, pixel_explored,taillefront, duration);
+        step += 1;
+    }
+
+    // Write results to disk when split3D is false
+    if (split3D == false) {
+        std::string base_dir = "data_exec_manual/nb_thread_" + std::to_string(nb_threads3D) + "/thread_" + std::to_string(slice);
+        std::filesystem::create_directories(base_dir);
+
+        std::ofstream file(base_dir + "/data_marker"+ std::to_string(marker_id)+ ".csv");
+        file << "Step,PixelsVisited,FrontSize,Time(ns)\n";
+        for (const auto& result : results) {
+            file << std::get<0>(result) << "," << std::get<1>(result) << "," << std::get<2>(result) << "," << std::get<3>(result) << "\n";
+        }
+        file.close();
     }
 }
 
@@ -663,6 +680,7 @@ void clean_distancemap3D()
     free(D3D->TailleSipp);
     free(D3D->TailleEi);
     free(D3D->start);
+    free(time_in_thread_par_);
 
 
     // Set all the pointers to NULL to avoid dangling pointers
@@ -931,10 +949,13 @@ std::tuple<int, int> algorithms3D::edge_to_vertices(const int edge, const int w,
 
 void algorithms3D::init_dmap(volumeManager* vol)
 {
+    marker_id = 0;
     vol_t_ptr = vol;
     D3D = (DistanceMap*)malloc(sizeof(struct DistanceMap)); // Distance map structure
+    nb_threads3D = vol->nb_threads_;
     D3D->p = nb_threads3D;
     allocate_distancemap3D(nb_threads3D);
+    time_in_thread_par_ = (long long*)malloc(nb_threads3D * sizeof(long long));
 }
 
 void algorithms3D::deinit_dmap()
@@ -955,65 +976,100 @@ void algorithms3D::splitSegment_par(volumeManager& vol, std::vector<bool>& histo
     int seq_explo = 0;
     std::vector<std::thread> threads(nb_threads3D);
 
-    memset(t_time_explo3D, 0, 50 * sizeof(long));
-    long seq_time = 0;
+    memset(time_in_thread_par_, 0, nb_threads3D * sizeof(long long));
+    long long seq_time = 0;
+    long long par_time = 0;
+
+    std::vector<std::reference_wrapper<std::binary_semaphore>> finish_sem;
+    std::vector<std::reference_wrapper<std::binary_semaphore>> start_sem;
+
+    //I gave up allocating those semaphore in a loop, if you know how to do it, I beg you to do a PR
 
     std::binary_semaphore finish_1{0}, start_1{0};
+    finish_sem.push_back(std::ref(finish_1));
+    start_sem.push_back(std::ref(start_1));
+
     std::binary_semaphore finish_2{0}, start_2{0};
+    finish_sem.push_back(std::ref(finish_2));
+    start_sem.push_back(std::ref(start_2));
+
     std::binary_semaphore finish_3{0}, start_3{0};
+    finish_sem.push_back(std::ref(finish_3));
+    start_sem.push_back(std::ref(start_3));
+
     std::binary_semaphore finish_4{0}, start_4{0};
+    finish_sem.push_back(std::ref(finish_4));
+    start_sem.push_back(std::ref(start_4));
+
     std::binary_semaphore finish_5{0}, start_5{0};
+    finish_sem.push_back(std::ref(finish_5));
+    start_sem.push_back(std::ref(start_5));
+
     std::binary_semaphore finish_6{0}, start_6{0};
+    finish_sem.push_back(std::ref(finish_6));
+    start_sem.push_back(std::ref(start_6));
+
     std::binary_semaphore finish_7{0}, start_7{0};
+    finish_sem.push_back(std::ref(finish_7));
+    start_sem.push_back(std::ref(start_7));
+
     std::binary_semaphore finish_8{0}, start_8{0};
+    finish_sem.push_back(std::ref(finish_8));
+    start_sem.push_back(std::ref(start_8));
+
     std::binary_semaphore finish_9{0}, start_9{0};
+    finish_sem.push_back(std::ref(finish_9));
+    start_sem.push_back(std::ref(start_9));
+
     std::binary_semaphore finish_10{0}, start_10{0};
+    finish_sem.push_back(std::ref(finish_10));
+    start_sem.push_back(std::ref(start_10));
+
     std::binary_semaphore finish_11{0}, start_11{0};
+    finish_sem.push_back(std::ref(finish_11));
+    start_sem.push_back(std::ref(start_11));
+
     std::binary_semaphore finish_12{0}, start_12{0};
+    finish_sem.push_back(std::ref(finish_12));
+    start_sem.push_back(std::ref(start_12));
+
     std::binary_semaphore finish_13{0}, start_13{0};
+    finish_sem.push_back(std::ref(finish_13));
+    start_sem.push_back(std::ref(start_13));
+
     std::binary_semaphore finish_14{0}, start_14{0};
+    finish_sem.push_back(std::ref(finish_14));
+    start_sem.push_back(std::ref(start_14));
 
-    /*std::binary_semaphore** finish_sem = (std::binary_semaphore**)malloc(14 * sizeof(std::binary_semaphore));
-    std::binary_semaphore** start_sem = (std::binary_semaphore**)malloc(14 * sizeof(std::binary_semaphore));
+    std::binary_semaphore finish_15{0}, start_15{0};
+    finish_sem.push_back(std::ref(finish_15));
+    start_sem.push_back(std::ref(start_15));
 
+    std::binary_semaphore finish_16{0}, start_16{0};
+    finish_sem.push_back(std::ref(finish_16));
+    start_sem.push_back(std::ref(start_16));
 
-    for(int sem = 0; sem < 14; sem++)
+    std::binary_semaphore finish_17{0}, start_17{0};
+    finish_sem.push_back(std::ref(finish_17));
+    start_sem.push_back(std::ref(start_17));
+
+    std::binary_semaphore finish_18{0}, start_18{0};
+    finish_sem.push_back(std::ref(finish_18));
+    start_sem.push_back(std::ref(start_18));
+
+    std::binary_semaphore finish_19{0}, start_19{0};
+    finish_sem.push_back(std::ref(finish_19));
+    start_sem.push_back(std::ref(start_19));
+
+    std::binary_semaphore finish_20{0}, start_20{0};
+    finish_sem.push_back(std::ref(finish_20));
+    start_sem.push_back(std::ref(start_20));
+
+    for(int t = 0; t < nb_threads3D; t++)
     {
-        auto temp_start = std::binary_semaphore(0);
-        finish_sem[sem] = &temp_start;
-        auto temp_fin = std::binary_semaphore(0);
-        start_sem[sem] = &temp_fin;
-    }*/
+        threads[t] = std::thread(parLevelSetTraversal_depth_3D, t, finish_sem[t], start_sem[t]);
+    }
 
-
-    threads[0] = std::thread(parLevelSetTraversal_depth_3D, 0, std::ref(finish_1), std::ref(start_1));
-    threads[1] = std::thread(parLevelSetTraversal_depth_3D, 1, std::ref(finish_2), std::ref(start_2));
-    threads[2] = std::thread(parLevelSetTraversal_depth_3D, 2, std::ref(finish_3), std::ref(start_3));
-    threads[3] = std::thread(parLevelSetTraversal_depth_3D, 3, std::ref(finish_4), std::ref(start_4));
-    threads[4] = std::thread(parLevelSetTraversal_depth_3D, 4, std::ref(finish_5), std::ref(start_5));
-    threads[5] = std::thread(parLevelSetTraversal_depth_3D, 5, std::ref(finish_6), std::ref(start_6));
-    threads[6] = std::thread(parLevelSetTraversal_depth_3D, 6, std::ref(finish_7), std::ref(start_7));
-    threads[7] = std::thread(parLevelSetTraversal_depth_3D, 7, std::ref(finish_8), std::ref(start_8));
-    threads[8] = std::thread(parLevelSetTraversal_depth_3D, 8, std::ref(finish_9), std::ref(start_9));
-    threads[9] = std::thread(parLevelSetTraversal_depth_3D, 9, std::ref(finish_10), std::ref(start_10));
-    /*threads[10] = std::thread(parLevelSetTraversal_depth_3D, 10, std::ref(finish_11), std::ref(start_11));
-    threads[11] = std::thread(parLevelSetTraversal_depth_3D, 11, std::ref(finish_12), std::ref(start_12));
-    threads[12] = std::thread(parLevelSetTraversal_depth_3D, 12, std::ref(finish_13), std::ref(start_13));
-    /*threads[13] = std::thread(parLevelSetTraversal_depth_3D, 13, std::ref(finish_14), std::ref(start_14));*/
-
-    /*for(int t = 0; t < nb_threads3D; t++)
-    {
-        threads[t] = std::thread(parLevelSetTraversal_v2_3D, t, std::ref(*finish_sem[t]), std::ref(*start_sem[t]));
-    }*/
-
-
-
-    //auto end_alloc = std::chrono::high_resolution_clock::now();
-    //auto diff_alloc = std::chrono::duration_cast<std::chrono::nanoseconds>(end_alloc - start_alloc).count();
-
-    //auto start = std::chrono::high_resolution_clock::now();
-
-    long test = 0;
 
     for (auto edge : queueEdges)
     {
@@ -1061,52 +1117,42 @@ void algorithms3D::splitSegment_par(volumeManager& vol, std::vector<bool>& histo
         //Main loop for exploring
         while (D3D->indice != 0)
         {
+            vol.size_front_.push_back(D3D->indice);
             if (D3D->indice > thres) //If propagation is above 50 vertex we // the process
             {
-                    //auto start_test = std::chrono::high_resolution_clock::now();
-                    // Partition Function
-                    for (int i = 0; i < nb_threads3D; i++)
-                    {
-                        seqPartition3D(i);
-                    }
+                //auto start_test = std::chrono::high_resolution_clock::now();
+                // Partition Function
+                for (int i = 0; i < nb_threads3D; i++)
+                {
+                    seqPartition3D(i);
+                }
+                auto start_test = std::chrono::high_resolution_clock::now();
+                // Start of the threads
 
-                    // Start of the threads
-                    start_1.release();
-                    start_2.release();
-                    start_3.release();
-                    start_4.release();
-                    start_5.release();
-                    start_6.release();
-                    start_7.release();
-                    start_8.release();
-                    start_9.release();
-                    start_10.release();
+                for(int t = 0; t < nb_threads3D; t++)
+                {
+                    start_sem[t].get().release();
+                }
 
-                    // Waiting for the threads to finish
-                    finish_1.acquire();
-                    finish_2.acquire();
-                    finish_3.acquire();
-                    finish_4.acquire();
-                    finish_5.acquire();
-                    finish_6.acquire();
-                    finish_7.acquire();
-                    finish_8.acquire();
-                    finish_9.acquire();
-                    finish_10.acquire();
+                // Waiting for the threads to finish
+                for(int t = 0; t < nb_threads3D; t++)
+                {
+                    finish_sem[t].get().acquire();
+                }
 
-                    // Union of the sets traversed by the threads to form th next level set stored in D3D->E
+                // Union of the sets traversed by the threads to form th next level set stored in D3D->E
 
-                    setUnion3D();
+                setUnion3D();
 
-                    //auto end_t = std::chrono::high_resolution_clock::now();
-                    //auto diff_t = std::chrono::duration_cast<std::chrono::nanoseconds>(end_t - start_test).count();
+                auto end_t = std::chrono::high_resolution_clock::now();
+                auto diff_t = std::chrono::duration_cast<std::chrono::nanoseconds>(end_t - start_test).count();
 
-                    //test += diff_t;
-                    par_explo++;
+                par_time += diff_t;
+                par_explo++;
             }
             else //else we don't
             {
-                //auto start_seq = std::chrono::high_resolution_clock::now();
+                auto start_seq = std::chrono::high_resolution_clock::now();
                 //std::cout << "Sequential exploration" << std::endl;
                 int i, x, y, vertex;
 
@@ -1239,74 +1285,40 @@ void algorithms3D::splitSegment_par(volumeManager& vol, std::vector<bool>& histo
 
                 memcpy(D3D->E, D3D->Si[i], D3D->TailleSi[i] * sizeof(int));
                 seq_explo++;
-                //auto end_seq = std::chrono::high_resolution_clock::now();
-                //auto duration_seq = std::chrono::duration_cast<std::chrono::nanoseconds>(end_seq - start_seq);
-                //seq_time += duration_seq.count();
+                auto end_seq = std::chrono::high_resolution_clock::now();
+                auto duration_seq = std::chrono::duration_cast<std::chrono::nanoseconds>(end_seq - start_seq);
+                seq_time += duration_seq.count();
             }
         }
 
     }
 
-    //auto end = std::chrono::high_resolution_clock::now();
+    //Print times
+    /*std::cout << "Sequential exploration : " << seq_explo << " times" << std::endl;
+    std::cout << "Parallel exploration : " << par_explo << " times" << std::endl;
+    std::cout << "Sequential time : " << seq_time << " ns" << std::endl;
+    std::cout << "Parallel time : " << par_time << " ns" << std::endl;
 
-    //auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start);
+    for(int t = 0; t < nb_threads3D; t++)
+    {
+        std::cout << "Thread " << t << " : " << time_in_thread_par_[t] << " ns" << std::endl;
+    }
+*/
+    //store time in vol
+    vol.time_seq_.emplace_back(seq_time);
+    vol.time_par_.emplace_back(par_time);
 
-    /*auto all_explo = seq_time;
-
-    long max = LONG_MIN;
-
-    //print exploration time for each thread
     for (int i = 0; i < nb_threads3D; i++)
     {
-        std::cout << "Thread " << i << " exploration time is : " << t_time_explo3D[i] / 1000000 << " ms" << std::endl;
-        if (t_time_explo3D[i] > max)
-        {
-            max = t_time_explo3D[i];
-        }
+        vol.time_real_thread_[i].emplace_back(time_in_thread_par_[i]);
     }
-
-    all_explo += max;
-
-    std::cout << "Time for sequential exploration : " << seq_time / 1000000 << " ms" << std::endl;
-
-    std::cout << "Time for all exploration : " << all_explo / 1000000 << " ms" << std::endl;
-
-    std::cout << "Time for eveything except exploration : " << (duration.count() - all_explo) / 1000000 << " ms" <<
-        std::endl;
-
-    std::cout << "Total time w/o alloc : " << (duration.count() + time_update_h3D) / 1000000 << " ms" << std::endl;
-
-    vol.time_wo_alloc_.emplace_back((duration.count() + time_update_h3D));
-
-    std::cout << "Total time with alloc : " << (duration.count() + time_update_h3D + diff_alloc) / 1000000 << " ms" <<
-        std::endl;
-
-    std::cout << "Number of step of labelisation in par : " << par_explo << std::endl;
-
-    std::cout << "Number of step of labelisation in seq : " << seq_explo << std::endl;
-
-    std::cout << "Threshold for par : " << thres << std::endl;
-
-    std::cout << "Time when thread are doing other than exploring is : " << (test-max) / 1000000 << " ms" << std::endl;
-
-    std::cout << "Time thread + sync time : " << (test) / 1000000 << " ms" << std::endl;
-
-    vol.time_thread_sync_.emplace_back(test/1000000);
-    vol.time_seq_.emplace_back(seq_time/1000000);
-    vol.time_total_.emplace_back((duration.count() + time_update_h3D + diff_alloc)/1000000);*/
 
     split3D = false;
 
-    start_1.release();
-    start_2.release();
-    start_3.release();
-    start_4.release();
-    start_5.release();
-    start_6.release();
-    start_7.release();
-    start_8.release();
-    start_9.release();
-    start_10.release();
+    for(int t = 0; t < nb_threads3D; t++)
+    {
+        start_sem[t].get().release();
+    }
 
     for (int tr = 0; tr < nb_threads3D; tr++)
     {
@@ -1419,6 +1431,8 @@ void algorithms3D::addMarker(volumeManager& vol, std::vector<int>& markers)
 
     // Get the end time
     auto end = std::chrono::high_resolution_clock::now();
+
+    marker_id++;
 
     // Calculate the difference
     auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start);

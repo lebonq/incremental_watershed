@@ -24,3 +24,5 @@ for i in range(0, 172*2,2):
         print(os.path.join(directory, files[i+1]))
         print(f'Volume integrity compromised')
         break
+
+print("Volume integrity maintained")
