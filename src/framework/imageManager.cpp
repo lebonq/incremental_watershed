@@ -53,7 +53,7 @@ void imageManager::init() {
 
     auto end = std::chrono::high_resolution_clock::now();
 std::chrono::duration<double> diff = end - start;
-    std::cout << "Hierarchy building + graph + sorting took " << diff.count() << " seconds" << std::endl;
+    //std::cout << "Hierarchy building + graph + sorting took " << diff.count() << " seconds" << std::endl;
 
     this->qbet_.clean_memory();
     this->graph_.cleanMemory();

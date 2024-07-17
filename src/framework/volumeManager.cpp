@@ -190,7 +190,7 @@ void volumeManager::initPostprocessStructure()
     this->ws_ = std::make_unique<std::vector<bool>>(this->hierarchy_->getQBT().getSize(),false);
     this->mstEdit_ = std::vector<bool>(this->graph_->getMst().size(), true);
     this->colorTab_ = std::make_unique<std::vector<int>>(this->graph_->getNbVertex()*2, 0);
-    this->time_real_thread_ = std::vector<std::vector<double>>(this->nb_threads_);
+    this->time_real_thread_ = std::vector<std::vector<long>>(this->nb_threads_);
     algorithms3D::init_dmap(this);
 
 }
@@ -204,10 +204,9 @@ void volumeManager::resetPostprocessStructure()
     this->ws_->clear();
     this->mstEdit_.clear();
     this->colorTab_->clear();
-
-    this->initPostprocessStructure();
     algorithms3D::deinit_dmap();
-        algorithms3D::init_dmap(this);
+    this->initPostprocessStructure();
+
 }
 int volumeManager::getEdge(int n)
 {
@@ -323,27 +322,15 @@ void volumeManager::write_CCL_times(const std::string& filename, int benchId, st
     algorithms::vector_to_csv(this->CCL_times_, filename+ "/CCL_" +std::to_string(benchId)+ "_" + name +".csv");
 }
 
-void volumeManager::write_seq_times(const std::string& filename, int benchId, std::string name)
+std::vector<long> volumeManager::get_CCL_times()
 {
-    algorithms::vector_to_csv(this->time_seq_, filename+ "/seq_" +std::to_string(benchId)+ "_" + name +".csv");
+    return this->CCL_times_;
 }
 
-void volumeManager::write_par_times(const std::string& filename, int benchId, std::string name)
-{
-    algorithms::vector_to_csv(this->time_par_, filename+ "/par_" +std::to_string(benchId)+ "_" + name +".csv");
-}
 
 void volumeManager::write_size_front(const std::string& filename, int benchId, std::string name)
 {
     algorithms::vector_to_csv(this->size_front_, filename+ "/size_front_" +std::to_string(benchId)+ "_" + name +".csv");
-}
-
-void volumeManager::write_real_thread_times(const std::string& filename, int benchId, std::string name)
-{
-    for(int i = 0; i < this->nb_threads_; i++)
-    {
-        algorithms::vector_to_csv(this->time_real_thread_[i], filename+ "/real_thread_" +std::to_string(benchId)+ "_" + name + "_" + std::to_string(i) +".csv");
-    }
 }
 
 bool volumeManager::isInMStEdit(int edge)

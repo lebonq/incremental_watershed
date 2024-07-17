@@ -50,10 +50,10 @@ public:
     std::vector<double> time_wo_alloc_;
 
     std::vector<double> time_total_;
-    std::vector<double> time_par_;
-    std::vector<double> time_seq_;
+    std::vector<long> time_par_;
+    std::vector<long> time_seq_;
     std::vector<double> size_front_;
-    std::vector<std::vector<double>> time_real_thread_;
+    std::vector<std::vector<long>> time_real_thread_;
     std::vector<long> CCL_times_;
 
     std::vector<int> segments_; //Label for each vertex
@@ -76,14 +76,13 @@ public:
 
     void addMarkers(std::vector<int>& markers);
     void removeMarkers(std::vector<int>& markers, int nbMarkers);
-    void write_par_times(const std::string& filename, int benchId, std::string name);
     void write_size_front(const std::string& filename, int benchId, std::string name);
-    void write_real_thread_times(const std::string& filename, int benchId, std::string name);
     bool isInMStEdit(int edge);
     void dualisation_segmentation(std::vector<int> &markers, int value);
 
     //Those function works only with the IWS method
     void write_CCL_times(const std::string& filename, int benchId, std::string name);
+    std::vector<long> get_CCL_times();
     void write_seq_times(const std::string& filename, int benchId, std::string name);
 
     std::vector<int>& getMarks() { return *marks_.get(); }

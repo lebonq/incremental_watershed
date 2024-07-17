@@ -1087,10 +1087,10 @@ void algorithms::addMarker(imageManager& im, int* markers, int nbMarkers)
     }
     auto end = std::chrono::high_resolution_clock::now();
     time_update_h = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
-    std::cout << "Time taken by hierarchy updating: " << std::chrono::duration_cast<
-        std::chrono::nanoseconds>(end - start).count() / 1000000 << " ms" << std::endl;
+    /*std::cout << "Time taken by hierarchy updating: " << std::chrono::duration_cast<
+        std::chrono::nanoseconds>(end - start).count() / 1000000 << " ms" << std::endl;*/
 
-    splitSegment_par(im, historyVisited, queueEdges);
+    splitSegment(im, historyVisited, queueEdges);
 
     delete[] historyVisited;
 #ifdef PIXELS_COUNT

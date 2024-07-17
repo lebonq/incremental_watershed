@@ -45,6 +45,8 @@ int main(int argc, char* argv[])
 
     int nb_markers = atoi(argv[3]);
 
+    std::string namepatient = argv[5];
+
     std::vector<std::vector<double>> time;
 
     std::vector<double> init_time(nb_benchmarks);
@@ -70,6 +72,8 @@ int main(int argc, char* argv[])
         markers_object_batched.at(i) = load_marker_from_txt(paths_object.at(i));
         markers_background_batched.at(i) = load_marker_from_txt(paths_background.at(i));
     }
+
+    std::vector<std::vector<long>> CCL_times(nb_benchmarks);
 
     //loop for benchmarking
     for (int j = 0; j < nb_benchmarks; j++)
@@ -98,7 +102,7 @@ int main(int argc, char* argv[])
 
         time.emplace_back();
 
-        volume_manager->threshold_ = 4000;
+        volume_manager->threshold_ = 400;
         std::cout << "Threshold set to " << volume_manager->threshold_ << std::endl;
 
         std::vector<int> markers_concat;
@@ -142,7 +146,7 @@ int main(int argc, char* argv[])
             diff = end - start;
             time[j].push_back(diff.count());
 
-            std::cout << GREEN << "Add markers (object/bakcground) " << RESET << "     step " << i << " took " << GREEN << diff
+            std::cout << GREEN << "Add markers (object/background) " << RESET << "     step " << i << " took " << GREEN << diff
                 .count()
                 << " seconds" << std::endl;
 
@@ -156,17 +160,19 @@ int main(int argc, char* argv[])
             volume_manager->dualisation_segmentation(markers_object_batched[batch], 1);
         }
 
-        auto volume = volume_manager->getSegmentedVolume();
+        /*auto volume = volume_manager->getSegmentedVolume();
         for (int i = 0; i < volume.size(); i++)
         {
             cv::imwrite("test_volume/slice" + std::to_string(i) + ".png", volume[i]);
-        }
-
+        }*/
+        CCL_times[j] = volume_manager->get_CCL_times();
         delete volume_manager;
     }
 
     // After the benchmarking loop, calculate average time for each step
     std::vector<double> avg_time(nb_markers*2);
+    std::vector<long> avg_ccl_times(nb_markers*2);
+
 
     for (int i = 0; i < nb_markers*2; i++)
     {
@@ -179,8 +185,24 @@ int main(int argc, char* argv[])
         avg_time[i] = sum_time / nb_benchmarks;
 
     }
+    for (int i = 0; i < nb_markers*2; i++)
+    {
+        long sum_ccl_time = 0;
+
+        for (int j = 0; j < nb_benchmarks; j++)
+        {
+            sum_ccl_time += CCL_times[j][i];
+        }
+
+        avg_ccl_times[i] = sum_ccl_time / nb_benchmarks;
+    }
 
     //save it ina file
-    algorithms::vector_to_csv(avg_time, path_markers + "/avg_time_niws.csv");
-    algorithms::vector_to_csv(init_time, path_markers + "/init_time_niws.csv");
+    // algorithms::vector_to_csv(avg_time, path_markers + "/avg_time_niws.csv");
+    // algorithms::vector_to_csv(init_time, path_markers + "/init_time_niws.csv");
+
+    algorithms::vector_to_csv(avg_time, path_markers + "/avg_object_time_niws_" + namepatient + "_seq.csv");
+    algorithms::vector_to_csv(init_time, path_markers + "/init_time_niws_" + namepatient  +"_seq.csv");
+    algorithms::vector_to_csv(avg_ccl_times, path_markers + "/avg_ccl_times_niws_" + namepatient + "_seq.csv");
+
 }

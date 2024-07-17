@@ -43,7 +43,9 @@ int main(int argc, char* argv[])
 {
     if (argc != 8)
     {
-        std::cout << "Usage: " << argv[0] << " <path_to_volume> <path_to_markers> <nb_markers> <nb_benchmarks> <name_patient> <threshold> <nb_threads>" << std::endl;
+        std::cout << "Usage: " << argv[0] <<
+            " <path_to_volume> <path_to_markers> <nb_markers> <nb_benchmarks> <name_patient> <threshold> <nb_threads>"
+            << std::endl;
         return 1;
     }
 
@@ -57,6 +59,7 @@ int main(int argc, char* argv[])
 
     std::vector<std::vector<double>> object_time(nb_benchmarks, std::vector<double>(nb_markers));
     std::vector<std::vector<double>> background_time(nb_benchmarks, std::vector<double>(nb_markers));
+    std::vector<std::vector<double>> time_all(nb_benchmarks, std::vector<double>(nb_markers * 2));
     std::vector<double> init_time(nb_benchmarks);
 
     std::string path_volume = argv[1];
@@ -81,10 +84,15 @@ int main(int argc, char* argv[])
         markers_background_batched.at(i) = load_marker_from_txt(paths_background.at(i));
     }
 
+    std::vector<std::vector<long>> CCL_times(nb_benchmarks);
+    std::vector<std::vector<long>> par_times(nb_benchmarks);
+    std::vector<std::vector<long>> seq_times(nb_benchmarks);
+    std::vector<std::vector<std::vector<long>>> real_thread_times(nb_benchmarks);
+
     //loop for benchmarking
     for (int j = 0; j < nb_benchmarks; j++)
     {
-        std::cout << YELLOW << "Benchmark " << j+1 << " / " << nb_benchmarks << std::endl;
+        std::cout << YELLOW << "Benchmark " << j + 1 << " / " << nb_benchmarks << std::endl;
         //Create the volumeManager
         auto volume_manager = new volumeManager();
 
@@ -112,6 +120,8 @@ int main(int argc, char* argv[])
 
         init_time[j] = diff.count();
 
+
+        int cpt = 0;
         for (int i = 0; i < nb_markers; i++)
         {
             //benchmark addMarkers object
@@ -119,24 +129,28 @@ int main(int argc, char* argv[])
             volume_manager->addMarkers(markers_object_batched[i]);
             end = std::chrono::high_resolution_clock::now();
             diff = end - start;
-            object_time[j][i] = diff.count();  // Store time taken
+            object_time[j][i] = diff.count(); // Store time taken
+            time_all[j][cpt] = diff.count();
+            cpt++;
             std::cout << GREEN << "addMarkers object" << RESET << "     step " << i << " took " << GREEN << diff.count()
                 << " seconds" << std::endl;
-            std::cout << GREEN << "labeling took 0." << volume_manager->CCL_times_.at(i*2)/1000000 << " seconds" << std::endl;
-		//volume_manager->write_size_front(path_markers,j,namepatient);
-		//exit(42);
+            std::cout << GREEN << "labeling took " << volume_manager->CCL_times_.at(i * 2) / 1e9 << " seconds" <<
+                std::endl;
+
             //bencmark addMarkers background
             start = std::chrono::high_resolution_clock::now();
             volume_manager->addMarkers(markers_background_batched[i]);
             end = std::chrono::high_resolution_clock::now();
             diff = end - start;
-            background_time[j][i] = diff.count();  // Store time taken
+            background_time[j][i] = diff.count(); // Store time taken
+            time_all[j][cpt] = diff.count();
+            cpt++;
             std::cout << RED << "addMarkers background" << RESET << " step " << i << " took " << RED << diff.count() <<
                 " seconds" << std::endl;
-            std::cout << RED << "labeling took 0." << volume_manager->CCL_times_.at(i*2+1)/1000000 << " seconds" << std::endl;
-
+            std::cout << RED << "labeling took " << volume_manager->CCL_times_.at(i * 2 + 1) / 1e9 << " seconds"
+                << std::endl;
         }
-        for(int batch = 0; batch < nb_markers; batch++)
+        for (int batch = 0; batch < nb_markers; batch++)
         {
             volume_manager->dualisation_segmentation(markers_background_batched[batch], 2);
             volume_manager->dualisation_segmentation(markers_object_batched[batch], 1);
@@ -149,10 +163,14 @@ int main(int argc, char* argv[])
         }*/
 
 
-        volume_manager->write_CCL_times(path_markers, j, namepatient);
-        volume_manager->write_real_thread_times(path_markers, j, namepatient);
-        volume_manager->write_par_times(path_markers, j, namepatient);
-        volume_manager->write_seq_times(path_markers, j, namepatient);
+        //volume_manager->write_CCL_times(path_markers, j, namepatient);
+        CCL_times[j] = volume_manager->get_CCL_times();
+        par_times[j] = volume_manager->time_par_;
+        seq_times[j] = volume_manager->time_seq_;
+        real_thread_times[j] = volume_manager->time_real_thread_;
+        //volume_manager->write_real_thread_times(path_markers, j, namepatient);
+        //volume_manager->write_par_times(path_markers, j, namepatient);
+        //volume_manager->write_seq_times(path_markers, j, namepatient);
         //volume_manager->write_size_front(path_markers, j, namepatient);
         //volume_manager->write_par_times(path_markers, j);
         delete volume_manager;
@@ -161,6 +179,8 @@ int main(int argc, char* argv[])
     // After the benchmarking loop, calculate average time for each step
     std::vector<double> avg_object_time(nb_markers);
     std::vector<double> avg_background_time(nb_markers);
+    std::vector<long> avg_ccl_times(nb_markers * 2);
+
 
     for (int i = 0; i < nb_markers; i++)
     {
@@ -177,16 +197,60 @@ int main(int argc, char* argv[])
         avg_background_time[i] = sum_background_time / nb_benchmarks;
     }
 
+    for (int i = 0; i < nb_markers * 2; i++)
+    {
+        long sum_ccl_time = 0;
+
+        for (int j = 0; j < nb_benchmarks; j++)
+        {
+            sum_ccl_time += CCL_times[j][i];
+        }
+
+        avg_ccl_times[i] = sum_ccl_time / nb_benchmarks;
+    }
+
+
+
     // Print average time for each step
     for (int i = 0; i < nb_markers; i++)
     {
         std::cout << "Average time for object step " << i << ": " << avg_object_time[i] << " seconds" << std::endl;
-        std::cout << "Average time for background step " << i << ": " << avg_background_time[i] << " seconds" << std::endl;
+        std::cout << "Average time for background step " << i << ": " << avg_background_time[i] << " seconds" <<
+            std::endl;
     }
 
-    //save it ina file patient_sizefrint_nb_threads
-    algorithms::vector_to_csv(avg_object_time, path_markers + "/avg_object_time_iws_" + namepatient + "_" + argv[6] + "_" + argv[7] +".csv");
-    algorithms::vector_to_csv(avg_background_time, path_markers + "/avg_background_time_iws_" + namepatient  + "_" + argv[6] + "_" + argv[7] +".csv");
-    algorithms::vector_to_csv(init_time, path_markers + "/init_time_iws_" + namepatient  +".csv");
+     //save it ina file patient_sizefrint_nb_threads
+     // algorithms::vector_to_csv(avg_object_time,
+     //                           path_markers + "/avg_object_time_iws_" + namepatient + "_" + argv[6] + "_" + argv[7] +
+     //                           ".csv");
+     // algorithms::vector_to_csv(avg_background_time,
+     //                           path_markers + "/avg_background_time_iws_" + namepatient + "_" + argv[6] + "_" + argv[7] +
+     //                           ".csv");
+     //algorithms::vector_to_csv(avg_ccl_times,                               path_markers + "/avg_ccl_times_iws_" + namepatient +                              ".csv");
+     // algorithms::vector_to_csv(init_time, path_markers + "/init_time_iws_" + namepatient  +".csv");
 
+    algorithms::vector_to_csv(avg_object_time, path_markers + "/avg_object_time_iws_" + namepatient + "_par.csv");
+    algorithms::vector_to_csv(avg_background_time, path_markers + "/avg_background_time_iws_" + namepatient + "_par.csv");
+    algorithms::vector_to_csv(init_time, path_markers + "/init_time_iws_" + namepatient  +"_par.csv");
+    algorithms::vector_to_csv(avg_ccl_times, path_markers + "/avg_ccl_times_iws_" + namepatient + "_par.csv");
+
+    //    for (int i = 0; i < nb_benchmarks; i++)
+    //    {
+    //        for (int thread = 0; thread < num_threads; thread++)
+    //        {
+    //            algorithms::vector_to_csv(real_thread_times[i][thread],
+    //                                      path_markers + "/par_detailled/real_thread_times_iws_" + namepatient + "_" + argv[
+    //                                          6] + "_" + argv[7] + "_bench_" + std::to_string(i) + "_thread_" +
+    //                                      std::to_string(thread) + ".csv");
+    //        }
+    //        algorithms::vector_to_csv(par_times[i],
+    //                                  path_markers + "/par_detailled/par_times_iws_" + namepatient + "_" + argv[6] + "_" +
+    //                                  argv[7] + "_bench_" + std::to_string(i) + ".csv");
+    //        algorithms::vector_to_csv(seq_times[i],
+    //                                  path_markers + "/par_detailled/seq_times_iws_" + namepatient + "_" + argv[6] + "_" +
+    //                                  argv[7] + "_bench_" + std::to_string(i) + ".csv");
+    //        algorithms::vector_to_csv(time_all[i],
+    //                                  path_markers + "/par_detailled/all_time_iws_" + namepatient + "_" + argv[6] +
+    //                                  "_" + argv[7] + "_bench_" + std::to_string(i) + ".csv");
+    //    }
 }

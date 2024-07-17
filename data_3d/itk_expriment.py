@@ -23,7 +23,7 @@ patients = ['patient_2', 'patient_7', 'patient_12', 'patient_19', 'patient_20']
 
 patient = args.patient
 
-for bench in tqdm.tqdm(range(0, 10),"Bench"):
+for bench in tqdm.tqdm(range(0, 5),"Bench"):
     time_obj = []
     time_back = []
 

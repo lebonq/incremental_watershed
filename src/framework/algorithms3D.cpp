@@ -980,6 +980,9 @@ void algorithms3D::splitSegment_par(volumeManager& vol, std::vector<bool>& histo
     long long seq_time = 0;
     long long par_time = 0;
 
+    long long time_alloc = 0;
+
+    auto start_t = std::chrono::high_resolution_clock::now();
     std::vector<std::reference_wrapper<std::binary_semaphore>> finish_sem;
     std::vector<std::reference_wrapper<std::binary_semaphore>> start_sem;
 
@@ -1065,6 +1068,123 @@ void algorithms3D::splitSegment_par(volumeManager& vol, std::vector<bool>& histo
     finish_sem.push_back(std::ref(finish_20));
     start_sem.push_back(std::ref(start_20));
 
+    std::binary_semaphore finish_21{0}, start_21{0};
+    finish_sem.push_back(std::ref(finish_21));
+    start_sem.push_back(std::ref(start_21));
+
+    std::binary_semaphore finish_22{0}, start_22{0};
+    finish_sem.push_back(std::ref(finish_22));
+    start_sem.push_back(std::ref(start_22));
+
+    std::binary_semaphore finish_23{0}, start_23{0};
+    finish_sem.push_back(std::ref(finish_23));
+    start_sem.push_back(std::ref(start_23));
+
+    std::binary_semaphore finish_24{0}, start_24{0};
+    finish_sem.push_back(std::ref(finish_24));
+    start_sem.push_back(std::ref(start_24));
+
+    std::binary_semaphore finish_25{0}, start_25{0};
+    finish_sem.push_back(std::ref(finish_25));
+    start_sem.push_back(std::ref(start_25));
+
+    std::binary_semaphore finish_26{0}, start_26{0};
+    finish_sem.push_back(std::ref(finish_26));
+    start_sem.push_back(std::ref(start_26));
+
+    std::binary_semaphore finish_27{0}, start_27{0};
+    finish_sem.push_back(std::ref(finish_27));
+    start_sem.push_back(std::ref(start_27));
+
+    std::binary_semaphore finish_28{0}, start_28{0};
+    finish_sem.push_back(std::ref(finish_28));
+    start_sem.push_back(std::ref(start_28));
+
+    std::binary_semaphore finish_29{0}, start_29{0};
+    finish_sem.push_back(std::ref(finish_29));
+    start_sem.push_back(std::ref(start_29));
+
+    std::binary_semaphore finish_30{0}, start_30{0};
+    finish_sem.push_back(std::ref(finish_30));
+    start_sem.push_back(std::ref(start_30));
+
+    std::binary_semaphore finish_31{0}, start_31{0};
+    finish_sem.push_back(std::ref(finish_31));
+    start_sem.push_back(std::ref(start_31));
+
+    std::binary_semaphore finish_32{0}, start_32{0};
+    finish_sem.push_back(std::ref(finish_32));
+    start_sem.push_back(std::ref(start_32));
+
+    std::binary_semaphore finish_33{0}, start_33{0};
+    finish_sem.push_back(std::ref(finish_33));
+    start_sem.push_back(std::ref(start_33));
+
+    std::binary_semaphore finish_34{0}, start_34{0};
+    finish_sem.push_back(std::ref(finish_34));
+    start_sem.push_back(std::ref(start_34));
+
+    std::binary_semaphore finish_35{0}, start_35{0};
+    finish_sem.push_back(std::ref(finish_35));
+    start_sem.push_back(std::ref(start_35));
+
+    std::binary_semaphore finish_36{0}, start_36{0};
+    finish_sem.push_back(std::ref(finish_36));
+    start_sem.push_back(std::ref(start_36));
+
+    std::binary_semaphore finish_37{0}, start_37{0};
+    finish_sem.push_back(std::ref(finish_37));
+    start_sem.push_back(std::ref(start_37));
+
+    std::binary_semaphore finish_38{0}, start_38{0};
+    finish_sem.push_back(std::ref(finish_38));
+    start_sem.push_back(std::ref(start_38));
+
+    std::binary_semaphore finish_39{0}, start_39{0};
+    finish_sem.push_back(std::ref(finish_39));
+    start_sem.push_back(std::ref(start_39));
+
+    std::binary_semaphore finish_40{0}, start_40{0};
+    finish_sem.push_back(std::ref(finish_40));
+    start_sem.push_back(std::ref(start_40));
+
+    std::binary_semaphore finish_41{0}, start_41{0};
+    finish_sem.push_back(std::ref(finish_41));
+    start_sem.push_back(std::ref(start_41));
+
+    std::binary_semaphore finish_42{0}, start_42{0};
+    finish_sem.push_back(std::ref(finish_42));
+    start_sem.push_back(std::ref(start_42));
+
+    std::binary_semaphore finish_43{0}, start_43{0};
+    finish_sem.push_back(std::ref(finish_43));
+    start_sem.push_back(std::ref(start_43));
+
+    std::binary_semaphore finish_44{0}, start_44{0};
+    finish_sem.push_back(std::ref(finish_44));
+    start_sem.push_back(std::ref(start_44));
+
+    std::binary_semaphore finish_45{0}, start_45{0};
+    finish_sem.push_back(std::ref(finish_45));
+    start_sem.push_back(std::ref(start_45));
+
+    std::binary_semaphore finish_46{0}, start_46{0};
+    finish_sem.push_back(std::ref(finish_46));
+    start_sem.push_back(std::ref(start_46));
+
+    std::binary_semaphore finish_47{0}, start_47{0};
+    finish_sem.push_back(std::ref(finish_47));
+    start_sem.push_back(std::ref(start_47));
+
+    std::binary_semaphore finish_48{0}, start_48{0};
+    finish_sem.push_back(std::ref(finish_48));
+    start_sem.push_back(std::ref(start_48));
+
+    auto end_t = std::chrono::high_resolution_clock::now();
+
+    time_alloc += std::chrono::duration_cast<std::chrono::nanoseconds>(end_t - start_t).count();
+
+
     for(int t = 0; t < nb_threads3D; t++)
     {
         threads[t] = std::thread(parLevelSetTraversal_depth_3D, t, finish_sem[t], start_sem[t]);
@@ -1118,15 +1238,16 @@ void algorithms3D::splitSegment_par(volumeManager& vol, std::vector<bool>& histo
         while (D3D->indice != 0)
         {
             vol.size_front_.push_back(D3D->indice);
-            if (D3D->indice > thres) //If propagation is above 50 vertex we // the process
+            if (D3D->indice > thres) //If propagation is above thes vertex we // the process
             {
                 //auto start_test = std::chrono::high_resolution_clock::now();
                 // Partition Function
+                auto start_test = std::chrono::high_resolution_clock::now();
+
                 for (int i = 0; i < nb_threads3D; i++)
                 {
                     seqPartition3D(i);
                 }
-                auto start_test = std::chrono::high_resolution_clock::now();
                 // Start of the threads
 
                 for(int t = 0; t < nb_threads3D; t++)
@@ -1293,20 +1414,31 @@ void algorithms3D::splitSegment_par(volumeManager& vol, std::vector<bool>& histo
 
     }
 
-    //Print times
-    /*std::cout << "Sequential exploration : " << seq_explo << " times" << std::endl;
-    std::cout << "Parallel exploration : " << par_explo << " times" << std::endl;
-    std::cout << "Sequential time : " << seq_time << " ns" << std::endl;
-    std::cout << "Parallel time : " << par_time << " ns" << std::endl;
-
-    for(int t = 0; t < nb_threads3D; t++)
-    {
-        std::cout << "Thread " << t << " : " << time_in_thread_par_[t] << " ns" << std::endl;
-    }
-*/
-    //store time in vol
-    vol.time_seq_.emplace_back(seq_time);
-    vol.time_par_.emplace_back(par_time);
+//    //Print times
+//    std::cout << "Sequential exploration : " << seq_explo          << " times" << std::endl;
+//    std::cout << "Parallel exploration : "   << par_explo          << " times" << std::endl;
+//
+//    std::cout << "Sequential time : "        << seq_time << " ns" << std::endl;
+//    //print in ms
+//    std::cout << "Sequential time : "        << seq_time / 1000000 << " ms" << std::endl;
+//
+//    std::cout << "Parallel time : "          << par_time << " ns" << std::endl;
+//    //print in ms
+//    std::cout << "Parallel time : "          << par_time / 1000000 << " ms" << std::endl;
+//
+//    std::cout << "Allocation time : "        << time_alloc << " ns" << std::endl;
+//    //print in ms
+//    std::cout << "Allocation time : "        << time_alloc / 1000000 << " ms" << std::endl;
+//
+//
+//    for(int t = 0; t < nb_threads3D; t++)
+//    {
+//        std::cout << "Thread " << t << " : " << time_in_thread_par_[t] << " ns" << std::endl;
+//    }
+//
+//    //store time in vol
+//    vol.time_seq_.emplace_back(seq_time);
+//    vol.time_par_.emplace_back(par_time);
 
     for (int i = 0; i < nb_threads3D; i++)
     {
